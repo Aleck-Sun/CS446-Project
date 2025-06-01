@@ -17,22 +17,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import com.example.cs446.data.model.Pet
+import com.example.cs446.data.repository.PetRepository
 import com.example.cs446.ui.theme.CS446Theme
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            CS446Theme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "World",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+        println(123)
+
+        lifecycleScope.launch{
+            val pets = SupabaseClient.supabase.postgrest.from("pets")
+                .select().decodeList<Pet>()
+
+            setContent {
+                CS446Theme {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Greeting(
+                            name = pets[0].name,
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
                 }
             }
         }
+
+
     }
 }
 
