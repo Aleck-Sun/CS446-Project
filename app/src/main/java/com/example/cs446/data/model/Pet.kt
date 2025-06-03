@@ -1,15 +1,15 @@
 package com.example.cs446.data.model
+import com.squareup.moshi.Json
 import java.time.OffsetDateTime
 import java.time.LocalDate
 
-class Pet(
+data class Pet(
     val id: Int,
-    val created_at: String,    // or OffsetDateTime if you parse manually
+    @Json(name = "created_at") val createdAt: String,
     val name: String,
     val species: Int,
-    val breed: String?,        // nullable because it can be null
-    val creator_id: Int,
-    val birthdate: String,     // or LocalDate if you want date parsing
+    val breed: String?,
+    @Json(name = "creator_id") val creatorId: Int,
+    val birthdate: String,
     val weight: Double
-) {
-}
+)
