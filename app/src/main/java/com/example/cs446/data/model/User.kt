@@ -10,5 +10,5 @@ data class User(
     @Json(name = "created_at") val createdAt: String,
     val username: String,
     val email: String,
-    @Json(name = "avatar_url") val avatarUrl: String
+    @Json(name = "avatar_url") val avatarUrl: String? = null
 )
