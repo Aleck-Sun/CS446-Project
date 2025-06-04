@@ -1,5 +1,6 @@
 package com.example.cs446
 
+import com.example.cs446.data.repository.InstantAdapter
 import com.example.cs446.data.repository.UUIDAdapter
 import com.example.cs446.data.repository.UserRepository
 import com.squareup.moshi.Moshi
@@ -29,11 +30,12 @@ object SupabaseClient {
 
         val moshi = Moshi.Builder()
             .add(UUIDAdapter())
+            .add(InstantAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
         defaultSerializer = MoshiSerializer(moshi)
     }
-    val userRepository = UserRepository()
+    private val userRepository = UserRepository()
 
     fun loginWithSupabase(
         email: String,
@@ -66,7 +68,6 @@ object SupabaseClient {
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                println("Signup process started")
                 supabase.auth.signUpWith(Email) {
                     this.email = email
                     this.password = password
@@ -76,7 +77,6 @@ object SupabaseClient {
                     try {
                         userRepository.createNewUser(userId, email)
                     } catch (e: Exception) {
-                        print(e.message)
                         throw Exception(
                             "Could not add user. Please try again."
                         )

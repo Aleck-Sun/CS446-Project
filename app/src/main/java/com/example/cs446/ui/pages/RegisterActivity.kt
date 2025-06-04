@@ -127,15 +127,16 @@ fun RegisterBox(
                         errorMessage = null;
                         if (password != confirmPassword) {
                             errorMessage = "Passwords do not match."
+                        } else {
+                            SupabaseClient.signUpWithSupabase(
+                                email = email,
+                                password = password,
+                                onSuccess = onRegister,
+                                onError = {
+                                    errorMessage = "Sign Up Failed."
+                                }
+                            )
                         }
-                        SupabaseClient.signUpWithSupabase(
-                            email = email,
-                            password = password,
-                            onSuccess = onRegister,
-                            onError = {
-                                errorMessage = "Sign Up Failed."
-                            }
-                        )
                     },
                 ) {
                     Text("Register")
