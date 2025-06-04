@@ -1,4 +1,4 @@
-package com.example.cs446
+package com.example.cs446.ui.pages
 
 import android.content.Intent
 import android.os.Bundle
@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.cs446.SupabaseClient
 import com.example.cs446.ui.theme.CS446Theme
 
 class LoginActivity : ComponentActivity() {

@@ -1,4 +1,4 @@
-package com.example.cs446
+package com.example.cs446.ui.pages
 
 import android.content.Intent
 import android.os.Bundle
@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.cs446.SupabaseClient
 import com.example.cs446.ui.theme.CS446Theme
 
 class RegisterActivity : ComponentActivity() {
@@ -88,22 +89,22 @@ fun RegisterBox(
             )
             OutlinedTextField(
                 value = email,
-                onValueChange = {email=it},
-                label = { Text("Email")},
+                onValueChange = { email = it },
+                label = { Text("Email") },
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             OutlinedTextField(
                 value = password,
-                onValueChange = {password=it},
-                label = { Text("Password")},
+                onValueChange = { password = it },
+                label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(bottom = 8.dp)
 
             )
             OutlinedTextField(
                 value = confirmPassword,
-                onValueChange = {confirmPassword=it},
-                label = { Text("Confirm Password")},
+                onValueChange = { confirmPassword = it },
+                label = { Text("Confirm Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(bottom = 8.dp)
 
@@ -116,7 +117,7 @@ fun RegisterBox(
                 )
             }
 
-            Row (
+            Row(
                 modifier = Modifier.padding(top = 16.dp)
             )
             {

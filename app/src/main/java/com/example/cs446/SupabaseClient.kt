@@ -1,6 +1,5 @@
 package com.example.cs446
 
-import com.example.cs446.BuildConfig
 import com.example.cs446.data.repository.UUIDAdapter
 import com.example.cs446.data.repository.UserRepository
 import com.squareup.moshi.Moshi
@@ -18,8 +17,6 @@ import kotlinx.coroutines.withContext
 
 const val supabaseUrl = BuildConfig.SUPABASE_URL
 const val supabaseKey = BuildConfig.SUPABASE_KEY
-
-
 
 object SupabaseClient {
     val supabase = createSupabaseClient(
