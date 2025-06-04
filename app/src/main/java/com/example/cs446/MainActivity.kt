@@ -8,50 +8,50 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.BasicSecureTextField
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import com.example.cs446.data.model.Pet
+import com.example.cs446.data.repository.PetRepository
 import com.example.cs446.ui.theme.CS446Theme
-import com.example.cs446.ui.theme.Typography
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        println(123)
 
-        setContent {
-            LoginScreen()
+        lifecycleScope.launch{
+            val pets = SupabaseClient.supabase.postgrest.from("pets")
+                .select().decodeList<Pet>()
+
+            setContent {
+                CS446Theme {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        Greeting(
+                            name = "1",
+                            modifier = Modifier.padding(innerPadding)
+                        )
+                    }
+                }
+            }
         }
+
+
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun LoginScreen() {
-    CS446Theme {
-        Greeting("World")
-    }
-}
-
 
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -60,31 +60,20 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Welcome to Petfolio",
+                text = "Petfolio",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             Text(
-                text = "Please sign in to continue",
+                text = "Hello $name!",
                 modifier = Modifier
-            )
-            OutlinedTextField(
-                value = "Enter your email",
-                onValueChange = {email=it},
-                label = { Text("Email")}
-            )
-            OutlinedTextField(
-                value = "",
-                onValueChange = {password=it},
-                label = { Text("Password")},
-                visualTransformation = PasswordVisualTransformation()
             )
         }
     }
 }
 
-
+@Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
     CS446Theme {

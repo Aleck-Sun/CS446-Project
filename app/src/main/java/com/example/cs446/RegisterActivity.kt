@@ -28,25 +28,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.cs446.ui.theme.CS446Theme
 
-class LoginActivity : ComponentActivity() {
+class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        fun onLogIn() {
+        fun onRegister() {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
         }
 
-        fun onSignUpRequest() {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
-        }
-
         setContent {
-            LoginScreen(
-                ::onLogIn,
-                ::onSignUpRequest
+            RegisterScreen(
+                ::onRegister
             )
         }
     }
@@ -54,28 +48,26 @@ class LoginActivity : ComponentActivity() {
 
 @Preview(showBackground = true)
 @Composable
-fun LoginScreen(
-    onLogIn: () -> Unit = {},
-    onSignUpRequest: () -> Unit = {}
+fun RegisterScreen(
+    onRegister: () -> Unit = {}
 ) {
     CS446Theme {
-        LoginBox(
-            onLogIn,
-            onSignUpRequest
+        RegisterBox(
+            onRegister
         )
     }
 }
 
 
 @Composable
-fun LoginBox(
-    onLogIn: () -> Unit,
-    onSignUpRequest: () -> Unit,
+fun RegisterBox(
+    onRegister: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var incorrectLogin by remember { mutableStateOf(false) }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage: String? by remember { mutableStateOf(null) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -85,13 +77,13 @@ fun LoginBox(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Welcome to Petfolio",
+                text = "Let's Get Started",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             Text(
-                text = "Please sign in to continue",
+                text = "Please enter an email and password",
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             OutlinedTextField(
@@ -108,9 +100,18 @@ fun LoginBox(
                 modifier = Modifier.padding(bottom = 8.dp)
 
             )
-            if (incorrectLogin) {
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = {confirmPassword=it},
+                label = { Text("Confirm Password")},
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.padding(bottom = 8.dp)
+
+            )
+
+            if (errorMessage != null) {
                 Text(
-                    text = "Incorrect Username or Password",
+                    text = errorMessage!!,
                     color = Color.Red,
                 )
             }
@@ -120,28 +121,23 @@ fun LoginBox(
             )
             {
                 Button(
+                    modifier = Modifier,
                     onClick = {
-                        incorrectLogin = false
-                        SupabaseClient.loginWithSupabase(
+                        errorMessage = null;
+                        if (password != confirmPassword) {
+                            errorMessage = "Passwords do not match."
+                        }
+                        SupabaseClient.signUpWithSupabase(
                             email = email,
                             password = password,
-                            onSuccess = onLogIn,
+                            onSuccess = onRegister,
                             onError = {
-                                incorrectLogin = true
+                                errorMessage = "Sign Up Failed."
                             }
                         )
                     },
-                    modifier.padding(end = 16.dp)
-
                 ) {
-                    Text("Log In")
-                }
-
-                Button(
-                    modifier = Modifier,
-                    onClick = onSignUpRequest,
-                ) {
-                    Text("Sign Up")
+                    Text("Register")
                 }
             }
         }
