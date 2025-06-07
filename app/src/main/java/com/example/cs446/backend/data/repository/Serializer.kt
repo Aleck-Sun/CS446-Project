@@ -1,4 +1,4 @@
-package com.example.cs446.data.repository
+package com.example.cs446.backend.data.repository
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.ToJson

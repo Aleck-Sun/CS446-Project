@@ -1,82 +1,67 @@
-package com.example.cs446.ui.pages
+package com.example.cs446.ui.pages.login
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.cs446.SupabaseClient
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.cs446.backend.data.result.AuthResult
 import com.example.cs446.ui.theme.CS446Theme
+import com.example.cs446.view.security.SecurityViewModel
 
-class LoginActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        fun onLogIn() {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        }
-
-        fun onSignUpRequest() {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
-        }
-
-        setContent {
-            LoginScreen(
-                ::onLogIn,
-                ::onSignUpRequest
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
 @Composable
 fun LoginScreen(
-    onLogIn: () -> Unit = {},
-    onSignUpRequest: () -> Unit = {}
+    viewModel: SecurityViewModel,
+    onNavigateToRegister: () -> Unit,
+    onLoggedIn: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    val authState by viewModel.authState.collectAsState()
+    LaunchedEffect(authState) {
+        if (authState is AuthResult.LoginSuccess) {
+            onLoggedIn()
+        }
+    }
     CS446Theme {
         LoginBox(
-            onLogIn,
-            onSignUpRequest
+            onNavigateToRegister = onNavigateToRegister,
+            onLogin = { email: String, password: String ->
+                viewModel.login(email, password)
+            },
+            authState = authState,
+            modifier = modifier
         )
     }
 }
 
-
 @Composable
 fun LoginBox(
-    onLogIn: () -> Unit,
-    onSignUpRequest: () -> Unit,
+    onNavigateToRegister: () -> Unit = {},
+    onLogin: (String, String) -> Unit = { _, _ -> },
+    authState: AuthResult,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var incorrectLogin by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -98,21 +83,30 @@ fun LoginBox(
             OutlinedTextField(
                 value = email,
                 onValueChange = {email=it},
-                label = { Text("Email")},
+                label = { Text("Email") },
                 modifier = Modifier.padding(bottom = 8.dp),
             )
             OutlinedTextField(
                 value = password,
                 onValueChange = {password=it},
-                label = { Text("Password")},
+                label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.padding(bottom = 8.dp)
 
             )
-            if (incorrectLogin) {
-                Text(
-                    text = "Incorrect Username or Password",
-                    color = Color.Red,
+            when (authState) {
+                is AuthResult.LoginSuccess -> Text(
+                    text = "Login successful",
+                    color = Color.Green
+                )
+                is AuthResult.LoginError -> Text(
+                    text = "Error: ${authState.message}",
+                    color = Color.Red
+                )
+                is AuthResult.Loading -> Spacer(Modifier)
+                else -> Text(
+                    text = "An unknown error has occurred.",
+                    color = Color.Red
                 )
             }
 
@@ -122,15 +116,7 @@ fun LoginBox(
             {
                 Button(
                     onClick = {
-                        incorrectLogin = false
-                        SupabaseClient.loginWithSupabase(
-                            email = email,
-                            password = password,
-                            onSuccess = onLogIn,
-                            onError = {
-                                incorrectLogin = true
-                            }
-                        )
+                        onLogin(email, password)
                     },
                     modifier.padding(end = 16.dp)
 
@@ -140,11 +126,24 @@ fun LoginBox(
 
                 Button(
                     modifier = Modifier,
-                    onClick = onSignUpRequest,
+                    onClick = onNavigateToRegister,
                 ) {
                     Text("Sign Up")
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    CS446Theme {
+        LoginBox(
+            onNavigateToRegister = {},
+            onLogin = { _, _ -> },
+            authState = AuthResult.Loading,
+            modifier = Modifier
+        )
     }
 }

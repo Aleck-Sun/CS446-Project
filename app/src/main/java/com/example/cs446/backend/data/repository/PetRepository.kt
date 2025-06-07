@@ -1,7 +1,7 @@
-package com.example.cs446.data.repository
+package com.example.cs446.backend.data.repository
 
-import com.example.cs446.SupabaseClient
-import com.example.cs446.data.model.Pet
+import com.example.cs446.backend.SupabaseClient
+import com.example.cs446.backend.data.model.Pet
 import io.github.jan.supabase.postgrest.from
 
 class PetRepository {

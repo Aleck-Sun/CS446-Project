@@ -1,4 +1,4 @@
-package com.example.cs446.data.model
+package com.example.cs446.backend.data.model
 import com.squareup.moshi.Json
 import kotlinx.datetime.Instant
 import java.time.OffsetDateTime
