@@ -28,7 +28,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        println(123)
 
         lifecycleScope.launch{
             val pets = SupabaseClient.supabase.postgrest.from("pets")
@@ -38,7 +37,7 @@ class MainActivity : ComponentActivity() {
                 CS446Theme {
                     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                         Greeting(
-                            name = "1",
+                            name = "World",
                             modifier = Modifier.padding(innerPadding)
                         )
                     }
