@@ -49,16 +49,16 @@ fun ActivityLogForm(
             .fillMaxSize()
             .padding(16.dp),
     ) {
-        Text("Log an Activity", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("Log Pet Activity", fontSize = 24.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         DatePickerTextField(
             date = activityDate,
-            label = "Select Date",
+            label = "Activity Date",
             formatter = formatter,
-            onDateChange = { newDate ->
-                activityDate = newDate
+            onDateChange = {
+                activityDate = it
             }
         )
 
@@ -83,7 +83,7 @@ fun ActivityLogForm(
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Make this a post?")
+            Text("Post to Pet Profile")
             Switch(
                 checked = makePost,
                 onCheckedChange = { makePost = it },
@@ -117,11 +117,17 @@ fun ActivityLogForm(
 
         Button(
             onClick = {
-                onSubmit(activityDate.atStartOfDay(ZoneOffset.UTC).toInstant(), activityType, comment, makePost, imageUri?.toString())
+                onSubmit(
+                    activityDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                    activityType,
+                    comment,
+                    makePost,
+                    imageUri?.toString()
+                )
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text("Submit Activity")
+            Text("Log Activity")
         }
     }
 }
