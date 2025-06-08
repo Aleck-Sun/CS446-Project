@@ -1,4 +1,4 @@
-package com.example.cs446
+package com.example.cs446.ui.pages
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -18,8 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
+import com.example.cs446.SupabaseClient
 import com.example.cs446.data.model.Pet
-import com.example.cs446.data.repository.PetRepository
 import com.example.cs446.ui.theme.CS446Theme
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
