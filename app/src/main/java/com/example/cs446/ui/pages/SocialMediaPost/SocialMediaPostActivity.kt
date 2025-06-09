@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.SupabaseClient
 import com.example.cs446.data.model.Pet
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
@@ -36,8 +35,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         lifecycleScope.launch{
-            val pets = SupabaseClient.supabase.postgrest.from("pets")
-                .select().decodeList<Pet>()
 
             setContent {
                 SocialMediaPostScreen()
