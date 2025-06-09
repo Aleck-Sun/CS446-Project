@@ -1,33 +1,31 @@
 package com.example.cs446.ui.pages
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.clickable
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import kotlinx.datetime.Instant
 import java.util.UUID
 
-import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.data.model.Pet
-
+import com.example.cs446.ui.theme.CS446Theme
+import com.example.cs446.ui.components.BottomNavigation
 
 class PetsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,64 +42,24 @@ class PetsActivity : ComponentActivity() {
 
 @Composable
 fun PetProfileScreen() {
+    val context = LocalContext.current
+
     val pets = listOf(
-        Pet(
-            id = 1,
-            createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-            name = "Charlie",
-            species = 1,
-            breed = "Golden Retriever",
-            creatorId = UUID.randomUUID(),
-            birthdate = Instant.parse("2025-05-28T00:00:00Z"),
-            weight = 65.0
-        ),
-        Pet(
-            id = 2,
-            createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-            name = "Colin",
-            species = 1,
-            breed = "Beagle",
-            creatorId = UUID.randomUUID(),
-            birthdate = Instant.parse("2024-01-15T00:00:00Z"),
-            weight = 40.0
-        ),
-        Pet(
-            id = 3,
-            createdAt = Instant.parse("2024-01-01T00:00:00Z"),
-            name = "Robin",
-            species = 1,
-            breed = "Poodle",
-            creatorId = UUID.randomUUID(),
-            birthdate = Instant.parse("2023-11-02T00:00:00Z"),
-            weight = 30.0
-        )
+        Pet(1, Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
+        Pet(2, Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
+        Pet(3, Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
     )
 
     var selectedPetIndex by remember { mutableIntStateOf(0) }
     val selectedPet = pets[selectedPetIndex]
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = {},
-                    icon = { Icon(Icons.Default.Face, contentDescription = "Pets") },
-                    label = { Text("Pets") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { /* TODO: handle go to Feed page */ },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Feed") },
-                    label = { Text("Feed") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = {  /* TODO: handle go to Profile page */ },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
-                )
+            BottomNavigation(currentScreen = "pets") { screen ->
+                when (screen) {
+                    "feed" -> context.startActivity(Intent(context, FeedActivity::class.java))
+                    "profile" -> context.startActivity(Intent(context, ProfileActivity::class.java))
+                }
             }
         }
     ) { innerPadding ->
@@ -121,9 +79,7 @@ fun PetProfileScreen() {
                 pets.forEachIndexed { index, pet ->
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable {
-                            selectedPetIndex = index
-                        }
+                        modifier = Modifier.clickable { selectedPetIndex = index }
                     ) {
                         Icon(
                             Icons.Default.Face,
@@ -136,7 +92,7 @@ fun PetProfileScreen() {
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { /* TODO: handle add pet */ }
+                    modifier = Modifier.clickable { /* Add Pet */ }
                 ) {
                     Icon(Icons.Default.AddCircle, contentDescription = "Add Pet", modifier = Modifier.size(56.dp))
                     Text("Add Pet", fontSize = 14.sp)
@@ -173,7 +129,6 @@ fun PetProfileScreen() {
                     Row {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Sex", fontWeight = FontWeight.Medium)
-                            // You don't have sex in your Pet class. You might add it or leave blank
                             Text("Unknown")
                         }
                         Column(modifier = Modifier.weight(1f)) {
@@ -186,10 +141,10 @@ fun PetProfileScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Logs button with unread notifications
+            // Logs button
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { /* handle logs click */ },
+                    onClick = { /* TODO: handle logs button click */ },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.List, contentDescription = null)
@@ -212,7 +167,7 @@ fun PetProfileScreen() {
 
             // Family button
             Button(
-                onClick = { /* handle family click */ },
+                onClick = { /* TODO: handle family button click */ },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
