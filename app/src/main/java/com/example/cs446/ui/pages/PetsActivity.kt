@@ -292,11 +292,21 @@ fun AddPetDialog(
     var breed by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
 
+    var nameError by remember { mutableStateOf(false) }
+    var weightError by remember { mutableStateOf(false) }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                onAdd(name, breed, weight)
+                // Validation logic
+                nameError = name.isBlank()
+                val weightValue = weight.toDoubleOrNull()
+                weightError = weightValue == null || weightValue <= 0.0
+
+                if (!nameError && !weightError) {
+                    onAdd(name, breed, weight)
+                }
             }) {
                 Text("Add")
             }
@@ -311,28 +321,55 @@ fun AddPetDialog(
             Column {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        nameError = false
+                    },
                     label = { Text("Pet Name") },
+                    isError = nameError,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (nameError) {
+                    Text(
+                        "Name cannot be empty.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = breed,
                     onValueChange = { breed = it },
                     label = { Text("Breed") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = weight,
-                    onValueChange = { weight = it },
+                    onValueChange = {
+                        weight = it
+                        weightError = false
+                    },
                     label = { Text("Weight (lbs)") },
+                    isError = weightError,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (weightError) {
+                    Text(
+                        "Weight must be a positive number.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
             }
         }
     )
 }
+
 
 @Composable
 fun EditPetDialog(
