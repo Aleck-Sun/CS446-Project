@@ -90,7 +90,8 @@ fun PetProfileScreen() {
             ) {
                 pets.forEach { pet ->
                     Column(
-                        modifier = Modifier.clickable { selectedPetId = pet.id }
+                        modifier = Modifier.clickable { selectedPetId = pet.id },
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             Icons.Default.Face,
