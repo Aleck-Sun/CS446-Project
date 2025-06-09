@@ -1,19 +1,17 @@
-package com.example.cs446.ui.pages
+package com.example.cs446.ui.pages.login
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,49 +24,45 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.cs446.SupabaseClient
+import com.example.cs446.backend.data.result.AuthResult
 import com.example.cs446.ui.theme.CS446Theme
+import com.example.cs446.view.security.SecurityViewModel
 
-class RegisterActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        fun onRegister() {
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-        }
-
-        setContent {
-            RegisterScreen(
-                ::onRegister
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
 @Composable
 fun RegisterScreen(
-    onRegister: () -> Unit = {}
+    viewModel: SecurityViewModel = SecurityViewModel(),
+    onNavigateToLogin: () -> Unit = {},
+    onRegistered: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val authState by viewModel.authState.collectAsState()
+    LaunchedEffect(authState) {
+        if (authState is AuthResult.RegisterSuccess) {
+            onRegistered()
+        }
+    }
     CS446Theme {
         RegisterBox(
-            onRegister
+            onNavigateToLogin = onNavigateToLogin,
+            onRegister = { email: String, password: String ->
+                viewModel.signUp(email, password)
+            },
+            authState = authState,
+            modifier = modifier
         )
     }
 }
 
-
 @Composable
 fun RegisterBox(
-    onRegister: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onRegister: (String, String) -> Unit,
+    authState: AuthResult,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var errorMessage: String? by remember { mutableStateOf(null) }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -110,11 +104,16 @@ fun RegisterBox(
 
             )
 
-            if (errorMessage != null) {
-                Text(
-                    text = errorMessage!!,
-                    color = Color.Red,
+            when (authState) {
+                is AuthResult.RegisterSuccess -> Text(
+                    text = "Login successful",
+                    color = Color.Green
                 )
+                is AuthResult.RegisterError -> Text(
+                    text = "Error: ${authState.message}",
+                    color = Color.Red
+                )
+                else -> Spacer(Modifier)
             }
 
             Row(
@@ -122,26 +121,33 @@ fun RegisterBox(
             )
             {
                 Button(
-                    modifier = Modifier,
+                    modifier = Modifier.padding(end = 16.dp),
                     onClick = {
-                        errorMessage = null;
-                        if (password != confirmPassword) {
-                            errorMessage = "Passwords do not match."
-                        } else {
-                            SupabaseClient.signUpWithSupabase(
-                                email = email,
-                                password = password,
-                                onSuccess = onRegister,
-                                onError = {
-                                    errorMessage = "Sign Up Failed."
-                                }
-                            )
-                        }
+                        onRegister(email, password)
                     },
                 ) {
                     Text("Register")
                 }
+                Button(
+                    modifier = Modifier,
+                    onClick = onNavigateToLogin,
+                ) {
+                    Text("Back")
+                }
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RegisterScreenPreview() {
+    CS446Theme {
+        RegisterBox(
+            onNavigateToLogin = { },
+            onRegister = { _, _ -> },
+            authState = AuthResult.Loading,
+            modifier = Modifier
+        )
     }
 }
