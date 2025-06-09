@@ -57,31 +57,3 @@ class LoginActivity : ComponentActivity() {
         }
     }
 }
-
-@Composable
-fun LoginNavigator(
-    onLoggedIn: () -> Unit = {},
-    viewModel: SecurityViewModel = SecurityViewModel()
-) {
-    val navController = rememberNavController()
-
-    NavHost(navController = navController,
-        startDestination = "login") {
-        composable("login") {
-            LoginScreen(
-                viewModel = viewModel,
-                onNavigateToRegister = { navController.navigate("register") },
-                onLoggedIn = onLoggedIn,
-                modifier = Modifier
-            )
-        }
-        composable("register") {
-            RegisterScreen(
-                viewModel = viewModel,
-                onNavigateToLogin = { navController.navigate("register") },
-                onRegistered = onLoggedIn, // automatically log in after registration
-                modifier = Modifier
-            )
-        }
-    }
-}

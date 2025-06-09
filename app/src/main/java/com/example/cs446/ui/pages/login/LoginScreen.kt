@@ -103,11 +103,7 @@ fun LoginBox(
                     text = "Error: ${authState.message}",
                     color = Color.Red
                 )
-                is AuthResult.Loading -> Spacer(Modifier)
-                else -> Text(
-                    text = "An unknown error has occurred.",
-                    color = Color.Red
-                )
+                else -> Spacer(Modifier)
             }
 
             Row (

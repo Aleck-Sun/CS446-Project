@@ -3,15 +3,16 @@ package com.example.cs446.data.repository
 import com.example.cs446.SupabaseClient
 import com.example.cs446.data.model.Pet
 import io.github.jan.supabase.postgrest.from
+import java.util.UUID
 
 class PetRepository {
     private val petsTable = SupabaseClient.supabase.from("pets")
 
-    suspend fun getPetsForUser(userId: Int): List<Pet> {
+    suspend fun getPetsForUser(userId: UUID): List<Pet> {
         return petsTable.select {
-            filter( {
-                eq("creator_id", 0)
-            })
+            filter {
+                eq("creator_id", userId)
+            }
         }.decodeList<Pet>()
     }
 

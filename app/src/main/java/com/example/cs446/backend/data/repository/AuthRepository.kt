@@ -23,7 +23,7 @@ class AuthRepository {
                     return AuthResult.RegisterError("Registration failed.")
                 }
 
-                return AuthResult.LoginSuccess
+                return AuthResult.RegisterSuccess
             }
         } catch (e: Exception) {
             return AuthResult.RegisterError("Registration failed.")

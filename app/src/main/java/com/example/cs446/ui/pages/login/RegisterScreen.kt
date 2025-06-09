@@ -64,7 +64,6 @@ fun RegisterBox(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -114,11 +113,7 @@ fun RegisterBox(
                     text = "Error: ${authState.message}",
                     color = Color.Red
                 )
-                is AuthResult.Loading -> Spacer(Modifier)
-                else -> Text(
-                    text = "An unknown error has occurred.",
-                    color = Color.Red
-                )
+                else -> Spacer(Modifier)
             }
 
             Row(
@@ -126,12 +121,18 @@ fun RegisterBox(
             )
             {
                 Button(
-                    modifier = Modifier,
+                    modifier = Modifier.padding(end = 16.dp),
                     onClick = {
                         onRegister(email, password)
                     },
                 ) {
                     Text("Register")
+                }
+                Button(
+                    modifier = Modifier,
+                    onClick = onNavigateToLogin,
+                ) {
+                    Text("Back")
                 }
             }
         }

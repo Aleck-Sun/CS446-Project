@@ -11,7 +11,7 @@ class UserRepository {
         usersTable.insert(
             mapOf(
                 "id" to userId,
-                "username" to userId,
+                "username" to email.split("@")[0],
                 "email" to email,
             )
         )
