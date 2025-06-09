@@ -44,14 +44,23 @@ class PetsActivity : ComponentActivity() {
 fun PetProfileScreen() {
     val context = LocalContext.current
 
-    val pets = listOf(
-        Pet(1, Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
-        Pet(2, Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
-        Pet(3, Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
-    )
+    var showAddPetDialog by remember { mutableStateOf(false) }
+    var showEditPetDialog by remember { mutableStateOf(false) }
+
+
+    // TODO: implement backend
+    var pets by remember {
+        mutableStateOf(
+            mutableListOf(
+                Pet(1, Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
+                Pet(2, Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
+                Pet(3, Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
+            )
+        )
+    }
 
     var selectedPetIndex by remember { mutableIntStateOf(0) }
-    val selectedPet = pets[selectedPetIndex]
+    val selectedPet = pets.getOrNull(selectedPetIndex)
 
     Scaffold(
         bottomBar = {
@@ -92,7 +101,9 @@ fun PetProfileScreen() {
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable { /* Add Pet */ }
+                    modifier = Modifier.clickable {
+                        showAddPetDialog = true
+                    }
                 ) {
                     Icon(Icons.Default.AddCircle, contentDescription = "Add Pet", modifier = Modifier.size(56.dp))
                     Text("Add Pet", fontSize = 14.sp)
@@ -106,35 +117,47 @@ fun PetProfileScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(selectedPet.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                if (selectedPet != null) {
+                    // Display pet info
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(selectedPet.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                    val birthdateString = selectedPet.birthdate.toString()
+                        val birthdateString = selectedPet.birthdate.toString()
 
-                    Row {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Breed", fontWeight = FontWeight.Medium)
-                            Text(selectedPet.breed ?: "Unknown")
+                        Row {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Breed", fontWeight = FontWeight.Medium)
+                                Text(selectedPet.breed ?: "Unknown")
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Date of Birth", fontWeight = FontWeight.Medium)
+                                Text(birthdateString)
+                            }
                         }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Date of Birth", fontWeight = FontWeight.Medium)
-                            Text(birthdateString)
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Row {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Sex", fontWeight = FontWeight.Medium)
+                                Text("Unknown")
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Weight", fontWeight = FontWeight.Medium)
+                                Text("${selectedPet.weight} lbs")
+                            }
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Row {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Sex", fontWeight = FontWeight.Medium)
-                            Text("Unknown")
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Weight", fontWeight = FontWeight.Medium)
-                            Text("${selectedPet.weight} lbs")
-                        }
+                    // Edit pet info
+                    Button(
+                        onClick = { showEditPetDialog = true },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Edit")
                     }
                 }
             }
@@ -176,4 +199,181 @@ fun PetProfileScreen() {
             }
         }
     }
+
+    if (showAddPetDialog) {
+        AddPetDialog(
+            onDismiss = { showAddPetDialog = false },
+            onAdd = { name, breed, weightStr ->
+                val newPet = Pet(
+                    id = pets.size + 1,
+                    createdAt = Instant.parse("2024-01-01T00:00:00Z"),
+                    name = name,
+                    species = 1,
+                    breed = breed,
+                    creatorId = UUID.randomUUID(),
+                    birthdate = Instant.parse("2024-01-01T00:00:00Z"),
+                    weight = weightStr.toDoubleOrNull() ?: 0.0
+                )
+                pets = pets.toMutableList().apply { add(newPet) }
+                selectedPetIndex = pets.lastIndex
+                showAddPetDialog = false
+            }
+        )
+    }
+
+    if (showEditPetDialog && selectedPet != null) {
+        EditPetDialog(
+            pet = selectedPet,
+            onDismiss = { showEditPetDialog = false },
+            onSave = { newName, newBreed, newWeightStr ->
+                val updatedList = pets.toMutableList()
+                val updatedPet = selectedPet.copy(
+                    name = newName,
+                    breed = newBreed,
+                    weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight
+                )
+                updatedList[selectedPetIndex] = updatedPet
+                pets = updatedList
+                showEditPetDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun AddPetDialog(
+    onDismiss: () -> Unit,
+    onAdd: (String, String, String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var breed by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                onAdd(name, breed, weight)
+            }) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = { Text("Add New Pet") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Pet Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = breed,
+                    onValueChange = { breed = it },
+                    label = { Text("Breed") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = weight,
+                    onValueChange = { weight = it },
+                    label = { Text("Weight (lbs)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun EditPetDialog(
+    pet: Pet,
+    onDismiss: () -> Unit,
+    onSave: (String, String, String) -> Unit
+) {
+    var name by remember { mutableStateOf(pet.name) }
+    var breed by remember { mutableStateOf(pet.breed ?: "") }
+    var weight by remember { mutableStateOf(pet.weight.toString()) }
+
+    var nameError by remember { mutableStateOf(false) }
+    var weightError by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = {
+                // Validation
+                nameError = name.isBlank()
+                weightError = weight.toDoubleOrNull() == null || weight.toDoubleOrNull()!! <= 0.0
+
+                if (!nameError && !weightError) {
+                    onSave(name, breed, weight)
+                }
+            }) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = { Text("Edit Pet") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        nameError = false
+                    },
+                    label = { Text("Pet Name") },
+                    isError = nameError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (nameError) {
+                    Text(
+                        "Name cannot be empty.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = breed,
+                    onValueChange = { breed = it },
+                    label = { Text("Breed") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = weight,
+                    onValueChange = {
+                        weight = it
+                        weightError = false
+                    },
+                    label = { Text("Weight (lbs)") },
+                    isError = weightError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (weightError) {
+                    Text(
+                        "Weight must be a positive number.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+        }
+    )
 }
