@@ -223,9 +223,8 @@ fun PetProfileScreen() {
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, breed, weightStr ->
-                val maxId = pets.maxOfOrNull { it.id } ?: 0
                 val newPet = Pet(
-                    id = maxId + 1,
+                    id = UUID.randomUUID().hashCode(),
                     createdAt = Instant.parse("2024-01-01T00:00:00Z"),
                     name = name,
                     species = 1,
