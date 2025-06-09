@@ -46,6 +46,7 @@ fun PetProfileScreen() {
 
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
+    var showRemovePetDialog by remember { mutableStateOf(false) }
 
 
     // TODO: implement backend
@@ -150,14 +151,32 @@ fun PetProfileScreen() {
                             }
                         }
                     }
-                    // Edit pet info
-                    Button(
-                        onClick = { showEditPetDialog = true },
-                        modifier = Modifier.align(Alignment.End)
+                    // Edit/Remove current pet
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Edit")
+                        Button(
+                            onClick = { showEditPetDialog = true }
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Edit")
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Button(
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                            onClick = { showRemovePetDialog = true }
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Remove")
+                        }
                     }
                 }
             }
@@ -204,8 +223,9 @@ fun PetProfileScreen() {
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, breed, weightStr ->
+                val maxId = pets.maxOfOrNull { it.id } ?: 0
                 val newPet = Pet(
-                    id = pets.size + 1,
+                    id = maxId + 1,
                     createdAt = Instant.parse("2024-01-01T00:00:00Z"),
                     name = name,
                     species = 1,
@@ -235,6 +255,29 @@ fun PetProfileScreen() {
                 updatedList[selectedPetIndex] = updatedPet
                 pets = updatedList
                 showEditPetDialog = false
+            }
+        )
+    }
+
+    if (showRemovePetDialog && selectedPet != null) {
+        RemovePetDialog(
+            petName = selectedPet.name,
+            onConfirm = {
+                val updatedList = pets.toMutableList()
+                updatedList.removeAt(selectedPetIndex)
+                pets = updatedList
+
+                // Select the next pet, if available
+                selectedPetIndex = when {
+                    updatedList.isEmpty() -> -1
+                    selectedPetIndex >= updatedList.size -> updatedList.lastIndex
+                    else -> selectedPetIndex
+                }
+
+                showRemovePetDialog = false
+            },
+            onDismiss = {
+                showRemovePetDialog = false
             }
         )
     }
@@ -373,6 +416,29 @@ fun EditPetDialog(
                         fontSize = 12.sp
                     )
                 }
+            }
+        }
+    )
+}
+
+@Composable
+fun RemovePetDialog(
+    petName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Remove Pet") },
+        text = { Text("Are you sure you want to remove $petName? This action cannot be undone.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Remove", color = Color.Red)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
     )
