@@ -53,9 +53,9 @@ fun PetProfileScreen() {
     var pets by remember {
         mutableStateOf(
             mutableListOf(
-                Pet(1, Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
-                Pet(2, Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
-                Pet(3, Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
+                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
+                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
+                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
             )
         )
     }
@@ -224,7 +224,7 @@ fun PetProfileScreen() {
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, breed, weightStr ->
                 val newPet = Pet(
-                    id = UUID.randomUUID().hashCode(),
+                    id = UUID.randomUUID(),
                     createdAt = Instant.parse("2024-01-01T00:00:00Z"),
                     name = name,
                     species = 1,
