@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.Instant
 import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 import com.example.cs446.data.model.Pet
 import com.example.cs446.ui.theme.CS446Theme
@@ -47,7 +50,6 @@ fun PetProfileScreen() {
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
     var showRemovePetDialog by remember { mutableStateOf(false) }
-
 
     // TODO: implement backend
     var pets by remember {
@@ -125,7 +127,7 @@ fun PetProfileScreen() {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        val birthdateString = selectedPet.birthdate.toString()
+                        val birthdateString = formatDate(selectedPet.birthdate)
 
                         Row {
                             Column(modifier = Modifier.weight(1f)) {
@@ -478,4 +480,11 @@ fun RemovePetDialog(
             }
         }
     )
+}
+
+fun formatDate(instant: Instant): String {
+    val formatter = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+    val millis = instant.toEpochMilliseconds()
+    val date = Date(millis)
+    return formatter.format(date)
 }
