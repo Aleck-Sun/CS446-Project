@@ -54,16 +54,16 @@ fun PetProfileScreen() {
     // TODO: implement backend
     var pets by remember {
         mutableStateOf(
-            mutableListOf(
-                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
-                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
-                Pet(UUID.randomUUID(), Instant.parse("2024-01-01T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
+            listOf(
+                Pet(UUID.randomUUID(), Instant.parse("2021-02-03T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
+                Pet(UUID.randomUUID(), Instant.parse("2024-11-06T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
+                Pet(UUID.randomUUID(), Instant.parse("2025-02-08T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
             )
         )
     }
 
-    var selectedPetIndex by remember { mutableIntStateOf(0) }
-    val selectedPet = pets.getOrNull(selectedPetIndex)
+    var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
+    val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
 
     Scaffold(
         bottomBar = {
@@ -88,20 +88,20 @@ fun PetProfileScreen() {
                     .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                pets.forEachIndexed { index, pet ->
+                pets.forEach { pet ->
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.clickable { selectedPetIndex = index }
+                        modifier = Modifier.clickable { selectedPetId = pet.id }
                     ) {
                         Icon(
                             Icons.Default.Face,
                             contentDescription = pet.name,
                             modifier = Modifier.size(56.dp),
-                            tint = if (index == selectedPetIndex) MaterialTheme.colorScheme.primary else Color.Gray
+                            tint = if (pet.id == selectedPetId) MaterialTheme.colorScheme.primary else Color.Gray
                         )
                         Text(pet.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     }
                 }
+
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.clickable {
@@ -191,7 +191,7 @@ fun PetProfileScreen() {
                     onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Icon(Icons.Default.List, contentDescription = null)
+                    Icon(Icons.Default.Menu, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logs")
                 }
@@ -236,7 +236,7 @@ fun PetProfileScreen() {
                     weight = weightStr.toDoubleOrNull() ?: 0.0
                 )
                 pets = pets.toMutableList().apply { add(newPet) }
-                selectedPetIndex = pets.lastIndex
+                selectedPetId = newPet.id
                 showAddPetDialog = false
             }
         )
@@ -253,8 +253,11 @@ fun PetProfileScreen() {
                     breed = newBreed,
                     weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight
                 )
-                updatedList[selectedPetIndex] = updatedPet
-                pets = updatedList
+                val index = updatedList.indexOfFirst { it.id == selectedPetId }
+                if (index != -1) {
+                    updatedList[index] = updatedPet
+                    pets = updatedList
+                }
                 showEditPetDialog = false
             }
         )
@@ -264,18 +267,19 @@ fun PetProfileScreen() {
         RemovePetDialog(
             petName = selectedPet.name,
             onConfirm = {
-                val updatedList = pets.toMutableList()
-                updatedList.removeAt(selectedPetIndex)
-                pets = updatedList
+                val removeIndex = pets.indexOfFirst { it.id == selectedPetId }
+                if (removeIndex != -1) {
+                    val updatedList = pets.toMutableList()
+                    updatedList.removeAt(removeIndex)
+                    pets = updatedList
 
-                // Select the next pet, if available
-                selectedPetIndex = when {
-                    updatedList.isEmpty() -> -1
-                    selectedPetIndex >= updatedList.size -> updatedList.lastIndex
-                    else -> selectedPetIndex
+                    selectedPetId = when {
+                        updatedList.isEmpty() -> null
+                        removeIndex >= updatedList.size -> updatedList.last().id
+                        else -> updatedList[removeIndex].id
+                    }
+                    showRemovePetDialog = false
                 }
-
-                showRemovePetDialog = false
             },
             onDismiss = {
                 showRemovePetDialog = false
