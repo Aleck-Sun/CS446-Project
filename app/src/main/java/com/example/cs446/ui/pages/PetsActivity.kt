@@ -144,7 +144,7 @@ fun PetProfileScreen() {
             // Logs button
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { /* TODO: handle logs button click */ },
+                    onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.List, contentDescription = null)
@@ -167,7 +167,7 @@ fun PetProfileScreen() {
 
             // Family button
             Button(
-                onClick = { /* TODO: handle family button click */ },
+                onClick = { context.startActivity(Intent(context, FamilyActivity::class.java)) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
