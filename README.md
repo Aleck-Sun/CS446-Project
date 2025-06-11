@@ -8,4 +8,4 @@
 | 2025-06-08 | Refactor Backend                                | 4.5            |                |               |                 | 0.5           |                |
 | 2025-06-08 | Setup page navigation, add layout for Pets page |                |                |               | 4.5             |               |                |
 | 2025-06-09 | PR fixes, refactor Main navigation              |                |                |               | 2               |               |                |
-| 2025-06-11 | Refactor Main navigation                        |                |                |               | x               |               |                |
+| 2025-06-11 | Refactor Main navigation and main screen files  |                |                |               | 2               |               |                |
