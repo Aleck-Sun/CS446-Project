@@ -13,13 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            var currentScreen by remember { mutableStateOf(MainActivityDestination.Pets) }
-
-            MainNavigator(
-                onNavigate = { destination ->
-                    currentScreen = destination
-                }
-            )
+            MainNavigator()
         }
     }
 }

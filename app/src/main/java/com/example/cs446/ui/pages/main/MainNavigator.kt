@@ -17,9 +17,7 @@ import com.example.cs446.ui.pages.main.feed.FeedScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
 
 @Composable
-fun MainNavigator(
-    onNavigate: (MainActivityDestination) -> Unit
-) {
+fun MainNavigator() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
@@ -27,20 +25,24 @@ fun MainNavigator(
         MainActivityDestination.entries.find { it.name.equals(route, ignoreCase = true) }
     } ?: MainActivityDestination.Pets
 
+    val navigateTo: (MainActivityDestination) -> Unit = { destination ->
+        if (destination != currentDestination) {
+            navController.navigate(destination.name.lowercase()) {
+                popUpTo(navController.graph.startDestinationId) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(currentDestination = currentDestination) { destination ->
-                if (destination != currentDestination) {
-                    navController.navigate(destination.name.lowercase()) {
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                    onNavigate(destination)
-                }
-            }
+            BottomNavigationBar(
+                currentDestination = currentDestination,
+                onNavigate = navigateTo
+            )
         }
     ) { innerPadding ->
         NavHost(
@@ -49,19 +51,19 @@ fun MainNavigator(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
-                PetsScreen(onNavigate = onNavigate)
+                PetsScreen(onNavigate = navigateTo)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = onNavigate)
+                FeedScreen(onNavigate = navigateTo)
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
-                ProfileScreen(onNavigate = onNavigate)
+                ProfileScreen(onNavigate = navigateTo)
             }
             composable(MainActivityDestination.Logs.name.lowercase()) {
-                LogsScreen(onNavigate = onNavigate)
+                LogsScreen(onNavigate = navigateTo)
             }
             composable(MainActivityDestination.Family.name.lowercase()) {
-                FamilyScreen(onNavigate = onNavigate)
+                FamilyScreen(onNavigate = navigateTo)
             }
         }
     }
