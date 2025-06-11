@@ -8,6 +8,7 @@ import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.serializer.MoshiSerializer
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.storage.Storage
 
 const val supabaseUrl = BuildConfig.SUPABASE_URL
 const val supabaseKey = BuildConfig.SUPABASE_KEY
@@ -19,7 +20,7 @@ object SupabaseClient {
     ) {
         install(Auth)
         install(Postgrest)
-        //install(Storage)
+        install(Storage)
 
         val moshi = Moshi.Builder()
             .add(UUIDAdapter())

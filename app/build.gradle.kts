@@ -80,6 +80,7 @@ dependencies {
 
     // Supabase dependencies
     implementation(libs.postgrest.kt)
+    implementation(libs.storage.kt)
 
     // Coil
     implementation(libs.coil.compose)

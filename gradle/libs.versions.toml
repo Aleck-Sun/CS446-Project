@@ -17,6 +17,7 @@ moshi = "1.15.2"
 moshiKotlin = "1.15.2"
 postgrestKt = "3.1.4"
 serializerMoshi = "3.1.4"
+storageKt = "3.1.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -42,6 +43,7 @@ moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "postgrestKt" }
 serializer-moshi = { module = "io.github.jan-tennert.supabase:serializer-moshi", version.ref = "serializerMoshi" }
+storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "storageKt" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.0" }
 
 [plugins]
