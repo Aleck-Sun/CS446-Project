@@ -103,5 +103,7 @@ fun SocialMediaPostScreen() {
 @Preview(showBackground = true)
 @Composable
 fun SocialMediaPostScreenPreview() {
-    SocialMediaPostScreen()
+    CS446Theme {
+        SocialMediaPostScreen()
+    }
 }
