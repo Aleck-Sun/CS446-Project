@@ -1,31 +1,32 @@
 package com.example.cs446.ui.components
 
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
+import com.example.cs446.ui.pages.main.MainActivityDestination
 
 @Composable
-fun BottomNavigation(currentScreen: String, onTabSelected: (String) -> Unit) {
+fun BottomNavigationBar(
+    currentDestination: MainActivityDestination?,
+    onNavigate: (MainActivityDestination) -> Unit
+) {
     NavigationBar {
         NavigationBarItem(
-            selected = currentScreen == "pets",
-            onClick = { onTabSelected("pets") },
+            selected = currentDestination == MainActivityDestination.Pets,
+            onClick = { onNavigate(MainActivityDestination.Pets) },
             icon = { Icon(Icons.Default.Face, contentDescription = "Pets") },
             label = { Text("Pets") }
         )
         NavigationBarItem(
-            selected = currentScreen == "feed",
-            onClick = { onTabSelected("feed") },
+            selected = currentDestination == MainActivityDestination.Feed,
+            onClick = { onNavigate(MainActivityDestination.Feed) },
             icon = { Icon(Icons.Default.Home, contentDescription = "Feed") },
             label = { Text("Feed") }
         )
         NavigationBarItem(
-            selected = currentScreen == "profile",
-            onClick = { onTabSelected("profile") },
+            selected = currentDestination == MainActivityDestination.Profile,
+            onClick = { onNavigate(MainActivityDestination.Profile) },
             icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
             label = { Text("Profile") }
         )

@@ -1,10 +1,5 @@
-package com.example.cs446.ui.pages
+package com.example.cs446.ui.pages.main.pets
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -27,24 +22,12 @@ import java.util.Date
 import java.util.Locale
 
 import com.example.cs446.data.model.Pet
-import com.example.cs446.ui.theme.CS446Theme
-import com.example.cs446.ui.components.BottomNavigation
-
-class PetsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        setContent {
-            CS446Theme {
-                PetProfileScreen()
-            }
-        }
-    }
-}
+import com.example.cs446.ui.pages.main.MainActivityDestination
 
 @Composable
-fun PetProfileScreen() {
+fun PetsScreen(
+    onNavigate: (MainActivityDestination) -> Unit
+) {
     val context = LocalContext.current
 
     var showAddPetDialog by remember { mutableStateOf(false) }
@@ -65,16 +48,7 @@ fun PetProfileScreen() {
     var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
 
-    Scaffold(
-        bottomBar = {
-            BottomNavigation(currentScreen = "pets") { screen ->
-                when (screen) {
-                    "feed" -> context.startActivity(Intent(context, FeedActivity::class.java))
-                    "profile" -> context.startActivity(Intent(context, ProfileActivity::class.java))
-                }
-            }
-        }
-    ) { innerPadding ->
+    Scaffold() { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -189,7 +163,7 @@ fun PetProfileScreen() {
             // Logs button
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { context.startActivity(Intent(context, LogsActivity::class.java)) },
+                    onClick = { onNavigate(MainActivityDestination.Logs) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Menu, contentDescription = null)
@@ -212,7 +186,7 @@ fun PetProfileScreen() {
 
             // Family button
             Button(
-                onClick = { context.startActivity(Intent(context, FamilyActivity::class.java)) },
+                onClick = { onNavigate(MainActivityDestination.Family) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
