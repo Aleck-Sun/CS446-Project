@@ -26,7 +26,62 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.pages.MainActivity"
+            android:name=".ui.pages.main.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CS446">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.pages.main.pets.PetsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CS446">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.pages.main.FeedActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CS446">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.pages.main.ProfileActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CS446">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.pages.main.LogsActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.CS446">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.pages.main.pets.FamilyActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.CS446">

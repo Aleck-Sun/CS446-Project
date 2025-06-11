@@ -1,4 +1,4 @@
-package com.example.cs446.components
+package com.example.cs446.ui.components
 
 import android.app.DatePickerDialog
 import android.os.Build
