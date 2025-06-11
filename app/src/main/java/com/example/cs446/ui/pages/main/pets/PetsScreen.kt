@@ -38,9 +38,35 @@ fun PetsScreen(
     var pets by remember {
         mutableStateOf(
             listOf(
-                Pet(UUID.randomUUID(), Instant.parse("2021-02-03T00:00:00Z"), "Charlie", 1, "Golden Retriever", UUID.randomUUID(), Instant.parse("2025-05-28T00:00:00Z"), 65.0),
-                Pet(UUID.randomUUID(), Instant.parse("2024-11-06T00:00:00Z"), "Colin", 1, "Beagle", UUID.randomUUID(), Instant.parse("2024-01-15T00:00:00Z"), 40.0),
-                Pet(UUID.randomUUID(), Instant.parse("2025-02-08T00:00:00Z"), "Robin", 1, "Poodle", UUID.randomUUID(), Instant.parse("2023-11-02T00:00:00Z"), 30.0)
+                Pet(
+                    UUID.randomUUID(),
+                    Instant.parse("2021-02-03T00:00:00Z"),
+                    "Charlie",
+                    1, "Golden Retriever",
+                    UUID.randomUUID(),
+                    Instant.parse("2025-05-28T00:00:00Z"),
+                    65.0
+                ),
+                Pet(
+                    UUID.randomUUID(),
+                    Instant.parse("2024-11-06T00:00:00Z"),
+                    "Colin",
+                    1,
+                    "Beagle",
+                    UUID.randomUUID(),
+                    Instant.parse("2024-01-15T00:00:00Z"),
+                    40.0
+                ),
+                Pet(
+                    UUID.randomUUID(),
+                    Instant.parse("2025-02-08T00:00:00Z"),
+                    "Robin",
+                    1,
+                    "Poodle",
+                    UUID.randomUUID(),
+                    Instant.parse("2023-11-02T00:00:00Z"),
+                    30.0
+                )
             )
         )
     }
@@ -261,204 +287,6 @@ fun PetsScreen(
             }
         )
     }
-}
-
-@Composable
-fun AddPetDialog(
-    onDismiss: () -> Unit,
-    onAdd: (String, String, String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
-    var weight by remember { mutableStateOf("") }
-
-    var nameError by remember { mutableStateOf(false) }
-    var weightError by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                // Validation logic
-                nameError = name.isBlank()
-                val weightValue = weight.toDoubleOrNull()
-                weightError = weightValue == null || weightValue <= 0.0
-
-                if (!nameError && !weightError) {
-                    onAdd(name, breed, weight)
-                }
-            }) {
-                Text("Add")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        title = { Text("Add New Pet") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = {
-                        name = it
-                        nameError = false
-                    },
-                    label = { Text("Pet Name") },
-                    isError = nameError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (nameError) {
-                    Text(
-                        "Name cannot be empty.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = breed,
-                    onValueChange = { breed = it },
-                    label = { Text("Breed") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = weight,
-                    onValueChange = {
-                        weight = it
-                        weightError = false
-                    },
-                    label = { Text("Weight (lbs)") },
-                    isError = weightError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (weightError) {
-                    Text(
-                        "Weight must be a positive number.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-    )
-}
-
-
-@Composable
-fun EditPetDialog(
-    pet: Pet,
-    onDismiss: () -> Unit,
-    onSave: (String, String, String) -> Unit
-) {
-    var name by remember { mutableStateOf(pet.name) }
-    var breed by remember { mutableStateOf(pet.breed ?: "") }
-    var weight by remember { mutableStateOf(pet.weight.toString()) }
-
-    var nameError by remember { mutableStateOf(false) }
-    var weightError by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = {
-                // Validation
-                nameError = name.isBlank()
-                weightError = weight.toDoubleOrNull() == null || weight.toDoubleOrNull()!! <= 0.0
-
-                if (!nameError && !weightError) {
-                    onSave(name, breed, weight)
-                }
-            }) {
-                Text("Save")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
-        title = { Text("Edit Pet") },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = {
-                        name = it
-                        nameError = false
-                    },
-                    label = { Text("Pet Name") },
-                    isError = nameError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (nameError) {
-                    Text(
-                        "Name cannot be empty.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = breed,
-                    onValueChange = { breed = it },
-                    label = { Text("Breed") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = weight,
-                    onValueChange = {
-                        weight = it
-                        weightError = false
-                    },
-                    label = { Text("Weight (lbs)") },
-                    isError = weightError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (weightError) {
-                    Text(
-                        "Weight must be a positive number.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-        }
-    )
-}
-
-@Composable
-fun RemovePetDialog(
-    petName: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Remove Pet") },
-        text = { Text("Are you sure you want to remove $petName? This action cannot be undone.") },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text("Remove", color = Color.Red)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 fun formatDate(instant: Instant): String {
