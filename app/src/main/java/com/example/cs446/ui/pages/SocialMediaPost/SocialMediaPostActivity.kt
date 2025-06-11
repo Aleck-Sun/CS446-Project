@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.data.model.Pet
+import com.example.cs446.ui.theme.CS446Theme
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 
@@ -37,7 +38,9 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch{
 
             setContent {
-                SocialMediaPostScreen()
+                CS446Theme {
+                    SocialMediaPostScreen()
+                }
             }
         }
     }
