@@ -16,14 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,17 +45,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.data.model.Pet
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDate
+import java.time.ZoneOffset
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditPetDialog(
     pet: Pet,
     onDismiss: () -> Unit,
-    onSave: (String, String, String, Uri?) -> Unit
+    onSave: (String, String, String, Instant, Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf(pet.name) }
     var breed by remember { mutableStateOf(pet.breed ?: "") }
     var weight by remember { mutableStateOf(pet.weight.toString()) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var birthdate by remember { 
+        mutableStateOf(
+            LocalDate.ofEpochDay(pet.birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
+        )
+    }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
@@ -61,6 +79,36 @@ fun EditPetDialog(
         selectedImageUri = uri
     }
 
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis <= System.currentTimeMillis()
+                }
+            }
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        birthdate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
@@ -70,7 +118,10 @@ fun EditPetDialog(
                 weightError = weight.toDoubleOrNull() == null || weight.toDoubleOrNull()!! <= 0.0
 
                 if (!nameError && !weightError) {
-                    onSave(name, breed, weight, selectedImageUri)
+                    val birthdateInstant = Instant.fromEpochMilliseconds(
+                        birthdate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+                    )
+                    onSave(name, breed, weight, birthdateInstant, selectedImageUri)
                 }
             }) {
                 Text("Save")
@@ -100,12 +151,19 @@ fun EditPetDialog(
                             .padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Show selected image if available, otherwise show current pet image or placeholder
-                        val imageToShow = selectedImageUri ?: pet.imageUrl
-                        if (imageToShow != null) {
+                        if (selectedImageUri != null) {
                             Image(
-                                painter = rememberAsyncImagePainter(imageToShow),
-                                contentDescription = "Pet image",
+                                painter = rememberAsyncImagePainter(selectedImageUri),
+                                contentDescription = "Selected pet image",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else if (pet.imageUrl != null) {
+                            Image(
+                                painter = rememberAsyncImagePainter(pet.imageUrl),
+                                contentDescription = "Current pet image",
                                 modifier = Modifier
                                     .size(100.dp)
                                     .clip(RoundedCornerShape(8.dp)),
@@ -155,6 +213,26 @@ fun EditPetDialog(
                     onValueChange = { breed = it },
                     label = { Text("Breed") },
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = birthdate.toString(),
+                    onValueChange = { },
+                    label = { Text("Date of Birth") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    enabled = true,
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Select date",
+                            modifier = Modifier.clickable { showDatePicker = true }
+                        )
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
