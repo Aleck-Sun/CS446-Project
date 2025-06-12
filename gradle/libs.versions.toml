@@ -17,6 +17,7 @@ moshi = "1.15.2"
 moshiKotlin = "1.15.2"
 postgrestKt = "3.1.4"
 serializerMoshi = "3.1.4"
+lifecycle = "2.7.0"
 storageKt = "3.1.4"
 
 [libraries]
@@ -45,6 +46,7 @@ postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version
 serializer-moshi = { module = "io.github.jan-tennert.supabase:serializer-moshi", version.ref = "serializerMoshi" }
 storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "storageKt" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.0" }
+lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
