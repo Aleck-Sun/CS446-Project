@@ -41,10 +41,12 @@ fun PetsScreen(
     val coroutineScope = rememberCoroutineScope()
     val imageRepository = remember { ImageRepository() }
     val petRepository = remember { PetRepository() }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
     var showRemovePetDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // TODO: implement backend
     var pets by remember {
@@ -86,7 +88,16 @@ fun PetsScreen(
     var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
 
-    Scaffold() { innerPadding ->
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            errorMessage = null
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -265,6 +276,7 @@ fun PetsScreen(
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, breed, weightStr, imageUri ->
+                // TODO: get pet UUID from database insert rather than defining it on the client side
                 val petId = UUID.randomUUID()
                 val newPet = Pet(
                     id = petId,
@@ -298,6 +310,7 @@ fun PetsScreen(
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
+                            errorMessage = "Failed to upload pet image. Please try again."
                         }
                     }
                 }
@@ -341,6 +354,7 @@ fun PetsScreen(
                             }
                         } catch (e: Exception) {
                             e.printStackTrace()
+                            errorMessage = "Failed to update pet image. Please try again."
                         }
                     }
                 }
