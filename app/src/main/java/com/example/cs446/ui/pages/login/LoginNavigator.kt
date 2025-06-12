@@ -17,22 +17,22 @@ fun LoginNavigator(
     NavHost(navController = navController,
         startDestination = LoginActivityDestination.Login.name.lowercase()) {
         composable(LoginActivityDestination.Register.name.lowercase()) {
-            LoginScreen(
-                viewModel = viewModel,
-                onNavigateToRegister = {
-                    navController.navigate(LoginActivityDestination.Register.name.lowercase())
-               },
-                onLoggedIn = onLoggedIn,
-                modifier = Modifier
-            )
-        }
-        composable(LoginActivityDestination.Login.name.lowercase()) {
             RegisterScreen(
                 viewModel = viewModel,
                 onNavigateToLogin = {
                     navController.navigate(LoginActivityDestination.Login.name.lowercase())
                 },
-                onRegistered = onLoggedIn, // automatically log in after registration
+                onRegistered = onLoggedIn,
+                modifier = Modifier
+            )
+        }
+        composable(LoginActivityDestination.Login.name.lowercase()) {
+            LoginScreen(
+                viewModel = viewModel,
+                onNavigateToRegister = {
+                    navController.navigate(LoginActivityDestination.Register.name.lowercase())
+                },
+                onLoggedIn = onLoggedIn,
                 modifier = Modifier
             )
         }
