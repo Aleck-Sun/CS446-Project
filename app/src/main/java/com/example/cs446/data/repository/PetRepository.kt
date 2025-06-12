@@ -1,6 +1,6 @@
 package com.example.cs446.data.repository
 
-import com.example.cs446.SupabaseClient
+import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.data.model.Pet
 import io.github.jan.supabase.postgrest.from
 import java.util.UUID

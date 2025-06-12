@@ -1,6 +1,5 @@
 package com.example.cs446.backend.data.repository
 
-import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.SupabaseClient.supabase
 import com.example.cs446.backend.data.result.AuthResult
 import io.github.jan.supabase.auth.auth

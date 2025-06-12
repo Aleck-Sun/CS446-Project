@@ -2,7 +2,7 @@ package com.example.cs446.data.repository
 
 import android.content.Context
 import android.net.Uri
-import com.example.cs446.SupabaseClient
+import com.example.cs446.backend.SupabaseClient
 import io.github.jan.supabase.storage.storage
 import java.util.UUID
 
