@@ -11,5 +11,6 @@ data class Pet(
     val breed: String?,
     @Json(name = "creator_id") val creatorId: UUID,
     val birthdate: Instant,
-    val weight: Double
+    val weight: Double,
+    @Json(name = "image_url") val imageUrl: String? = null
 )

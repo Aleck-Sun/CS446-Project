@@ -19,4 +19,14 @@ class PetRepository {
     suspend fun addPet(pet: Pet) {
         petsTable.insert(pet)
     }
+    
+    suspend fun updatePetImage(petId: UUID, imageUrl: String) {
+        petsTable.update({
+            set("image_url", imageUrl)
+        }) {
+            filter {
+                eq("id", petId)
+            }
+        }
+    }
 }
