@@ -16,14 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.SelectableDates
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,16 +44,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDate
+import java.time.ZoneOffset
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPetDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String, String, Uri?) -> Unit
+    onAdd: (String, String, String, Instant, Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var breed by remember { mutableStateOf("") }
     var weight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var birthdate by remember { mutableStateOf(LocalDate.now()) }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
@@ -57,6 +71,36 @@ fun AddPetDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedImageUri = uri
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    return utcTimeMillis <= System.currentTimeMillis()
+                }
+            }
+        )
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        birthdate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 
     AlertDialog(
@@ -69,7 +113,10 @@ fun AddPetDialog(
                 weightError = weightValue == null || weightValue <= 0.0
 
                 if (!nameError && !weightError) {
-                    onAdd(name, breed, weight, selectedImageUri)
+                    val birthdateInstant = Instant.fromEpochMilliseconds(
+                        birthdate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+                    )
+                    onAdd(name, breed, weight, birthdateInstant, selectedImageUri)
                 }
             }) {
                 Text("Add")
@@ -152,6 +199,26 @@ fun AddPetDialog(
                     onValueChange = { breed = it },
                     label = { Text("Breed") },
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = birthdate.toString(),
+                    onValueChange = { },
+                    label = { Text("Date of Birth") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    enabled = true,
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Select date",
+                            modifier = Modifier.clickable { showDatePicker = true }
+                        )
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
