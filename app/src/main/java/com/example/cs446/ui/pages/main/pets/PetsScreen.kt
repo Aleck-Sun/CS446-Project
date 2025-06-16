@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.pets
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +59,9 @@ import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.formatDate
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
+import java.time.LocalDate
+import java.time.LocalDate.ofEpochDay
+import java.time.Period
 import java.util.UUID
 
 @Composable
@@ -119,6 +123,18 @@ fun PetsScreen(
         errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             errorMessage = null
+        }
+    }
+
+    @SuppressLint("NewApi") // TODO this gets rid of the compiler errors idk why
+    fun calculateAge(birthdate: Instant): String {
+        val birthLocalDate = ofEpochDay(birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
+        val today = LocalDate.now()
+        val period = Period.between(birthLocalDate, today)
+        return when {
+            period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
+            period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
+            else -> "${period.days} day${if (period.days > 1) "s" else ""}"
         }
     }
 
@@ -214,7 +230,7 @@ fun PetsScreen(
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Date of Birth", fontWeight = FontWeight.Medium)
-                                Text(birthdateString)
+                                Text("${formatDate(selectedPet.birthdate)} (${calculateAge(selectedPet.birthdate)} old)")
                             }
                         }
 
@@ -302,7 +318,7 @@ fun PetsScreen(
     if (showAddPetDialog) {
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
-            onAdd = { name, breed, weightStr, imageUri ->
+            onAdd = { name, breed, weightStr, birthdate, imageUri ->
                 // TODO: get pet UUID from database insert rather than defining it on the client side
                 val petId = UUID.randomUUID()
                 val newPet = Pet(
@@ -312,7 +328,7 @@ fun PetsScreen(
                     species = 1,
                     breed = breed,
                     creatorId = UUID.randomUUID(),
-                    birthdate = Instant.parse("2024-01-01T00:00:00Z"),
+                    birthdate = birthdate,
                     weight = weightStr.toDoubleOrNull() ?: 0.0,
                     imageUrl = null
                 )
@@ -351,12 +367,13 @@ fun PetsScreen(
         EditPetDialog(
             pet = selectedPet,
             onDismiss = { showEditPetDialog = false },
-            onSave = { newName, newBreed, newWeightStr, imageUri ->
+            onSave = { newName, newBreed, newWeightStr, newBirthdate, imageUri ->
                 val updatedList = pets.toMutableList()
                 val updatedPet = selectedPet.copy(
                     name = newName,
                     breed = newBreed,
-                    weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight
+                    weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight,
+                    birthdate = newBirthdate
                 )
                 val index = updatedList.indexOfFirst { it.id == selectedPetId }
                 if (index != -1) {
