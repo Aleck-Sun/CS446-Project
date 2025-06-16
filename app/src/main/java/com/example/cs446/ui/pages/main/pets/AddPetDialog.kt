@@ -40,15 +40,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
-import java.time.LocalDate
-import java.time.ZoneOffset
+import kotlinx.datetime.atStartOfDayIn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,12 +61,11 @@ fun AddPetDialog(
     var weight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var birthdate by remember { mutableStateOf(LocalDate.now()) }
+    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -86,7 +85,8 @@ fun AddPetDialog(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        birthdate = LocalDate.ofEpochDay(millis / (24 * 60 * 60 * 1000))
+                        val instant = Instant.fromEpochMilliseconds(millis)
+                        birthdate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
                     }
                     showDatePicker = false
                 }) {
@@ -113,9 +113,7 @@ fun AddPetDialog(
                 weightError = weightValue == null || weightValue <= 0.0
 
                 if (!nameError && !weightError) {
-                    val birthdateInstant = Instant.fromEpochMilliseconds(
-                        birthdate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-                    )
+                    val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
                     onAdd(name, breed, weight, birthdateInstant, selectedImageUri)
                 }
             }) {
