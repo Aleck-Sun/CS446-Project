@@ -13,7 +13,7 @@ import com.example.cs446.ui.pages.main.MainActivityDestination
 @Composable
 fun FeedScreen(
     modifier: Modifier = Modifier,
-    onNavigate: (MainActivityDestination) -> Unit
+    onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
