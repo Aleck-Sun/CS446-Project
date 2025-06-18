@@ -12,3 +12,4 @@
 | 2025-06-11 | Add image uploader                              |                |                |               |                 |               | ???            |
 | 2025-06-12 | Clean up imports and code organization          | 0.5            |                |               |                 |               |                |
 | 2025-06-12 | Setup Permissions Page                          |                |                | 5.5           |                 |               |                |
+| 2025-06-17 | PR fixes                                        |                |                | 0.5           |                 |               |                |
