@@ -327,7 +327,7 @@ fun PetsScreen(
                     name = name,
                     species = 1,
                     breed = breed,
-                    creatorId = UUID.randomUUID(),
+                    createdBy = UUID.randomUUID(),
                     birthdate = birthdate,
                     weight = weightStr.toDoubleOrNull() ?: 0.0,
                     imageUrl = null

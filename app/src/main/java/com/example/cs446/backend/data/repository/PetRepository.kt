@@ -1,19 +1,53 @@
 package com.example.cs446.backend.data.repository
 
 import com.example.cs446.backend.SupabaseClient
+import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.model.UserPetRelation
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import java.util.UUID
 
 class PetRepository {
     private val petsTable = SupabaseClient.supabase.from("pets")
+    private val relationsTable = SupabaseClient.supabase.from("user-pet-relations")
 
-    suspend fun getPetsForUser(userId: UUID): List<Pet> {
+    suspend fun getPetsCreatedByUser(userId: UUID): List<Pet> {
         return petsTable.select {
             filter {
                 eq("creator_id", userId)
             }
         }.decodeList<Pet>()
+    }
+
+    suspend fun getPetsByPostPermission(): List<Pet> {
+        val currentUser = SupabaseClient.supabase.auth.currentUserOrNull()?.id
+        val validPetIds = relationsTable
+            .select()
+            .decodeList<UserPetRelationRaw>()
+            .filter {
+                it.userId.toString() == currentUser
+            }
+            .map {
+                UserPetRelation(
+                    userId = it.userId,
+                    petId = it.petId,
+                    relation = it.relation,
+                    permissions = parsePermissions(it.permissions)
+                )
+            }
+            .filter {
+                it.permissions.makePosts
+            }
+            .map { it.petId }
+
+        val pets = petsTable
+            .select()
+            .decodeList<Pet>()
+            .filter{
+                validPetIds.contains(it.id)
+            }
+        return pets
     }
 
     suspend fun addPet(pet: Pet) {

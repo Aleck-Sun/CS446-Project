@@ -3,7 +3,10 @@ package com.example.cs446.view.social
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.Comment
+import com.example.cs446.backend.data.model.Permissions
+import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.PostRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,13 +19,24 @@ class FeedViewModel : ViewModel() {
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts
 
+    private val _pets = MutableStateFlow<List<Pet>>(emptyList())
+    val pets: StateFlow<List<Pet>> = _pets
+
     private val postRepository = PostRepository()
+    private val petRepository = PetRepository()
 
     private var isLoading = false
     private var currentPage = 0
 
     init {
         loadMorePosts()
+        getPetsWithPostPermissions()
+    }
+
+    fun getPetsWithPostPermissions() {
+        viewModelScope.launch {
+            _pets.value = petRepository.getPetsByPostPermission()
+        }
     }
 
     fun loadMorePosts() {

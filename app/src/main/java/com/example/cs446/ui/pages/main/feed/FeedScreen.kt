@@ -1,3 +1,4 @@
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Comment
+import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.Post
 import com.example.cs446.ui.components.feed.CommentText
 import com.example.cs446.ui.components.feed.FollowButton
@@ -61,7 +63,9 @@ fun FeedScreen(
     viewModel: FeedViewModel,
     modifier: Modifier = Modifier,
 ) {
+    viewModel.getPetsWithPostPermissions()
     val posts by viewModel.posts.collectAsState()
+    val pets by viewModel.pets.collectAsState()
 
     fun onLoadMorePosts() {
         viewModel.loadMorePosts()
@@ -75,12 +79,13 @@ fun FeedScreen(
     fun onShare(postId: UUID) {
         // TODO
     }
-    fun onCreatePost() {
+    fun onCreatePost(text: String, imagrUris: List<Uri>) {
 
     }
 
     FeedContent(
         posts,
+        pets,
         ::onLoadMorePosts,
         ::onLike,
         ::onComment,
@@ -92,11 +97,12 @@ fun FeedScreen(
 @Composable
 fun FeedContent(
     posts: List<Post>,
+    pets: List<Pet> = emptyList(),
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
     onComment: (UUID) -> Unit = {},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: () -> Unit = {}
+    onCreatePost: (String, List<Uri>) -> Unit = {_, _ ->}
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
     CS446Theme {
@@ -121,6 +127,7 @@ fun FeedContent(
             }
             if (showAddPostDialog) {
                 CreatePostDialog(
+                    pets = pets,
                     onPost = onCreatePost,
                     onDismiss = { showAddPostDialog = false }
                 )
