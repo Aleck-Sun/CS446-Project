@@ -1,0 +1,128 @@
+package com.example.cs446.ui.pages.SocialMediaProfile
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import com.example.cs446.ui.theme.CS446Theme
+import com.example.cs446.R
+import kotlinx.coroutines.launch
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        lifecycleScope.launch{
+            setContent {
+                CS446Theme{
+                    SocialMediaProfile()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SocialMediaProfile() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Image(
+                painter = painterResource(id = R.drawable.profile_pic),
+                contentDescription = "Profile Picture",
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color.Gray, CircleShape)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text("Username", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                Text("Bio goes here", fontSize = 14.sp, color = Color.Gray)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ProfileStat("Posts", "120")
+            ProfileStat("Followers", "2.5K")
+            ProfileStat("Following", "300")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { /* follow/edit profile */ },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Follow")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Posts", fontWeight = FontWeight.Bold)
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(20) { index ->
+                Image(
+                    painter = painterResource(id = R.drawable.sample_post),
+                    contentDescription = "Post $index",
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ProfileStat(label: String, count: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(count, fontWeight = FontWeight.Bold)
+        Text(label, color = Color.Gray)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SocialMediaPostScreenPreview() {
+    CS446Theme{
+        SocialMediaProfile()
+    }
+}
