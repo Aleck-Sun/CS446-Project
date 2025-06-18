@@ -1,6 +1,8 @@
 package com.example.cs446.ui.pages.main
 
 import FeedScreen
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -17,6 +19,7 @@ import com.example.cs446.ui.pages.main.pets.LogsScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
 import com.example.cs446.view.social.FeedViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
     feedViewModel: FeedViewModel
@@ -25,12 +28,19 @@ fun MainNavigator(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     val currentDestination = navBackStackEntry?.destination?.route?.let { route ->
-        MainActivityDestination.entries.find { it.name.equals(route, ignoreCase = true) }
+        // Handle routes with parameters
+        val baseRoute = route.split("/")[0]
+        MainActivityDestination.entries.find { it.name.equals(baseRoute, ignoreCase = true) }
     } ?: MainActivityDestination.Pets
 
-    val navigateTo: (MainActivityDestination) -> Unit = { destination ->
+    val navigateTo: (MainActivityDestination, String?) -> Unit = { destination, pathParam ->
         if (destination != currentDestination) {
-            navController.navigate(destination.name.lowercase()) {
+            val route = if (!pathParam.isNullOrEmpty()) {
+                "${destination.name.lowercase()}/$pathParam"
+            } else {
+                destination.name.lowercase()
+            }
+            navController.navigate(route) {
                 popUpTo(navController.graph.startDestinationId) {
                     saveState = true
                 }
@@ -62,8 +72,12 @@ fun MainNavigator(
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo)
             }
-            composable(MainActivityDestination.Logs.name.lowercase()) {
-                LogsScreen(onNavigate = navigateTo)
+            composable( "${MainActivityDestination.Logs.name.toLowerCase()}/{petId}") { backStackEntry ->
+                val petId = backStackEntry.arguments?.getString("petId") ?: ""
+                LogsScreen(
+                    petId = petId,
+                    onNavigate = navigateTo
+                )
             }
             composable(MainActivityDestination.Family.name.lowercase()) {
                 FamilyScreen(onNavigate = navigateTo)

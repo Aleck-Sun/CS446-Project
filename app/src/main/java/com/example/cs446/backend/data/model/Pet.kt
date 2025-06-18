@@ -4,7 +4,7 @@ import kotlinx.datetime.Instant
 import java.util.UUID
 
 data class Pet(
-    val id: Int,
+    val id: UUID,
     @Json(name = "created_at") val createdAt: Instant,
     val name: String,
     val species: Int,

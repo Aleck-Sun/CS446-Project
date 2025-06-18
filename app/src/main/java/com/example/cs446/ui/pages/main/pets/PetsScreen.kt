@@ -66,7 +66,7 @@ import java.util.UUID
 
 @Composable
 fun PetsScreen(
-    onNavigate: (MainActivityDestination) -> Unit
+    onNavigate: (MainActivityDestination, String?) -> Unit,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -282,7 +282,7 @@ fun PetsScreen(
             // Logs button
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { onNavigate(MainActivityDestination.Logs) },
+                    onClick = { onNavigate(MainActivityDestination.Logs, selectedPetId.toString()) },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Menu, contentDescription = null)
@@ -305,7 +305,7 @@ fun PetsScreen(
 
             // Family button
             Button(
-                onClick = { onNavigate(MainActivityDestination.Family) },
+                onClick = { onNavigate(MainActivityDestination.Family, null) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)

@@ -57,8 +57,9 @@ import java.util.UUID
 
 @Composable
 fun FeedScreen(
-    onNavigate: (MainActivityDestination) -> Unit,
-    viewModel: FeedViewModel = viewModel()
+    onNavigate: (MainActivityDestination, String?) -> Unit,
+    viewModel: FeedViewModel,
+    modifier: Modifier = Modifier,
 ) {
     val posts by viewModel.posts.collectAsState()
 
