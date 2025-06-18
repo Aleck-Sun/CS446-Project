@@ -1,3 +1,4 @@
+import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Comment
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.CommentText
 import com.example.cs446.ui.components.feed.FollowButton
 import com.example.cs446.ui.components.feed.IconWithText
@@ -66,6 +70,7 @@ fun FeedScreen(
     viewModel.getPetsWithPostPermissions()
     val posts by viewModel.posts.collectAsState()
     val pets by viewModel.pets.collectAsState()
+    val postResult by viewModel.postState.collectAsState()
 
     fun onLoadMorePosts() {
         viewModel.loadMorePosts()
@@ -79,13 +84,19 @@ fun FeedScreen(
     fun onShare(postId: UUID) {
         // TODO
     }
-    fun onCreatePost(text: String, imagrUris: List<Uri>) {
-
+    fun onCreatePost(context: Context, text: String, petId: UUID, imageUris: List<Uri>) {
+        viewModel.uploadPost(
+            context = context,
+            petId = petId,
+            caption = text,
+            imageUris = imageUris
+        )
     }
 
     FeedContent(
         posts,
         pets,
+        postResult,
         ::onLoadMorePosts,
         ::onLike,
         ::onComment,
@@ -98,13 +109,20 @@ fun FeedScreen(
 fun FeedContent(
     posts: List<Post>,
     pets: List<Pet> = emptyList(),
+    postResult: PostResult = PostResult.PostSuccess,
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
     onComment: (UUID) -> Unit = {},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: (String, List<Uri>) -> Unit = {_, _ ->}
+    onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> }
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(postResult) {
+        if (postResult is PostResult.PostSuccess)
+        {
+            showAddPostDialog = false
+        }
+    }
     CS446Theme {
         Column {
             LazyColumn(
@@ -119,7 +137,9 @@ fun FeedContent(
                     }
                     if (index == 0) {
                         AddPostButton(
-                            onClick = { showAddPostDialog = true }
+                            onClick = {
+                                showAddPostDialog = true
+                            }
                         )
                     }
                     PostItem(post, onLike, onComment, onShare)
@@ -129,7 +149,8 @@ fun FeedContent(
                 CreatePostDialog(
                     pets = pets,
                     onPost = onCreatePost,
-                    onDismiss = { showAddPostDialog = false }
+                    onDismiss = { showAddPostDialog = false },
+                    postResult = postResult
                 )
             }
         }

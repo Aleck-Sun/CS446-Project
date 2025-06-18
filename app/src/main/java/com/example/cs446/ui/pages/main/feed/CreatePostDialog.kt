@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.feed
 
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -45,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.result.AuthResult
+import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.DropdownPetSelector
 import java.util.UUID
 
@@ -52,13 +55,14 @@ import java.util.UUID
 fun CreatePostDialog(
     pets: List<Pet> = emptyList<Pet>(),
     onDismiss: () -> Unit = {},
-    onPost: (String, List<Uri>) -> Unit = {_,_ -> }
+    onPost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ ->  },
+    postResult: PostResult = PostResult.Idling
 ) {
 
     var currentImageIndex by remember { mutableStateOf<Int?>(null) }
     val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var text by remember { mutableStateOf<String>("") }
-    var selectedPet by remember { mutableStateOf<Pet?>(null) }
+    var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
 
     val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -74,13 +78,23 @@ fun CreatePostDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                onPost(text, selectedImagesUri)
+                if (postResult is PostResult.Posting) {
+                    return@TextButton
+                }
+                selectedPet?.let {
+                    onPost(context, text, it.id, selectedImagesUri)
+                }
             }) {
                 Text("Add")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(onClick = {
+                if (postResult is PostResult.Posting) {
+                    return@TextButton
+                }
+                onDismiss
+            }) {
                 Text("Cancel")
             }
         },
@@ -168,7 +182,17 @@ fun CreatePostDialog(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-
+                when (postResult) {
+                    is PostResult.Posting -> Text(
+                        text = "Please wait...",
+                        color = Color.Green
+                    )
+                    is PostResult.PostError -> Text(
+                        text = "Error: ${postResult.message}",
+                        color = Color.Red
+                    )
+                    else -> Spacer(Modifier)
+                }
             }
         }
     )
