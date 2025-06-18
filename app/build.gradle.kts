@@ -94,4 +94,6 @@ dependencies {
     implementation(libs.serializer.moshi)
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.material.icons.extended)
 }

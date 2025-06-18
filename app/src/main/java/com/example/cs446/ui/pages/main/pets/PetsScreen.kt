@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.pets
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,18 +56,12 @@ import com.example.cs446.data.model.Pet
 import com.example.cs446.data.repository.ImageRepository
 import com.example.cs446.data.repository.PetRepository
 import com.example.cs446.ui.pages.main.MainActivityDestination
+import com.example.cs446.ui.pages.main.formatDate
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlinx.datetime.toLocalDateTime
-import java.text.SimpleDateFormat
 import java.time.LocalDate
+import java.time.LocalDate.ofEpochDay
 import java.time.Period
-import java.time.ZoneOffset
-import java.util.Date
-import java.util.Locale
 import java.util.UUID
 
 @Composable
@@ -131,8 +126,9 @@ fun PetsScreen(
         }
     }
 
+    @SuppressLint("NewApi") // TODO this gets rid of the compiler errors idk why
     fun calculateAge(birthdate: Instant): String {
-        val birthLocalDate = LocalDate.ofEpochDay(birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
+        val birthLocalDate = ofEpochDay(birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
         val today = LocalDate.now()
         val period = Period.between(birthLocalDate, today)
         return when {
@@ -435,11 +431,4 @@ fun PetsScreen(
             }
         )
     }
-}
-
-fun formatDate(instant: Instant): String {
-    val formatter = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
-    val millis = instant.toEpochMilliseconds()
-    val date = Date(millis)
-    return formatter.format(date)
 }

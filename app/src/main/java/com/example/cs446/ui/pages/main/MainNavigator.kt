@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main
 
+import FeedScreen
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
@@ -15,12 +16,14 @@ import com.example.cs446.ui.components.BottomNavigationBar
 import com.example.cs446.ui.pages.main.pets.FamilyScreen
 import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.pets.LogsScreen
-import com.example.cs446.ui.pages.main.feed.FeedScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
+import com.example.cs446.view.social.FeedViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainNavigator() {
+fun MainNavigator(
+    feedViewModel: FeedViewModel
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
@@ -64,7 +67,7 @@ fun MainNavigator() {
                 PetsScreen(onNavigate = navigateTo)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = navigateTo)
+                FeedScreen(onNavigate = navigateTo, feedViewModel)
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo)
