@@ -11,3 +11,4 @@
 | 2025-06-11 | Refactor Main navigation and main screen files  |                |                |               | 2               |               |                |
 | 2025-06-11 | Add image uploader                              |                |                |               |                 |               | ???            |
 | 2025-06-12 | Clean up imports and code organization          | 0.5            |                |               |                 |               |                |
+| 2025-06-18 | Social Media feed page                          | 4              |                |               |                 |               |                |
