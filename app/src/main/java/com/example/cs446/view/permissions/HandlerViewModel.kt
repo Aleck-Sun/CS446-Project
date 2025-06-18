@@ -11,8 +11,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cs446.data.model.Handler
-import com.example.cs446.data.model.Permissions
+import com.example.cs446.backend.data.model.Handler
+import com.example.cs446.backend.data.model.Permissions
 import java.util.UUID
 
 class HandlerViewModel : ViewModel() {
