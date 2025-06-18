@@ -29,4 +29,22 @@ class PetRepository {
             }
         }
     }
+
+    suspend fun getPet(petId: UUID): Pet {
+        // TODO: Remove mocked data
+        return Pet(
+            petId,
+            kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
+            "Charlie",
+            1, "Golden Retriever",
+            UUID.randomUUID(),
+            kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
+            65.0
+        )
+//        return petsTable.select {
+//            filter {
+//                eq("id", petId)
+//            }
+//        }.decodeSingle()
+    }
 }
