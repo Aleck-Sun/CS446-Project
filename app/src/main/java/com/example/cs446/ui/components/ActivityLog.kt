@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ActivityLogForm(
     modifier: Modifier = Modifier,
-    onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, imageUri: String?) -> Unit
+    onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, imageUri: Uri?) -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -133,7 +133,7 @@ fun ActivityLogForm(
                     activityType,
                     comment,
                     makePost,
-                    imageUri?.toString()
+                    imageUri
                 )
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
