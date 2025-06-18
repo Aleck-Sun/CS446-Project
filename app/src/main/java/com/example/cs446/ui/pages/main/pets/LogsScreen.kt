@@ -28,6 +28,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.cs446.backend.data.model.ActivityLog
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.data.model.Pet
+import com.example.cs446.data.repository.PetRepository
 import com.example.cs446.ui.components.ActivityLogComponent
 import com.example.cs446.ui.components.ActivityLogForm
 import com.example.cs446.ui.pages.main.MainActivityDestination
@@ -43,27 +44,18 @@ fun LogsScreen(
     petId: String,
     onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
-    // TODO: get pet using petId
-    var pet = Pet(
-        UUID.fromString(petId),
-        kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
-        "Charlie",
-        1, "Golden Retriever",
-        UUID.randomUUID(),
-        kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
-        65.0
-    )
-
     val coroutineScope = rememberCoroutineScope()
     var showActivityLogModal by remember { mutableStateOf(false) }
     val activityLogRepository = remember { ActivityLogRepository() }
+    val petRepository = remember { PetRepository() }
 
-    // State to hold loaded activity logs
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
+    var pet by remember { mutableStateOf<Pet?>(null) }
 
     // Launch a coroutine to load logs when petId changes
     LaunchedEffect(petId) {
         activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
+        pet = petRepository.getPet(UUID.fromString(petId))
     }
 
     Box(
