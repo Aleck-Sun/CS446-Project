@@ -1,4 +1,4 @@
-package com.example.cs446.data.model
+package com.example.cs446.backend.data.model
 
 import kotlinx.datetime.Instant
 import java.util.UUID

@@ -41,8 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.data.model.Comment
-import com.example.cs446.data.model.Post
+import com.example.cs446.backend.data.model.Comment
+import com.example.cs446.backend.data.model.Post
 import com.example.cs446.ui.components.feed.CommentText
 import com.example.cs446.ui.components.feed.FollowButton
 import com.example.cs446.ui.components.feed.IconWithText

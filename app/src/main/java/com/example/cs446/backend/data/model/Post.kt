@@ -1,4 +1,4 @@
-package com.example.cs446.data.model
+package com.example.cs446.backend.data.model
 
 import android.location.Location
 import com.squareup.moshi.Json
