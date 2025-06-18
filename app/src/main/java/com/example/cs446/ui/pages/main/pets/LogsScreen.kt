@@ -4,15 +4,19 @@ import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -21,18 +25,46 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.example.cs446.backend.data.model.ActivityLog
+import com.example.cs446.backend.data.repository.ActivityLogRepository
+import com.example.cs446.data.model.Pet
+import com.example.cs446.ui.components.ActivityLogComponent
 import com.example.cs446.ui.components.ActivityLogForm
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.theme.CS446Theme
+import kotlinx.coroutines.launch
 import java.time.Instant
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LogsScreen(
     modifier: Modifier = Modifier,
-    onNavigate: (MainActivityDestination) -> Unit
+    petId: String,
+    onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
+    // TODO: get pet using petId
+    var pet = Pet(
+        UUID.fromString(petId),
+        kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
+        "Charlie",
+        1, "Golden Retriever",
+        UUID.randomUUID(),
+        kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
+        65.0
+    )
+
+    val coroutineScope = rememberCoroutineScope()
     var showActivityLogModal by remember { mutableStateOf(false) }
+    val activityLogRepository = remember { ActivityLogRepository() }
+
+    // State to hold loaded activity logs
+    var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
+
+    // Launch a coroutine to load logs when petId changes
+    LaunchedEffect(petId) {
+        activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
+    }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -40,19 +72,24 @@ fun LogsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)) {
-            // TODO (BOWEN): Add pet name in front
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
-                text = "Activity Logs",
+                text = "${pet?.name ?: "Pet"} Activity Logs",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(8.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // TODO (BOWEN): Add existing logs list here
-            // LazyColumn { ... }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(activityLogs) { log ->
+                    ActivityLogComponent(activityLog = log)
+                }
+            }
         }
 
         // Floating Action Button in bottom right
@@ -107,14 +144,18 @@ fun LogsScreen(
 
                         ActivityLogForm(
                             onSubmit = { activityDate, activityType, comment, makePost, imageUri ->
-                                handleActivitySubmission(
-                                    activityDate = activityDate,
-                                    activityType = activityType,
-                                    comment = comment,
-                                    makePost = makePost,
-                                    imageUri = imageUri
-                                )
-                                showActivityLogModal = false
+                                coroutineScope.launch {
+                                    handleActivitySubmission(
+                                        activityLogRepository = activityLogRepository,
+                                        activityDate = activityDate,
+                                        activityType = activityType,
+                                        comment = comment,
+                                        makePost = makePost,
+                                        imageUri = imageUri,
+                                        petId = UUID.fromString(petId)
+                                    )
+                                    showActivityLogModal = false
+                                }
                             }
                         )
                     }
@@ -124,17 +165,25 @@ fun LogsScreen(
     }
 }
 
-private fun handleActivitySubmission(
+private suspend fun handleActivitySubmission(
+    activityLogRepository: ActivityLogRepository,
     activityDate: Instant,
     activityType: String,
     comment: String,
     makePost: Boolean,
-    imageUri: Uri?
+    imageUri: Uri?,
+    petId: UUID,
 ) {
     if (makePost) {
         // TODO: Implement posting logic
     }
-    // TODO: Implement submission logic
+    activityLogRepository.addActivityLog(ActivityLog(
+        userId = UUID.randomUUID(), // TODO: Have a way to globally get current user Id
+        petId = petId,
+        activityType = activityType,
+        comment = comment,
+        createdAt = activityDate
+    ))
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -143,7 +192,8 @@ private fun handleActivitySubmission(
 fun LogsScreenPreview() {
     CS446Theme {
         LogsScreen(
-            onNavigate = { }
+            petId = "",
+            onNavigate = { } as (MainActivityDestination, String?) -> Unit
         )
     }
 }
