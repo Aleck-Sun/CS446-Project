@@ -27,8 +27,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.cs446.backend.data.model.ActivityLog
 import com.example.cs446.backend.data.repository.ActivityLogRepository
-import com.example.cs446.data.model.Pet
-import com.example.cs446.data.repository.PetRepository
+import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.ui.components.ActivityLogComponent
 import com.example.cs446.ui.components.ActivityLogForm
 import com.example.cs446.ui.pages.main.MainActivityDestination

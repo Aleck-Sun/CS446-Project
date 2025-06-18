@@ -52,9 +52,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.data.model.Pet
-import com.example.cs446.data.repository.ImageRepository
-import com.example.cs446.data.repository.PetRepository
+import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.repository.ImageRepository
+import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.formatDate
 import kotlinx.coroutines.launch
