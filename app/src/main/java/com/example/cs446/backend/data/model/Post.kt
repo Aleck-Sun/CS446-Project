@@ -23,7 +23,7 @@ data class Post(
     val caption: String,
     val imageUrls: List<String>,
     val userProfileUrl: String? = null,
-    val comments: List<Comment> = emptyList(),
+    val comments: List<Comment> = listOf<Comment>(),
     val location: Location? = null,
     val authorName: String? = null,
     val petName: String? = null,

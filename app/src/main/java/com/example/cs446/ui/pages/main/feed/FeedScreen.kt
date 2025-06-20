@@ -80,10 +80,10 @@ fun FeedScreen(
         viewModel.loadMorePosts()
     }
     fun onLike(postId: UUID) {
-        // TODO
+        viewModel.likePost(postId)
     }
     fun onComment(postId: UUID, text: String) {
-        // TODO
+        viewModel.uploadComment(postId, text)
     }
     fun onShare(postId: UUID) {
         // TODO
@@ -275,6 +275,7 @@ fun PostItem(
                     count = post.likes,
                     tint = if (post.liked) Color.Red else Color.Unspecified,
                     onClick = {
+                        println("Click!")
                         onLike(post.id)
                     }
                 )
@@ -350,8 +351,9 @@ fun CommentSection(
         Button(
             onClick = {
                 commentText?.let{
-
+                    onComment(post.id, it)
                 }
+                commentText = null
             },
             modifier = Modifier
                 .align(Alignment.End)
@@ -379,7 +381,7 @@ fun SocialFeedPreview() {
             location = null,
             authorName = "Jane Doe",
             petName = "Rex",
-            comments = listOf(
+            comments = mutableListOf(
                 Comment(
                     id = UUID.randomUUID(),
                     authorId = UUID.randomUUID(),
@@ -400,7 +402,7 @@ fun SocialFeedPreview() {
             location = null,
             authorName = "Bruce Wayne",
             petName = "Mimi",
-            comments = listOf(
+            comments = mutableListOf(
                 Comment(
                     id = UUID.randomUUID(),
                     authorId = UUID.randomUUID(),
