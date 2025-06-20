@@ -3,6 +3,7 @@ package com.example.cs446.backend.data.repository
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.postgrest.from
+import java.util.UUID
 
 class UserRepository {
     private val usersTable = SupabaseClient.supabase.from("users")
@@ -21,5 +22,18 @@ class UserRepository {
             }
         }.decodeSingle<User>()
         return user
+    }
+
+    suspend fun getUserById(userId: UUID): User? {
+        return try {
+            usersTable.select {
+                filter {
+                    eq("id", userId)
+                }
+            }.decodeSingle<User>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
     }
 }

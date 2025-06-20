@@ -24,13 +24,6 @@ class InstantAdapter {
     fun toJson(value: Instant?): String? = value?.toString()
 }
 
-data class UserPetRelationRaw(
-    @Json(name = "user_id") val userId: UUID,
-    @Json(name = "pet_id") val petId: UUID,
-    val relation: String?,
-    val permissions: List<String>
-)
-
 fun parsePermissions(list: List<String>): Permissions {
     return Permissions(
         editLogs = "edit_logs" in list,

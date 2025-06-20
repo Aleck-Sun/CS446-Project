@@ -17,5 +17,5 @@ fun CommentText(author: String, comment: String) {
         append(": $comment")
     }
 
-    Text(text = styledText, style= MaterialTheme.typography.bodySmall)
+    Text(text = styledText, style= MaterialTheme.typography.bodyMedium)
 }

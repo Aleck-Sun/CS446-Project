@@ -4,6 +4,7 @@ import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.UserPetRelation
+import com.example.cs446.backend.data.model.UserPetRelationRaw
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import java.util.UUID
@@ -70,7 +71,7 @@ class PetRepository {
             petId,
             kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
             "Charlie",
-            1, "Golden Retriever",
+            "Dog", "Golden Retriever",
             UUID.randomUUID(),
             kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
             65.0

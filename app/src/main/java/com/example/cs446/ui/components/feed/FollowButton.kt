@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 fun FollowButton(isFollowing: Boolean) {
 
     val label = if (isFollowing) "Following" else "Follow"
-    val bgColor = if (isFollowing) Color.LightGray else Color(0xFF8E24AA)
+    val bgColor = if (isFollowing) Color.LightGray else Color(0xFF5a0783)
 
     Box(
         modifier = Modifier

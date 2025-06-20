@@ -25,6 +25,7 @@ object SupabaseClient {
 
         val moshi = Moshi.Builder()
             .add(UUIDAdapter())
+            .add(KotlinJsonAdapterFactory())
             .add(InstantAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()

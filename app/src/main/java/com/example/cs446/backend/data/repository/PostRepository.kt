@@ -4,9 +4,12 @@ import android.content.Context
 import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.PostRaw
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.*
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import kotlinx.datetime.Instant
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -15,6 +18,8 @@ class PostRepository {
     private val auth = SupabaseClient.supabase.auth
     private val bucketName = "posts"
     private val postTable = SupabaseClient.supabase.from("posts")
+    private val userRepository = UserRepository()
+    private val petRepository = PetRepository()
 
     suspend fun uploadPost(
         imageUrls: List<String>,
@@ -70,6 +75,45 @@ class PostRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             ""
+        }
+    }
+
+    suspend fun loadPosts(
+        firstTimeStamp: Instant? = null,
+        lastTimeStamp: Instant? = null
+    ): List<Post> {
+        return try {
+            val postsRaw = postTable
+                .select {
+                    order("created_at", Order.DESCENDING)
+                    lastTimeStamp?.let {
+                        filter {
+                            lt("created_at", it)
+                        }
+                    }
+                }
+                .decodeList<PostRaw>()
+            val posts = postsRaw.map {
+                val user = userRepository.getUserById(it.userId)
+                val pet = petRepository.getPet(it.petId)
+                Post(
+                    id = it.id,
+                    userId = it.userId,
+                    petId = it.petId,
+                    createdAt = it.createdAt,
+                    caption = it.caption,
+                    imageUrls = it.imageUrls.map {
+                        url -> getSignedImageUrl(url)
+                    },
+                    userProfileUrl = user?.avatarUrl,
+                    authorName = user?.username,
+                    petName = pet.name
+                )
+            }
+            return posts
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList<Post>()
         }
     }
 }

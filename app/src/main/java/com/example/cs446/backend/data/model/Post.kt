@@ -5,13 +5,23 @@ import com.squareup.moshi.Json
 import kotlinx.datetime.Instant
 import java.util.UUID
 
-data class Post(
+data class PostRaw(
     val id: UUID,
     @Json(name = "user_id") val userId: UUID,
     @Json(name = "pet_id") val petId: UUID,
     @Json(name = "created_at") val createdAt: Instant,
-    val text: String,
-    @Json(name = "photo_urls") val photoUrls: List<String>,
+    val caption: String,
+    @Json(name = "image_urls") val imageUrls: List<String>,
+    val location: String? = null, // Loaded as string from database
+)
+
+data class Post(
+    val id: UUID,
+    val userId: UUID,
+    val petId: UUID,
+    val createdAt: Instant,
+    val caption: String,
+    val imageUrls: List<String>,
     val userProfileUrl: String? = null,
     val comments: List<Comment> = emptyList(),
     val location: Location? = null,
