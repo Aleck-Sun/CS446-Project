@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,10 +23,14 @@ import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,12 +43,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Comment
 import com.example.cs446.backend.data.model.Pet
@@ -76,10 +80,10 @@ fun FeedScreen(
         viewModel.loadMorePosts()
     }
     fun onLike(postId: UUID) {
-        // TODO
+        viewModel.likePost(postId)
     }
-    fun onComment(postId: UUID) {
-        // TODO
+    fun onComment(postId: UUID, text: String) {
+        viewModel.uploadComment(postId, text)
     }
     fun onShare(postId: UUID) {
         // TODO
@@ -112,16 +116,21 @@ fun FeedContent(
     postResult: PostResult = PostResult.PostSuccess,
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
-    onComment: (UUID) -> Unit = {},
+    onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (UUID) -> Unit = {},
     onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> }
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
+    var expandedPostId by remember { mutableStateOf<UUID?>(null) }
     LaunchedEffect(postResult) {
         if (postResult is PostResult.PostSuccess)
         {
             showAddPostDialog = false
         }
+    }
+
+    fun onOpenCommentSection(postId: UUID) {
+        expandedPostId = if (postId == expandedPostId) null else postId
     }
     CS446Theme {
         Column {
@@ -142,7 +151,14 @@ fun FeedContent(
                             }
                         )
                     }
-                    PostItem(post, onLike, onComment, onShare)
+                    PostItem(
+                        post = post,
+                        isExpanded = expandedPostId == post.id,
+                        onLike = onLike,
+                        onComment = onComment,
+                        onOpenCommentSection = ::onOpenCommentSection,
+                        onShare = onShare
+                    )
                 }
             }
             if (showAddPostDialog) {
@@ -186,8 +202,10 @@ fun AddPostButton(
 @Composable
 fun PostItem(
     post: Post,
+    isExpanded: Boolean = false,
     onLike: (UUID) -> Unit,
-    onComment: (UUID) -> Unit,
+    onComment: (UUID, String) -> Unit,
+    onOpenCommentSection: (UUID) -> Unit,
     onShare: (UUID) -> Unit
 ) {
     Card(
@@ -221,14 +239,14 @@ fun PostItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Media Carousel (if multiple images)
-            if (post.photoUrls.isNotEmpty()) {
-                ImageCarousel(post.photoUrls)
+            if (post.imageUrls.isNotEmpty()) {
+                ImageCarousel(post.imageUrls)
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
             // Description + location + timestamp
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = post.text)
+                Text(text = post.caption)
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = formatDate(post.createdAt),
@@ -257,6 +275,7 @@ fun PostItem(
                     count = post.likes,
                     tint = if (post.liked) Color.Red else Color.Unspecified,
                     onClick = {
+                        println("Click!")
                         onLike(post.id)
                     }
                 )
@@ -265,7 +284,7 @@ fun PostItem(
                     icon = Icons.AutoMirrored.Filled.Comment,
                     count = post.comments.size,
                     onClick = {
-                        onComment(post.id)
+                        onOpenCommentSection(post.id)
                     }
                 )
                 Spacer(modifier = Modifier.width(16.dp))
@@ -281,9 +300,69 @@ fun PostItem(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Top Comments
-            post.comments.forEach { comment ->
-                CommentText(author = comment.authorName?:"User", comment = comment.text)
+            if (isExpanded)
+            {
+                CommentSection(
+                    post,
+                    onComment
+                )
+            } else {
+                post.comments.firstOrNull()?.let {
+                    CommentText(author = it.authorName?:"User", comment = it.text)
+                }
             }
+
+
+        }
+    }
+}
+
+@Composable
+fun CommentSection(
+    post: Post,
+    onComment: (UUID, String) -> Unit
+) {
+    var commentText by remember { mutableStateOf<String?>(null) }
+
+    Column(modifier = Modifier.padding(top = 8.dp)) {
+        // Preview of existing comments
+        post.comments.forEach {
+            CommentText(author = it.authorName?:"User", comment = it.text)
+        }
+
+        OutlinedTextField(
+            value = commentText ?: "",
+            onValueChange = { commentText = it },
+            placeholder = {
+                Text(
+                    "Write a comment...",
+                    fontSize = 14.sp // slightly larger font helps readability
+                )
+            },
+            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+                .defaultMinSize(minHeight = 56.dp) // adaptive min height
+        )
+
+        Spacer(modifier = Modifier.padding(4.dp))
+
+        Button(
+            onClick = {
+                commentText?.let{
+                    onComment(post.id, it)
+                }
+                commentText = null
+            },
+            modifier = Modifier
+                .align(Alignment.End)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFcb85ed)
+            )
+        ) {
+            Text("Post", color = Color.White)
         }
     }
 }
@@ -297,12 +376,12 @@ fun SocialFeedPreview() {
             userId = UUID.randomUUID(),
             petId = UUID.randomUUID(),
             createdAt = Instant.fromEpochSeconds(1749934670),
-            photoUrls = listOf(""),
-            text = "Cute puppy at play!",
+            imageUrls = listOf(""),
+            caption = "Cute puppy at play!",
             location = null,
             authorName = "Jane Doe",
             petName = "Rex",
-            comments = listOf(
+            comments = mutableListOf(
                 Comment(
                     id = UUID.randomUUID(),
                     authorId = UUID.randomUUID(),
@@ -318,12 +397,12 @@ fun SocialFeedPreview() {
             userId = UUID.randomUUID(),
             petId = UUID.randomUUID(),
             createdAt = Instant.fromEpochSeconds(1749934670),
-            photoUrls = listOf(""),
-            text = "Look at this kitty!",
+            imageUrls = listOf(""),
+            caption = "Look at this kitty!",
             location = null,
             authorName = "Bruce Wayne",
             petName = "Mimi",
-            comments = listOf(
+            comments = mutableListOf(
                 Comment(
                     id = UUID.randomUUID(),
                     authorId = UUID.randomUUID(),

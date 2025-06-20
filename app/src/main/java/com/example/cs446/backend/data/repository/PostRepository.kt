@@ -3,10 +3,16 @@ package com.example.cs446.backend.data.repository
 import android.content.Context
 import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
+import com.example.cs446.backend.data.model.Comment
+import com.example.cs446.backend.data.model.Like
 import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.PostRaw
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.*
+import io.github.jan.supabase.postgrest.query.Count
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
+import kotlinx.datetime.Instant
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -15,6 +21,10 @@ class PostRepository {
     private val auth = SupabaseClient.supabase.auth
     private val bucketName = "posts"
     private val postTable = SupabaseClient.supabase.from("posts")
+    private val commentTable = SupabaseClient.supabase.from("comments")
+    private val likeTable = SupabaseClient.supabase.from("likes")
+    private val userRepository = UserRepository()
+    private val petRepository = PetRepository()
 
     suspend fun uploadPost(
         imageUrls: List<String>,
@@ -59,6 +69,24 @@ class PostRepository {
         }
         return imageUrls
     }
+
+    suspend fun uploadComment(postId: UUID, text: String): Comment? {
+        return try {
+            val authorId = auth.currentUserOrNull()?.id
+            commentTable.insert(
+                mapOf(
+                    "author_id" to authorId,
+                    "text" to text,
+                    "post_id" to postId
+                )
+            ) {
+                select()
+            }.decodeSingle<Comment>()
+        } catch(e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
     
     suspend fun getSignedImageUrl(imageUrl: String): String {
         return try {
@@ -70,6 +98,122 @@ class PostRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             ""
+        }
+    }
+
+    suspend fun getCommentsForPost(postId: UUID, amount: Long? = null): List<Comment> {
+        return try {
+            val comments = commentTable.select {
+                filter { eq("post_id", postId) }
+                amount?.let {
+                    limit(it)
+                }
+            }.decodeList<Comment>()
+
+            return comments.map {
+                val user = userRepository.getUserById(it.authorId)
+                it.copy(authorName = user?.username)
+            }
+        } catch(e: Exception) {
+            e.printStackTrace()
+            listOf<Comment>()
+        }
+    }
+
+    suspend fun getLikesForPost(postId: UUID): Int {
+        return try {
+            likeTable.select {
+                filter {
+                    eq("post_id", postId)
+                    eq("liked", true)
+                }
+                count(Count.ESTIMATED)
+            }.countOrNull()!!.toInt()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
+        }
+    }
+
+    suspend fun getIfUserLikedPost(postId: UUID): Boolean {
+        return try {
+            likeTable.select {
+                filter {
+                    eq("post_id", postId)
+                    eq("user_id", auth.currentUserOrNull()?.id?:"")
+                    eq("liked", true)
+                }
+            }.decodeSingleOrNull<Like>() != null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun updateLikeStatus(postId: UUID): Boolean {
+        return try {
+            likeTable.upsert(
+                mapOf(
+                    "user_id" to auth.currentUserOrNull()?.id,
+                    "post_id" to postId,
+                    "liked" to !getIfUserLikedPost(postId)
+                )
+            )
+            {
+                select()
+            }.decodeSingle<Like>().liked
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun loadPosts(
+        createdAfter: Instant? = null,
+        createdBefore: Instant? = null
+    ): List<Post> {
+        return try {
+            val postsRaw = postTable
+                .select {
+                    order("created_at", Order.DESCENDING)
+                    filter{
+                        or {
+                            createdBefore?.let {
+                                lt("created_at", it)
+                            }
+                            createdAfter?.let{
+                                gt("created_at", createdAfter)
+                            }
+                        }
+                    }
+                }
+                .decodeList<PostRaw>()
+            val posts = postsRaw.map {
+                val user = userRepository.getUserById(it.userId)
+                val pet = petRepository.getPet(it.petId)
+                val likes = getLikesForPost(it.id)
+                val liked = getIfUserLikedPost(it.id)
+                Post(
+                    id = it.id,
+                    userId = it.userId,
+                    petId = it.petId,
+                    createdAt = it.createdAt,
+                    caption = it.caption,
+                    imageUrls = it.imageUrls.map {
+                        url -> getSignedImageUrl(url)
+                    },
+                    userProfileUrl = user?.avatarUrl,
+                    authorName = user?.username,
+                    petName = pet.name,
+                    comments = getCommentsForPost(it.id),
+                    likes = likes,
+                    liked = liked
+                )
+            }
+            return posts
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList<Post>()
         }
     }
 }
