@@ -339,20 +339,20 @@ fun PetsScreen(
                     try {
                         petRepository.addPet(newPet)
                         // TODO: fix
-//                        petRepository.addUserPetRelation(
-//                            UserPetRelation(
-//                                userId = currentUserId!!,
-//                                petId = petId,
-//                                relation = "Owner",
-//                                permissions = Permissions(
-//                                    editLogs = true,
-//                                    setReminders = true,
-//                                    inviteHandlers = true,
-//                                    makePosts = true,
-//                                    editPermissionsOfOthers = true
-//                                )
-//                            )
-//                        )
+                        petRepository.addUserPetRelation(
+                            UserPetRelation(
+                                userId = currentUserId!!,
+                                petId = petId,
+                                relation = "Owner",
+                                permissions = Permissions(
+                                    editLogs = true,
+                                    setReminders = true,
+                                    inviteHandlers = true,
+                                    makePosts = true,
+                                    editPermissionsOfOthers = true
+                                )
+                            )
+                        )
                         pets = petRepository.getPetsCreatedByUser(currentUserId!!)
                         selectedPetId = petId
                     } catch (e: Exception) {

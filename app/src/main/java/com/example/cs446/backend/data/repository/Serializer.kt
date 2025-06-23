@@ -79,16 +79,10 @@ fun petToRaw(pet: Pet): PetRaw {
 }
 
 fun userPetRelationToRaw(userPetRelation: UserPetRelation): UserPetRelationRaw {
-    val perms = mutableListOf<String>()
-    if (userPetRelation.permissions.editLogs) perms.add("edit_logs")
-    if (userPetRelation.permissions.setReminders) perms.add("set_reminders")
-    if (userPetRelation.permissions.inviteHandlers) perms.add("invite_handlers")
-    if (userPetRelation.permissions.makePosts) perms.add("make_posts")
-    if (userPetRelation.permissions.editPermissionsOfOthers) perms.add("edit_permissionsOfOthers")
     return UserPetRelationRaw(
         userId = userPetRelation.userId,
         petId = userPetRelation.petId,
         relation = userPetRelation.relation,
-        permissions = perms
+        permissions = userPetRelation.permissions.toList()
     )
 }
