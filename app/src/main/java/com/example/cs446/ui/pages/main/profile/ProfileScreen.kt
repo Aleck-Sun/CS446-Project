@@ -29,25 +29,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.R
+import com.example.cs446.ui.pages.main.MainActivityDestination
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        lifecycleScope.launch{
-            setContent {
-                CS446Theme{
-                    SocialMediaProfile()
-                }
-            }
-        }
-    }
-}
-
 @Composable
-fun SocialMediaProfile() {
+fun ProfileScreen(
+    onNavigate: (MainActivityDestination) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -116,14 +104,6 @@ fun ProfileStat(label: String, count: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(count, fontWeight = FontWeight.Bold)
         Text(label, color = Color.Gray)
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SocialMediaPostScreenPreview() {
-    CS446Theme{
-        SocialMediaProfile()
     }
 }
 
