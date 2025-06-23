@@ -1,4 +1,4 @@
-package com.example.cs446.ui.components
+package com.example.cs446.ui.components.pets
 
 import android.net.Uri
 import android.os.Build
@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.cs446.ui.components.DatePickerTextField
 import com.example.cs446.ui.theme.CS446Theme
 import java.time.Instant
 import java.time.LocalDate

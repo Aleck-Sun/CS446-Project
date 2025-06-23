@@ -1,6 +1,5 @@
 package com.example.cs446.ui.pages.main.pets
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,17 +51,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.launch
+import java.util.UUID
+
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.repository.ImageRepository
 import com.example.cs446.backend.data.repository.PetRepository
+import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.formatDate
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import java.time.LocalDate
-import java.time.LocalDate.ofEpochDay
-import java.time.Period
-import java.util.UUID
+import com.example.cs446.ui.pages.main.calculateAge
+import com.example.cs446.backend.data.model.UserPetRelation
+import com.example.cs446.backend.data.model.Permissions
+import com.example.cs446.backend.data.repository.petToRaw
+import kotlinx.datetime.Clock
 
 @Composable
 fun PetsScreen(
@@ -79,45 +81,60 @@ fun PetsScreen(
     var showRemovePetDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // TODO: implement backend
-    var pets by remember {
-        mutableStateOf(
-            listOf(
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2021-02-03T00:00:00Z"),
-                    "Charlie",
-                    "Dog", "Golden Retriever",
-                    UUID.randomUUID(),
-                    Instant.parse("2025-05-28T00:00:00Z"),
-                    65.0
-                ),
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2024-11-06T00:00:00Z"),
-                    "Colin",
-                    "Dog", "Beagle",
-                    UUID.randomUUID(),
-                    Instant.parse("2024-01-15T00:00:00Z"),
-                    40.0
-                ),
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2025-02-08T00:00:00Z"),
-                    "Robin",
-                    "Dog",
-                    "Poodle",
-                    UUID.randomUUID(),
-                    Instant.parse("2023-11-02T00:00:00Z"),
-                    30.0
-                )
-            )
-        )
-    }
+//    var pets by remember {
+//        mutableStateOf(
+//            listOf(
+//                Pet(
+//                    UUID.randomUUID(),
+//                    Instant.parse("2021-02-03T00:00:00Z"),
+//                    "Charlie",
+//                    "Dog", "Golden Retriever",
+//                    UUID.randomUUID(),
+//                    Instant.parse("2025-05-28T00:00:00Z"),
+//                    65.0
+//                ),
+//                Pet(
+//                    UUID.randomUUID(),
+//                    Instant.parse("2024-11-06T00:00:00Z"),
+//                    "Colin",
+//                    "Dog", "Beagle",
+//                    UUID.randomUUID(),
+//                    Instant.parse("2024-01-15T00:00:00Z"),
+//                    40.0
+//                ),
+//                Pet(
+//                    UUID.randomUUID(),
+//                    Instant.parse("2025-02-08T00:00:00Z"),
+//                    "Robin",
+//                    "Dog",
+//                    "Poodle",
+//                    UUID.randomUUID(),
+//                    Instant.parse("2023-11-02T00:00:00Z"),
+//                    30.0
+//                )
+//            )
+//        )
+//    }
 
+    var currentUserId by remember { mutableStateOf<UUID?>(null) }
+    var pets by remember { mutableStateOf(emptyList<Pet>()) }
     var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
 
+    // Load pets the users created from backend. TODO: change to pets that have any relation with user
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            try {
+                currentUserId = UserRepository().getCurrentUserId()
+                    ?: throw IllegalStateException("User ID is null")
+                pets = petRepository.getPetsCreatedByUser(currentUserId!!)
+                selectedPetId = pets.firstOrNull()?.id
+            } catch (e: Exception) {
+                errorMessage = e.message
+//                errorMessage = "Failed to initialize user and pets."
+            }
+        }
+    }
     LaunchedEffect(errorMessage) {
         errorMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
@@ -125,17 +142,6 @@ fun PetsScreen(
         }
     }
 
-    @SuppressLint("NewApi") // TODO this gets rid of the compiler errors idk why
-    fun calculateAge(birthdate: Instant): String {
-        val birthLocalDate = ofEpochDay(birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
-        val today = LocalDate.now()
-        val period = Period.between(birthLocalDate, today)
-        return when {
-            period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
-            period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
-            else -> "${period.days} day${if (period.days > 1) "s" else ""}"
-        }
-    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -220,12 +226,10 @@ fun PetsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        val birthdateString = formatDate(selectedPet.birthdate)
-
                         Row {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Breed", fontWeight = FontWeight.Medium)
-                                Text(selectedPet.breed ?: "Unknown")
+                                Text(selectedPet.breed.toString())
                             }
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Date of Birth", fontWeight = FontWeight.Medium)
@@ -317,21 +321,47 @@ fun PetsScreen(
     if (showAddPetDialog) {
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
-            onAdd = { name, breed, weightStr, birthdate, imageUri ->
+            onAdd = { name, species, breed, birthdate, weight, imageUri ->
                 // TODO: get pet UUID from database insert rather than defining it on the client side
                 val petId = UUID.randomUUID()
                 val newPet = Pet(
                     id = petId,
-                    createdAt = Instant.parse("2024-01-01T00:00:00Z"),
+                    createdAt = Clock.System.now(),
                     name = name,
-                    species = "Dog",
+                    species = species,
                     breed = breed,
-                    createdBy = UUID.randomUUID(),
+                    createdBy = currentUserId!!,
                     birthdate = birthdate,
-                    weight = weightStr.toDoubleOrNull() ?: 0.0,
+                    weight = weight,
                     imageUrl = null
                 )
-                
+                coroutineScope.launch {
+                    try {
+                        petRepository.addPet(newPet)
+                        // TODO: fix
+//                        petRepository.addUserPetRelation(
+//                            UserPetRelation(
+//                                userId = currentUserId!!,
+//                                petId = petId,
+//                                relation = "Owner",
+//                                permissions = Permissions(
+//                                    editLogs = true,
+//                                    setReminders = true,
+//                                    inviteHandlers = true,
+//                                    makePosts = true,
+//                                    editPermissionsOfOthers = true
+//                                )
+//                            )
+//                        )
+                        pets = petRepository.getPetsCreatedByUser(currentUserId!!)
+                        selectedPetId = petId
+                    } catch (e: Exception) {
+                        errorMessage = e.message
+//                        errorMessage = "Failed to add pet."
+                    }
+                }
+
+
                 pets = pets.toMutableList().apply { add(newPet) }
                 selectedPetId = newPet.id
                 
@@ -366,12 +396,12 @@ fun PetsScreen(
         EditPetDialog(
             pet = selectedPet,
             onDismiss = { showEditPetDialog = false },
-            onSave = { newName, newBreed, newWeightStr, newBirthdate, imageUri ->
+            onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, imageUri ->
                 val updatedList = pets.toMutableList()
                 val updatedPet = selectedPet.copy(
                     name = newName,
                     breed = newBreed,
-                    weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight,
+                    weight = newWeight,
                     birthdate = newBirthdate
                 )
                 val index = updatedList.indexOfFirst { it.id == selectedPetId }

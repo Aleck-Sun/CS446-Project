@@ -19,6 +19,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -43,28 +45,38 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.cs446.backend.data.model.Breed
+import com.example.cs446.backend.data.model.Species
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.atStartOfDayIn
+import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPetDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String, String, Instant, Uri?) -> Unit
+    // name, species, breed, birthdate, weight, imageUri
+    onAdd: (String, Species, Breed, Instant, Double, Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
+    var selectedSpecies by remember { mutableStateOf<Species?>(null) }
+    var selectedBreed by remember { mutableStateOf<Breed?>(null) }
+    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
     var weight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var speciesDropdownExpanded by remember { mutableStateOf(false) }
+    var breedDropdownExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
+    var speciesError by remember { mutableStateOf(false) }
+    var breedError by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -107,14 +119,19 @@ fun AddPetDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                // Validation logic
+                // Validation
                 nameError = name.isBlank()
+                speciesError = selectedSpecies == null
+                breedError = selectedBreed == null
+
                 val weightValue = weight.toDoubleOrNull()
                 weightError = weightValue == null || weightValue <= 0.0
 
-                if (!nameError && !weightError) {
-                    val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
-                    onAdd(name, breed, weight, birthdateInstant, selectedImageUri)
+                val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
+                val birthdateError = birthdateInstant > Clock.System.now()
+
+                if (!nameError && !speciesError && !breedError && !birthdateError && !weightError) {
+                    onAdd(name, selectedSpecies!!, selectedBreed!!, birthdateInstant, weightValue!!, selectedImageUri)
                 }
             }) {
                 Text("Add")
@@ -172,6 +189,7 @@ fun AddPetDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Name
                 OutlinedTextField(
                     value = name,
                     onValueChange = {
@@ -192,35 +210,77 @@ fun AddPetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = breed,
-                    onValueChange = { breed = it },
-                    label = { Text("Breed") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = birthdate.toString(),
-                    onValueChange = { },
-                    label = { Text("Date of Birth") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDatePicker = true },
-                    enabled = true,
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = "Select date",
-                            modifier = Modifier.clickable { showDatePicker = true }
-                        )
+                // Species
+                Box {
+                    OutlinedTextField(
+                        value = selectedSpecies?.name ?: "",
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Species") },
+                        readOnly = true,
+                        isError = speciesError
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { speciesDropdownExpanded = true }
+                    )
+                    DropdownMenu(
+                        expanded = speciesDropdownExpanded,
+                        onDismissRequest = { speciesDropdownExpanded = false }
+                    ) {
+                        Species.entries.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                                onClick = {
+                                    selectedSpecies = it
+                                    speciesError = false
+                                    speciesDropdownExpanded = false
+                                }
+                            )
+                        }
                     }
-                )
+                }
+                if (speciesError) Text("Please select a species.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Breed
+                Box {
+                    OutlinedTextField(
+                        value = selectedBreed?.name ?: "",
+                        onValueChange = {},
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Breed") },
+                        readOnly = true,
+                        isError = breedError
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { breedDropdownExpanded = true }
+                    )
+                    DropdownMenu(
+                        expanded = breedDropdownExpanded,
+                        onDismissRequest = { breedDropdownExpanded = false }
+                    ) {
+                        Breed.entries.forEach {
+                            DropdownMenuItem(
+                                text = { Text(it.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                                onClick = {
+                                    selectedBreed = it
+                                    breedError = false
+                                    breedDropdownExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Weight
                 OutlinedTextField(
                     value = weight,
                     onValueChange = {

@@ -1,8 +1,10 @@
 package com.example.cs446.backend.data.repository
 
 import com.example.cs446.backend.SupabaseClient
-import com.example.cs446.backend.data.model.Permissions
+import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.model.PetRaw
+import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.UserPetRelationRaw
 import io.github.jan.supabase.auth.auth
@@ -14,11 +16,12 @@ class PetRepository {
     private val relationsTable = SupabaseClient.supabase.from("user-pet-relations")
 
     suspend fun getPetsCreatedByUser(userId: UUID): List<Pet> {
-        return petsTable.select {
+        val petRawList = petsTable.select {
             filter {
-                eq("creator_id", userId)
+                eq("created_by", userId)
             }
-        }.decodeList<Pet>()
+        }.decodeList<PetRaw>()
+        return petRawList.map { parsePet(it) }
     }
 
     suspend fun getPetsByPostPermission(): List<Pet> {
@@ -42,17 +45,21 @@ class PetRepository {
             }
             .map { it.petId }
 
-        val pets = petsTable
+        val petRawList = petsTable
             .select()
-            .decodeList<Pet>()
+            .decodeList<PetRaw>()
             .filter{
                 validPetIds.contains(it.id)
             }
-        return pets
+        return petRawList.map { parsePet(it) }
     }
 
     suspend fun addPet(pet: Pet) {
-        petsTable.insert(pet)
+        petsTable.insert(petToRaw(pet))
+    }
+
+    suspend fun addUserPetRelation(relation: UserPetRelation) {
+        relationsTable.insert(userPetRelationToRaw(relation))
     }
 
     suspend fun updatePetImage(petId: UUID, imageUrl: String) {
@@ -71,7 +78,7 @@ class PetRepository {
             petId,
             kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
             "Charlie",
-            "Dog", "Golden Retriever",
+            Species.DOG, Breed.GOLDEN_RETRIEVER,
             UUID.randomUUID(),
             kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
             65.0
