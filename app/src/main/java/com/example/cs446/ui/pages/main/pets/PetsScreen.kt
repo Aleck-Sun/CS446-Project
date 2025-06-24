@@ -81,41 +81,6 @@ fun PetsScreen(
     var showRemovePetDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-//    var pets by remember {
-//        mutableStateOf(
-//            listOf(
-//                Pet(
-//                    UUID.randomUUID(),
-//                    Instant.parse("2021-02-03T00:00:00Z"),
-//                    "Charlie",
-//                    "Dog", "Golden Retriever",
-//                    UUID.randomUUID(),
-//                    Instant.parse("2025-05-28T00:00:00Z"),
-//                    65.0
-//                ),
-//                Pet(
-//                    UUID.randomUUID(),
-//                    Instant.parse("2024-11-06T00:00:00Z"),
-//                    "Colin",
-//                    "Dog", "Beagle",
-//                    UUID.randomUUID(),
-//                    Instant.parse("2024-01-15T00:00:00Z"),
-//                    40.0
-//                ),
-//                Pet(
-//                    UUID.randomUUID(),
-//                    Instant.parse("2025-02-08T00:00:00Z"),
-//                    "Robin",
-//                    "Dog",
-//                    "Poodle",
-//                    UUID.randomUUID(),
-//                    Instant.parse("2023-11-02T00:00:00Z"),
-//                    30.0
-//                )
-//            )
-//        )
-//    }
-
     var currentUserId by remember { mutableStateOf<UUID?>(null) }
     var pets by remember { mutableStateOf(emptyList<Pet>()) }
     var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
@@ -127,11 +92,11 @@ fun PetsScreen(
             try {
                 currentUserId = UserRepository().getCurrentUserId()
                     ?: throw IllegalStateException("User ID is null")
-                pets = petRepository.getPetsCreatedByUser(currentUserId!!)
+                pets = petRepository.getPetsRelatedToUser(currentUserId!!)
                 selectedPetId = pets.firstOrNull()?.id
             } catch (e: Exception) {
-                errorMessage = e.message
-//                errorMessage = "Failed to initialize user and pets."
+                e.printStackTrace()
+                errorMessage = "Failed to initialize user and pets."
             }
         }
     }
@@ -322,23 +287,29 @@ fun PetsScreen(
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, species, breed, birthdate, weight, imageUri ->
-                // TODO: get pet UUID from database insert rather than defining it on the client side
-                val petId = UUID.randomUUID()
-                val newPet = Pet(
-                    id = petId,
-                    createdAt = Clock.System.now(),
-                    name = name,
-                    species = species,
-                    breed = breed,
-                    createdBy = currentUserId!!,
-                    birthdate = birthdate,
-                    weight = weight,
-                    imageUrl = null
-                )
                 coroutineScope.launch {
                     try {
+                        // TODO: get pet UUID from database insert rather than defining it on the client side
+                        val petId = UUID.randomUUID()
+                        var imageUrl: String? = null
+                        if (imageUri != null) {
+                            imageUrl = imageRepository.uploadPetImage(context, imageUri, petId)
+                            if (imageUrl == null) {
+                                errorMessage = "Failed to upload image."
+                            }
+                        }
+                        val newPet = Pet(
+                            id = petId,
+                            createdAt = Clock.System.now(),
+                            name = name,
+                            species = species,
+                            breed = breed,
+                            createdBy = currentUserId!!,
+                            birthdate = birthdate,
+                            weight = weight,
+                            imageUrl = imageUrl
+                        )
                         petRepository.addPet(newPet)
-                        // TODO: fix
                         petRepository.addUserPetRelation(
                             UserPetRelation(
                                 userId = currentUserId!!,
@@ -353,40 +324,13 @@ fun PetsScreen(
                                 )
                             )
                         )
-                        pets = petRepository.getPetsCreatedByUser(currentUserId!!)
+                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
                         selectedPetId = petId
                     } catch (e: Exception) {
-                        errorMessage = e.message
-//                        errorMessage = "Failed to add pet."
+                        e.printStackTrace()
+                        errorMessage = "Failed to add pet."
                     }
                 }
-
-
-                pets = pets.toMutableList().apply { add(newPet) }
-                selectedPetId = newPet.id
-                
-                // if image was selected, upload it
-                if (imageUri != null) {
-                    coroutineScope.launch {
-                        try {
-                            val imageUrl = imageRepository.uploadPetImage(context, imageUri, petId)
-                            if (imageUrl != null) {
-                                // update pet with image URL
-                                val updatedPet = newPet.copy(imageUrl = imageUrl)
-                                val updatedList = pets.toMutableList()
-                                val index = updatedList.indexOfFirst { it.id == petId }
-                                if (index != -1) {
-                                    updatedList[index] = updatedPet
-                                    pets = updatedList
-                                }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            errorMessage = "Failed to upload pet image. Please try again."
-                        }
-                    }
-                }
-                
                 showAddPetDialog = false
             }
         )
@@ -396,43 +340,35 @@ fun PetsScreen(
         EditPetDialog(
             pet = selectedPet,
             onDismiss = { showEditPetDialog = false },
-            onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, imageUri ->
-                val updatedList = pets.toMutableList()
-                val updatedPet = selectedPet.copy(
-                    name = newName,
-                    breed = newBreed,
-                    weight = newWeight,
-                    birthdate = newBirthdate
-                )
-                val index = updatedList.indexOfFirst { it.id == selectedPetId }
-                if (index != -1) {
-                    updatedList[index] = updatedPet
-                    pets = updatedList
-                }
-                
-                // if new image was selected, upload it
-                if (imageUri != null) {
-                    coroutineScope.launch {
-                        try {
-                            val imageUrl = imageRepository.uploadPetImage(context, imageUri, selectedPet.id)
-                            if (imageUrl != null) {
-                                // update pet with new image URL
-                                val finalUpdatedPet = updatedPet.copy(imageUrl = imageUrl)
-                                val finalUpdatedList = pets.toMutableList()
-                                val finalIndex = finalUpdatedList.indexOfFirst { it.id == selectedPetId }
-                                if (finalIndex != -1) {
-                                    finalUpdatedList[finalIndex] = finalUpdatedPet
-                                    pets = finalUpdatedList
-                                }
+            onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, newImageUri ->
+                coroutineScope.launch {
+                    try {
+                        val newImageUrl: String? = if (newImageUri != null) {
+                            val url = imageRepository.uploadPetImage(context, newImageUri, selectedPet.id)
+                            if (url == null) {
+                                errorMessage = "Failed to upload image."
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            errorMessage = "Failed to update pet image. Please try again."
+                            url
+                        } else {
+                            selectedPet.imageUrl
                         }
+
+                        val updatedPet = selectedPet.copy(
+                            name = newName,
+                            species = newSpecies,
+                            breed = newBreed,
+                            birthdate = newBirthdate,
+                            weight = newWeight,
+                            imageUrl = newImageUrl
+                        )
+                        petRepository.updatePet(updatedPet)
+                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        errorMessage = "Failed to update pet."
                     }
+                    showEditPetDialog = false
                 }
-                
-                showEditPetDialog = false
             }
         )
     }
@@ -441,16 +377,15 @@ fun PetsScreen(
         RemovePetDialog(
             petName = selectedPet.name,
             onConfirm = {
-                val removeIndex = pets.indexOfFirst { it.id == selectedPetId }
-                if (removeIndex != -1) {
-                    val updatedList = pets.toMutableList()
-                    updatedList.removeAt(removeIndex)
-                    pets = updatedList
-
-                    selectedPetId = when {
-                        updatedList.isEmpty() -> null
-                        removeIndex >= updatedList.size -> updatedList.last().id
-                        else -> updatedList[removeIndex].id
+                coroutineScope.launch {
+                    try {
+                        petRepository.deletePet(selectedPet.id)
+                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
+                        selectedPetId = pets.firstOrNull()?.id
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        errorMessage = e.message
+//                        errorMessage = "Failed to remove pet."
                     }
                     showRemovePetDialog = false
                 }

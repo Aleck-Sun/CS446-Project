@@ -24,6 +24,25 @@ class PetRepository {
         return petRawList.map { parsePet(it) }
     }
 
+    suspend fun getPetsRelatedToUser(userId: UUID): List<Pet> {
+        val relatedPetIds = relationsTable.select {
+                filter {
+                    eq("user_id", userId)
+                }
+            }
+            .decodeList<UserPetRelationRaw>()
+            .map { it.petId }
+
+        if (relatedPetIds.isEmpty()) {
+            return emptyList()
+        }
+        val petRawList = petsTable.select()
+            .decodeList<PetRaw>()
+            .filter { relatedPetIds.contains(it.id) }
+
+        return petRawList.map { parsePet(it) }
+    }
+
     suspend fun getPetsByPostPermission(): List<Pet> {
         val currentUser = SupabaseClient.supabase.auth.currentUserOrNull()?.id
         val validPetIds = relationsTable
@@ -62,12 +81,29 @@ class PetRepository {
         relationsTable.insert(userPetRelationToRaw(relation))
     }
 
-    suspend fun updatePetImage(petId: UUID, imageUrl: String) {
+    suspend fun updatePet(pet: Pet) {
+        val petRaw = petToRaw(pet)
         petsTable.update({
-            set("image_url", imageUrl)
+            set("name", petRaw.name)
+            set("species", petRaw.species)
+            set("breed", petRaw.breed)
+            set("birthdate", petRaw.birthdate)
+            set("weight", petRaw.weight)
+            set("image_url", petRaw.imageUrl)
         }) {
             filter {
-                eq("id", petId)
+                eq("id", pet.id)
+            }
+        }
+    }
+
+    // Delete all relations for the pet
+    // Does not delete the actual pet from the petsTable
+    //   because it might still be referred to in other tables, such as posts.
+    suspend fun deletePet(petId: UUID) {
+        relationsTable.delete {
+            filter {
+                eq("pet_id", petId)
             }
         }
     }
