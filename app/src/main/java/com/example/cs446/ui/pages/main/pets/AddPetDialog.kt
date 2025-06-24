@@ -213,7 +213,7 @@ fun AddPetDialog(
                 // Species
                 Box {
                     OutlinedTextField(
-                        value = selectedSpecies?.name ?: "",
+                        value = selectedSpecies?.toString() ?: "",
                         onValueChange = {},
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Species") },
@@ -231,7 +231,7 @@ fun AddPetDialog(
                     ) {
                         Species.entries.forEach {
                             DropdownMenuItem(
-                                text = { Text(it.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                                text = { Text(it.toString()) },
                                 onClick = {
                                     selectedSpecies = it
                                     speciesError = false
@@ -248,7 +248,7 @@ fun AddPetDialog(
                 // Breed
                 Box {
                     OutlinedTextField(
-                        value = selectedBreed?.name ?: "",
+                        value = selectedBreed?.toString() ?: "",
                         onValueChange = {},
                         modifier = Modifier.fillMaxWidth(),
                         label = { Text("Breed") },
@@ -266,7 +266,7 @@ fun AddPetDialog(
                     ) {
                         Breed.entries.forEach {
                             DropdownMenuItem(
-                                text = { Text(it.name.lowercase().replaceFirstChar(Char::titlecase)) },
+                                text = { Text(it.toString()) },
                                 onClick = {
                                     selectedBreed = it
                                     breedError = false

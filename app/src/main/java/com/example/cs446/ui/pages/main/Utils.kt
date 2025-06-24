@@ -22,8 +22,8 @@ fun calculateAge(birthdate: Instant): String {
     val period = birthDate.periodUntil(today)
 
     return when {
-        period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
-        period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
-        else -> "${period.days} day${if (period.days > 1) "s" else ""}"
+        period.years > 0 -> "${period.years} Year${if (period.years > 1) "s" else ""}"
+        period.months > 0 -> "${period.months} Month${if (period.months > 1) "s" else ""}"
+        else -> "${period.days} Day${if (period.days > 1) "s" else ""}"
     }
 }

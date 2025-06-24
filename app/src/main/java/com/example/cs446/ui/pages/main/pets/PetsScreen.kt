@@ -169,7 +169,7 @@ fun PetsScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 if (selectedPet != null) {
-                    // Display pet info
+                    // Display pet info (Breed, Weight, Date of Birth, Age)
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -197,8 +197,8 @@ fun PetsScreen(
                                 Text(selectedPet.breed.toString())
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Date of Birth", fontWeight = FontWeight.Medium)
-                                Text("${formatDate(selectedPet.birthdate)} (${calculateAge(selectedPet.birthdate)} old)")
+                                Text("Weight", fontWeight = FontWeight.Medium)
+                                Text("%.2f lbs".format(selectedPet.weight))
                             }
                         }
 
@@ -206,12 +206,12 @@ fun PetsScreen(
 
                         Row {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Sex", fontWeight = FontWeight.Medium)
-                                Text("Unknown")
+                                Text("Date of Birth", fontWeight = FontWeight.Medium)
+                                Text(formatDate(selectedPet.birthdate))
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Weight", fontWeight = FontWeight.Medium)
-                                Text("${selectedPet.weight} lbs")
+                                Text("Age", fontWeight = FontWeight.Medium)
+                                Text("${calculateAge(selectedPet.birthdate)} Old")
                             }
                         }
                     }
@@ -384,8 +384,7 @@ fun PetsScreen(
                         selectedPetId = pets.firstOrNull()?.id
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        errorMessage = e.message
-//                        errorMessage = "Failed to remove pet."
+                        errorMessage = "Failed to remove pet."
                     }
                     showRemovePetDialog = false
                 }

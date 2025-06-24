@@ -67,14 +67,14 @@ fun EditPetDialog(
     onSave: (String, Species, Breed, Instant, Double, Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf(pet.name) }
-    var selectedSpecies by remember { mutableStateOf<Species?>(null) }
-    var selectedBreed by remember { mutableStateOf<Breed?>(null) }
+    var selectedSpecies by remember { mutableStateOf(pet.species) }
+    var selectedBreed by remember { mutableStateOf(pet.breed) }
     var birthdate by remember {
         mutableStateOf(
             pet.birthdate.toLocalDateTime(TimeZone.currentSystemDefault()).date
         )
     }
-    var weight by remember { mutableStateOf("") }
+    var weight by remember { mutableStateOf(pet.weight.toString()) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     var speciesDropdownExpanded by remember { mutableStateOf(false) }
@@ -130,8 +130,6 @@ fun EditPetDialog(
             TextButton(onClick = {
                 // Validation
                 nameError = name.isBlank()
-                speciesError = selectedSpecies == null
-                breedError = selectedBreed == null
 
                 val weightValue = weight.toDoubleOrNull()
                 weightError = weightValue == null || weightValue <= 0.0
@@ -139,8 +137,8 @@ fun EditPetDialog(
                 val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
                 val birthdateError = birthdateInstant > Clock.System.now()
 
-                if (!nameError && !speciesError && !breedError && !birthdateError && !weightError) {
-                    onSave(name, selectedSpecies!!, selectedBreed!!, birthdateInstant, weightValue!!, selectedImageUri)
+                if (!nameError && !birthdateError && !weightError) {
+                    onSave(name, selectedSpecies, selectedBreed, birthdateInstant, weightValue!!, selectedImageUri)
                 }
             }) {
                 Text("Save")
@@ -230,12 +228,17 @@ fun EditPetDialog(
                 // Species
                 Box {
                     OutlinedTextField(
-                        value = selectedSpecies?.name ?: "",
+                        value = selectedSpecies?.toString() ?: "",
                         onValueChange = {},
-                        modifier = Modifier.fillMaxWidth().clickable { speciesDropdownExpanded = true },
+                        modifier = Modifier.fillMaxWidth(),
                         label = { Text("Species") },
                         readOnly = true,
                         isError = speciesError
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { speciesDropdownExpanded = true }
                     )
                     DropdownMenu(
                         expanded = speciesDropdownExpanded,
@@ -243,7 +246,7 @@ fun EditPetDialog(
                     ) {
                         Species.entries.forEach {
                             DropdownMenuItem(
-                                text = { Text(it.name.lowercase().replaceFirstChar(Char::uppercase)) },
+                                text = { Text(it.toString()) },
                                 onClick = {
                                     selectedSpecies = it
                                     speciesError = false
@@ -260,12 +263,17 @@ fun EditPetDialog(
                 // Breed
                 Box {
                     OutlinedTextField(
-                        value = selectedBreed?.name ?: "",
+                        value = selectedBreed?.toString() ?: "",
                         onValueChange = {},
-                        modifier = Modifier.fillMaxWidth().clickable { breedDropdownExpanded = true },
+                        modifier = Modifier.fillMaxWidth(),
                         label = { Text("Breed") },
                         readOnly = true,
                         isError = breedError
+                    )
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable { breedDropdownExpanded = true }
                     )
                     DropdownMenu(
                         expanded = breedDropdownExpanded,
@@ -273,7 +281,7 @@ fun EditPetDialog(
                     ) {
                         Breed.entries.forEach {
                             DropdownMenuItem(
-                                text = { Text(it.name.lowercase().replaceFirstChar(Char::uppercase)) },
+                                text = { Text(it.toString()) },
                                 onClick = {
                                     selectedBreed = it
                                     breedError = false
