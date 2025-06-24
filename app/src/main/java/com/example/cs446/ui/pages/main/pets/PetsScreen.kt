@@ -328,7 +328,8 @@ fun PetsScreen(
                         selectedPetId = petId
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        errorMessage = "Failed to add pet."
+                        errorMessage = e.message
+//                        errorMessage = "Failed to add pet."
                     }
                 }
                 showAddPetDialog = false

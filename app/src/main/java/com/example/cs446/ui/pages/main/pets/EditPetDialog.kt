@@ -17,14 +17,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,15 +46,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toLocalDateTime
-import java.time.ZoneOffset
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.todayIn
+import com.example.cs446.backend.data.model.speciesOfBreed
+import com.example.cs446.ui.components.DropdownSelector
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +66,7 @@ fun EditPetDialog(
 ) {
     var name by remember { mutableStateOf(pet.name) }
     var selectedSpecies by remember { mutableStateOf(pet.species) }
-    var selectedBreed by remember { mutableStateOf(pet.breed) }
+    var selectedBreed by remember { mutableStateOf<Breed?>(pet.breed) }
     var birthdate by remember {
         mutableStateOf(
             pet.birthdate.toLocalDateTime(TimeZone.currentSystemDefault()).date
@@ -77,8 +75,6 @@ fun EditPetDialog(
     var weight by remember { mutableStateOf(pet.weight.toString()) }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    var speciesDropdownExpanded by remember { mutableStateOf(false) }
-    var breedDropdownExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     var nameError by remember { mutableStateOf(false) }
@@ -130,6 +126,7 @@ fun EditPetDialog(
             TextButton(onClick = {
                 // Validation
                 nameError = name.isBlank()
+                breedError = selectedBreed == null
 
                 val weightValue = weight.toDoubleOrNull()
                 weightError = weightValue == null || weightValue <= 0.0
@@ -137,8 +134,8 @@ fun EditPetDialog(
                 val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
                 val birthdateError = birthdateInstant > Clock.System.now()
 
-                if (!nameError && !birthdateError && !weightError) {
-                    onSave(name, selectedSpecies, selectedBreed, birthdateInstant, weightValue!!, selectedImageUri)
+                if (!nameError && !breedError && !birthdateError && !weightError) {
+                    onSave(name, selectedSpecies, selectedBreed!!, birthdateInstant, weightValue!!, selectedImageUri)
                 }
             }) {
                 Text("Save")
@@ -226,71 +223,38 @@ fun EditPetDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Species
-                Box {
-                    OutlinedTextField(
-                        value = selectedSpecies?.toString() ?: "",
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Species") },
-                        readOnly = true,
-                        isError = speciesError
-                    )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable { speciesDropdownExpanded = true }
-                    )
-                    DropdownMenu(
-                        expanded = speciesDropdownExpanded,
-                        onDismissRequest = { speciesDropdownExpanded = false }
-                    ) {
-                        Species.entries.forEach {
-                            DropdownMenuItem(
-                                text = { Text(it.toString()) },
-                                onClick = {
-                                    selectedSpecies = it
-                                    speciesError = false
-                                    speciesDropdownExpanded = false
-                                }
-                            )
+                DropdownSelector(
+                    label = "Species",
+                    selectedValue = selectedSpecies,
+                    options = Species.entries.toList(),
+                    onValueSelected = {
+                        if (it != selectedSpecies) {
+                            selectedSpecies = it
+                            selectedBreed = null // Only reset if species changes
                         }
-                    }
-                }
+                        speciesError = false
+                    },
+                    isError = speciesError,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 if (speciesError) Text("Please select a species.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Breed
-                Box {
-                    OutlinedTextField(
-                        value = selectedBreed?.toString() ?: "",
-                        onValueChange = {},
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Breed") },
-                        readOnly = true,
-                        isError = breedError
-                    )
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .clickable { breedDropdownExpanded = true }
-                    )
-                    DropdownMenu(
-                        expanded = breedDropdownExpanded,
-                        onDismissRequest = { breedDropdownExpanded = false }
-                    ) {
-                        Breed.entries.forEach {
-                            DropdownMenuItem(
-                                text = { Text(it.toString()) },
-                                onClick = {
-                                    selectedBreed = it
-                                    breedError = false
-                                    breedDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+                DropdownSelector(
+                    label = "Breed",
+                    selectedValue = selectedBreed,
+                    options = selectedSpecies.let { species ->
+                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
+                    },
+                    onValueSelected = {
+                        selectedBreed = it
+                        breedError = false
+                    },
+                    isError = breedError,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 // Weight

@@ -19,3 +19,4 @@
 | 2025-06-21 | Pets info enum selector (breed, species)        |                |                |               | 0.5             |               |                |
 | 2025-06-22 | Pets backend (Create, Read, Update)             |                |                |               | 2               |               |                |
 | 2025-06-23 | Pets backend (Update, Delete), fix display      |                |                |               | 3               |               |                |
+| 2025-06-24 | Refactor code, Filter species selector by breed |                |                |               | 1               |               |                |

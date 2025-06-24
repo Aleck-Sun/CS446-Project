@@ -3,6 +3,7 @@ package com.example.cs446.backend.data.model
 enum class Species {
     DOG,
     CAT,
+    GOLDFISH,
     HAMSTER,
     OTHER;
 
