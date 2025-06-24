@@ -16,4 +16,6 @@
 | 2025-06-18 | Create activity log page and backend            |                |                |               |                 | 7             |                |
 | 2025-06-18 | Social Media feed page                          | 8              |                |               |                 |               |                |
 | 2025-06-20 | Social Media post and comment backend           | 4              |                |               |                 |               |                |
-
+| 2025-06-21 | Pets info enum selector (breed, species)        |                |                |               | 0.5             |               |                |
+| 2025-06-22 | Pets backend (Create, Read, Update)             |                |                |               | 2               |               |                |
+| 2025-06-23 | Pets backend (Update, Delete), fix display      |                |                |               | 3               |               |                |
