@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -241,6 +242,27 @@ fun EditPetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Birthdate
+                OutlinedTextField(
+                    value = birthdate.toString(),
+                    onValueChange = { },
+                    label = { Text("Date of Birth") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
+                    enabled = true,
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = "Select date",
+                            modifier = Modifier.clickable { showDatePicker = true }
+                        )
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                
                 // Breed
                 DropdownSelector(
                     label = "Breed",
