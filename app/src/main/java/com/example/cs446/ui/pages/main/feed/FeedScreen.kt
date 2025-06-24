@@ -27,11 +27,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -88,12 +90,19 @@ fun FeedScreen(
     fun onShare(postId: UUID) {
         // TODO
     }
-    fun onCreatePost(context: Context, text: String, petId: UUID, imageUris: List<Uri>) {
+    fun onCreatePost(
+        context: Context,
+        text: String,
+        petId: UUID,
+        imageUris: List<Uri>,
+        isPublic: Boolean
+    ) {
         viewModel.uploadPost(
             context = context,
             petId = petId,
             caption = text,
-            imageUris = imageUris
+            imageUris = imageUris,
+            isPublic = isPublic,
         )
     }
 
@@ -109,6 +118,7 @@ fun FeedScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedContent(
     posts: List<Post>,
@@ -118,7 +128,7 @@ fun FeedContent(
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> }
+    onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> }
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
@@ -137,28 +147,29 @@ fun FeedContent(
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
             ) {
-                itemsIndexed(posts) { index, post ->
-                    if (index >= posts.size - 3) {
-                        // Load more when near end of list
-                        onLoadMorePosts()
-                    }
+                items(posts.size + 1) { index ->
                     if (index == 0) {
                         AddPostButton(
                             onClick = {
                                 showAddPostDialog = true
                             }
                         )
+                    } else {
+                        val post = posts[index-1]
+                        if (index >= posts.size - 2) {
+                            // Load more when near end of list
+                            onLoadMorePosts()
+                        }
+                        PostItem(
+                            post = post,
+                            isExpanded = expandedPostId == post.id,
+                            onLike = onLike,
+                            onComment = onComment,
+                            onOpenCommentSection = ::onOpenCommentSection,
+                            onShare = onShare
+                        )
                     }
-                    PostItem(
-                        post = post,
-                        isExpanded = expandedPostId == post.id,
-                        onLike = onLike,
-                        onComment = onComment,
-                        onOpenCommentSection = ::onOpenCommentSection,
-                        onShare = onShare
-                    )
                 }
             }
             if (showAddPostDialog) {

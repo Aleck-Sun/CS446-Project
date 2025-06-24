@@ -82,4 +82,19 @@ class PetRepository {
 //            }
 //        }.decodeSingle()
     }
+
+    suspend fun getPetsByIds(petIds: List<UUID>): List<Pet> {
+        // TODO: Remove mocked data
+        return petIds.map{
+            Pet(
+                it,
+                kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
+                "Charlie",
+                "Dog", "Golden Retriever",
+                UUID.randomUUID(),
+                kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
+                65.0
+            )
+        }
+    }
 }

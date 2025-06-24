@@ -36,4 +36,17 @@ class UserRepository {
             return null
         }
     }
+
+    suspend fun getUsersByIds(userIds: List<UUID>): List<User> {
+        return try {
+            usersTable.select {
+                filter {
+                    isIn("id", userIds)
+                }
+            }.decodeList<User>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
+        }
+    }
 }
