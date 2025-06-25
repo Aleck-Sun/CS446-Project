@@ -29,3 +29,4 @@
 | 2025-06-24 | Refactor code, Filter species selector by breed |                |                |               | 1               |               |                |
 | 2025-06-24 | Implement ViewModel for pets                    |                |                |               | 1.5             |               |                |
 | 2025-06-24 | Profile screen functionality                    |                |                |               |                 |               | 1              |
+| 2025-06-25 | Social feed likes and avatars                   | 3              |                |               |                 |               | 1              |
