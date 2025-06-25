@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
-    onNavigate: (MainActivityDestination) -> Unit
+    onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
     Column(
         modifier = Modifier

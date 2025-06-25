@@ -20,14 +20,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -75,6 +78,7 @@ fun FeedScreen(
     val posts by viewModel.posts.collectAsState()
     val pets by viewModel.pets.collectAsState()
     val postResult by viewModel.postState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     fun onLoadMorePosts() {
         viewModel.loadMorePosts()
@@ -96,16 +100,25 @@ fun FeedScreen(
             imageUris = imageUris
         )
     }
+    fun onSearchQueryChange(query: String) {
+        viewModel.updateSearchQuery(query)
+    }
+    fun onClearSearch() {
+        viewModel.clearSearch()
+    }
 
     FeedContent(
         posts,
         pets,
         postResult,
+        searchQuery,
         ::onLoadMorePosts,
         ::onLike,
         ::onComment,
         ::onShare,
         ::onCreatePost,
+        ::onSearchQueryChange,
+        ::onClearSearch,
     )
 }
 
@@ -114,11 +127,14 @@ fun FeedContent(
     posts: List<Post>,
     pets: List<Pet> = emptyList(),
     postResult: PostResult = PostResult.PostSuccess,
+    searchQuery: String = "",
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> }
+    onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> },
+    onSearchQueryChange: (String) -> Unit = {},
+    onClearSearch: () -> Unit = {}
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
@@ -139,17 +155,29 @@ fun FeedContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                itemsIndexed(posts) { index, post ->
-                    if (index >= posts.size - 3) {
-                        // Load more when near end of list
-                        onLoadMorePosts()
-                    }
-                    if (index == 0) {
+                // search bar - always show
+                item {
+                    SearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = onSearchQueryChange,
+                        onClearSearch = onClearSearch
+                    )
+                }
+                
+                // add post button (only show when not searching)
+                if (searchQuery.isBlank()) {
+                    item {
                         AddPostButton(
                             onClick = {
                                 showAddPostDialog = true
                             }
                         )
+                    }
+                }
+                
+                itemsIndexed(posts) { index, post ->
+                    if (index >= posts.size - 3 && searchQuery.isBlank()) {
+                        onLoadMorePosts()
                     }
                     PostItem(
                         post = post,
@@ -159,6 +187,36 @@ fun FeedContent(
                         onOpenCommentSection = ::onOpenCommentSection,
                         onShare = onShare
                     )
+                }
+                
+                // show a message when search returns no results
+                if (searchQuery.isNotBlank() && posts.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "No posts found for \"$searchQuery\"",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Try searching for something else",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
                 }
             }
             if (showAddPostDialog) {
@@ -170,8 +228,53 @@ fun FeedContent(
                 )
             }
         }
+    }
+}
 
-
+@Composable
+fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            placeholder = { 
+                Text("Search posts, pets, or owners...") 
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = Color.Gray
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = onClearSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear search",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
     }
 }
 
@@ -415,5 +518,8 @@ fun SocialFeedPreview() {
         )
     )
 
-    FeedContent(posts = samplePosts)
+    FeedContent(
+        posts = samplePosts,
+        searchQuery = "" // defaault
+    )
 }

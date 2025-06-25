@@ -17,8 +17,12 @@ import kotlinx.datetime.Instant
 import java.util.UUID
 
 class FeedViewModel : ViewModel() {
-    private val _posts = MutableStateFlow<List<Post>>(listOf())
-    val posts: StateFlow<List<Post>> = _posts
+    private val _allPosts = MutableStateFlow<List<Post>>(listOf())
+    private val _searchQuery = MutableStateFlow("")
+    private val _filteredPosts = MutableStateFlow<List<Post>>(listOf())
+    
+    val posts: StateFlow<List<Post>> = _filteredPosts
+    val searchQuery: StateFlow<String> = _searchQuery
 
     private val _pets = MutableStateFlow<List<Pet>>(emptyList())
     val pets: StateFlow<List<Pet>> = _pets
@@ -37,8 +41,34 @@ class FeedViewModel : ViewModel() {
     val _latestLoadedTime = MutableStateFlow<Instant?>(null)
 
     init {
+        filterPosts()
         loadMorePosts()
         getPetsWithPostPermissions()
+    }
+
+    private fun filterPosts() {
+        val query = _searchQuery.value.lowercase().trim()
+        val allPosts = _allPosts.value
+        
+        _filteredPosts.value = if (query.isEmpty()) {
+            allPosts
+        } else {
+            allPosts.filter { post ->
+                post.caption.lowercase().contains(query) ||
+                post.petName?.lowercase()?.contains(query) == true ||
+                post.authorName?.lowercase()?.contains(query) == true
+            }
+        }
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+        filterPosts()
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        filterPosts()
     }
 
     fun getPetsWithPostPermissions() {
@@ -67,6 +97,7 @@ class FeedViewModel : ViewModel() {
                     caption
                 )
                 _postState.value = PostResult.PostSuccess
+                loadMorePosts()
             } catch (_: Exception) {
                 _postState.value = PostResult.PostError("Failed to post.")
             }
@@ -78,51 +109,72 @@ class FeedViewModel : ViewModel() {
         isLoading = true
 
         viewModelScope.launch {
-            val newPosts = postRepository.loadPosts(
-                createdAfter = _latestLoadedTime.value,
-                createdBefore = _earliestLoadedTime.value
-            )
-            _posts.value = (_posts.value + newPosts).sortedByDescending {
-                it.createdAt
-            }.toMutableList()
-            _earliestLoadedTime.value = _posts.value.lastOrNull()?.createdAt
-            _latestLoadedTime.value = _posts.value.firstOrNull()?.createdAt
+            try {
+                val newPosts = postRepository.loadPosts(
+                    createdAfter = _latestLoadedTime.value,
+                    createdBefore = _earliestLoadedTime.value
+                )
+                _allPosts.value = (_allPosts.value + newPosts).sortedByDescending {
+                    it.createdAt
+                }.toMutableList()
+                _earliestLoadedTime.value = _allPosts.value.lastOrNull()?.createdAt
+                _latestLoadedTime.value = _allPosts.value.firstOrNull()?.createdAt
 
-            currentPage++
-            isLoading = false
+                filterPosts()
+
+                currentPage++
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // show existing posts
+                filterPosts()
+            } finally {
+                isLoading = false
+            }
         }
     }
 
     fun uploadComment(postId: UUID, text: String) {
         viewModelScope.launch {
-            val comment = postRepository.uploadComment(postId, text)
-            comment?.let {
-                _posts.value = _posts.value.map {
-                    post ->
-                    if (post.id == postId) {
-                        val updatedComments = post.comments.toMutableList()
-                        updatedComments.add(it)
-                        post.copy(comments = updatedComments)
-                    } else {
-                        post
+            try {
+                val comment = postRepository.uploadComment(postId, text)
+                comment?.let {
+                    _allPosts.value = _allPosts.value.map {
+                        post ->
+                        if (post.id == postId) {
+                            val updatedComments = post.comments.toMutableList()
+                            updatedComments.add(it)
+                            post.copy(comments = updatedComments)
+                        } else {
+                            post
+                        }
                     }
+                    // update filtered posts after adding comment
+                    filterPosts()
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
 
     fun likePost(postId: UUID) {
         viewModelScope.launch {
-            val liked = postRepository.updateLikeStatus(postId)
-            _posts.value = _posts.value.map {
-                if (it.id == postId) {
-                    it.copy(
-                        liked = liked,
-                        likes = postRepository.getLikesForPost(it.id)
-                    )
-                } else {
-                    it
+            try {
+                val liked = postRepository.updateLikeStatus(postId)
+                _allPosts.value = _allPosts.value.map {
+                    if (it.id == postId) {
+                        it.copy(
+                            liked = liked,
+                            likes = postRepository.getLikesForPost(it.id)
+                        )
+                    } else {
+                        it
+                    }
                 }
+                // update filtered posts after liking
+                filterPosts()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
