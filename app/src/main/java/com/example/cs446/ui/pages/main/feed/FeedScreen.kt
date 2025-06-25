@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +37,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -54,7 +52,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -75,7 +72,6 @@ import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.datetime.Instant
 import java.util.UUID
-import kotlin.time.Duration.Companion.seconds
 
 // helper function to calculate relative time
 fun getRelativeTime(timestamp: Instant): String {
@@ -308,19 +304,42 @@ fun AddPostButton(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF8F9FA)
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(4.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconWithText(
-                Icons.Default.AddCircleOutline,
-                "Post Something...",
-                fontSize = 24.sp,
-                onClick = onClick
+            Icon(
+                imageVector = Icons.Default.AddCircleOutline,
+                contentDescription = "Add post",
+                tint = Color(0xFFcb85ed),
+                modifier = Modifier.size(28.dp)
             )
+            Text(
+                text = "Share something about your pet...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6C757D),
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Post", color = Color.White)
+            }
         }
     }
 }
