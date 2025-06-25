@@ -8,11 +8,13 @@
 | 2025-06-08 | Refactor Backend                                | 4.5            |                |               |                 | 0.5           |                |
 | 2025-06-08 | Setup page navigation, add layout for Pets page |                |                |               | 4.5             |               |                |
 | 2025-06-09 | PR fixes, refactor Main navigation              |                |                |               | 2               |               |                |
+| 2025-06-09 | Social Media Post Front End                     |                | 2              |               |                 |               |                |
 | 2025-06-11 | Refactor Main navigation and main screen files  |                |                |               | 2               |               |                |
 | 2025-06-11 | Add image uploader                              |                |                |               |                 |               | ???            |
 | 2025-06-12 | Clean up imports and code organization          | 0.5            |                |               |                 |               |                |
 | 2025-06-12 | Setup Permissions Page                          |                |                | 5.5           |                 |               |                |
 | 2025-06-17 | PR fixes                                        |                |                | 0.5           |                 |               |                |
+| 2025-06-17 | Social Media Profile Front End                  |                | 3              |               |                 |               |                |
 | 2025-06-18 | Create activity log page and backend            |                |                |               |                 | 7             |                |
 | 2025-06-18 | Social Media feed page                          | 8              |                |               |                 |               |                |
 | 2025-06-20 | Social Media post and comment backend           | 4              |                |               |                 |               |                |
