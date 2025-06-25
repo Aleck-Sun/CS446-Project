@@ -1,6 +1,5 @@
 package com.example.cs446.ui.pages.main.pets
 
-import android.annotation.SuppressLint
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -63,7 +61,7 @@ import com.example.cs446.ui.components.DropdownSelector
 fun EditPetDialog(
     pet: Pet,
     onDismiss: () -> Unit,
-    onSave: (String, Species, Breed, Instant, Double, Uri?) -> Unit
+    onSave: (name: String, species: Species, breed: Breed, birthdate: Instant, weight: Double, imageUri: Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf(pet.name) }
     var selectedSpecies by remember { mutableStateOf(pet.species) }
@@ -83,13 +81,13 @@ fun EditPetDialog(
     var speciesError by remember { mutableStateOf(false) }
     var breedError by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedImageUri = uri
     }
 
+    // TODO: figure out date picker off by 1 issue
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             selectableDates = object : SelectableDates {
@@ -213,13 +211,7 @@ fun EditPetDialog(
                     isError = nameError,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (nameError) {
-                    Text(
-                        "Name cannot be empty.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
+                if (nameError) Text("Name cannot be empty.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -231,7 +223,7 @@ fun EditPetDialog(
                     onValueSelected = {
                         if (it != selectedSpecies) {
                             selectedSpecies = it
-                            selectedBreed = null // Only reset if species changes
+                            selectedBreed = null // Reset breed if species changes
                         }
                         speciesError = false
                     },
@@ -239,6 +231,24 @@ fun EditPetDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (speciesError) Text("Please select a species.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Breed
+                DropdownSelector(
+                    label = "Breed",
+                    selectedValue = selectedBreed,
+                    options = selectedSpecies.let { species ->
+                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
+                    },
+                    onValueSelected = {
+                        selectedBreed = it
+                        breedError = false
+                    },
+                    isError = breedError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -262,22 +272,6 @@ fun EditPetDialog(
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                // Breed
-                DropdownSelector(
-                    label = "Breed",
-                    selectedValue = selectedBreed,
-                    options = selectedSpecies.let { species ->
-                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
-                    },
-                    onValueSelected = {
-                        selectedBreed = it
-                        breedError = false
-                    },
-                    isError = breedError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 // Weight
                 OutlinedTextField(

@@ -59,8 +59,7 @@ import com.example.cs446.ui.components.DropdownSelector
 @Composable
 fun AddPetDialog(
     onDismiss: () -> Unit,
-    // name, species, breed, birthdate, weight, imageUri
-    onAdd: (String, Species, Breed, Instant, Double, Uri?) -> Unit
+    onAdd: (name: String, species: Species, breed: Breed, birthdate: Instant, weight: Double, imageUri: Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var selectedSpecies by remember { mutableStateOf<Species?>(null) }
@@ -81,7 +80,8 @@ fun AddPetDialog(
     ) { uri: Uri? ->
         selectedImageUri = uri
     }
-
+    
+    // TODO: figure out date picker off by 1 issue
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             selectableDates = object : SelectableDates {
@@ -198,13 +198,7 @@ fun AddPetDialog(
                     isError = nameError,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (nameError) {
-                    Text(
-                        "Name cannot be empty.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
+                if (nameError) Text("Name cannot be empty.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -228,6 +222,24 @@ fun AddPetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Breed
+                DropdownSelector(
+                    label = "Breed",
+                    selectedValue = selectedBreed,
+                    options = selectedSpecies?.let { species ->
+                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
+                    } ?: emptyList(),
+                    onValueSelected = {
+                        selectedBreed = it
+                        breedError = false
+                    },
+                    isError = breedError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Birthdate
                 OutlinedTextField(
                     value = birthdate.toString(),
@@ -246,24 +258,6 @@ fun AddPetDialog(
                         )
                     }
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Breed
-                DropdownSelector(
-                    label = "Breed",
-                    selectedValue = selectedBreed,
-                    options = selectedSpecies?.let { species ->
-                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
-                    } ?: emptyList(),
-                    onValueSelected = {
-                        selectedBreed = it
-                        breedError = false
-                    },
-                    isError = breedError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
