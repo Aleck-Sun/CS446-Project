@@ -93,7 +93,6 @@ class PostRepository {
     suspend fun getSignedImageUrl(imageUrl: String): String {
         return try {
             storage.from(bucketName).createSignedUrl(
-                // TODO - this should be the URL of the poster, not the user
                 path = imageUrl,
                 expiresIn = Duration.parse("1h")  // expires in 1 hour
             )
@@ -241,6 +240,7 @@ class PostRepository {
                     comments = getCommentsForPost(it.id),
                     likes = likes,
                     liked = liked,
+
 
                 )
             }

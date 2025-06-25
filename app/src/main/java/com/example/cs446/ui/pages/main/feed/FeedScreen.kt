@@ -230,6 +230,7 @@ fun PostItem(
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (post.userProfileUrl != null) {
+                    println(post.userProfileUrl)
                     Image(
                         painter = rememberAsyncImagePainter(post.userProfileUrl),
                         contentDescription = "Profile Picture",
