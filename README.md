@@ -28,4 +28,4 @@
 | 2025-06-23 | Comment feature, UI fixes, bug fixes            |                |                |               |                 |               | 2.5            |
 | 2025-06-24 | Refactor code, Filter species selector by breed |                |                |               | 1               |               |                |
 | 2025-06-24 | Implement ViewModel for pets                    |                |                |               | 1.5             |               |                |
-| 2025-06-23 | Profile screen functionality                    |                |                |               |                 |               | 1              |
+| 2025-06-24 | Profile screen functionality                    |                |                |               |                 |               | 1              |
