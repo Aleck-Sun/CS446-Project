@@ -1,4 +1,4 @@
-package com.example.cs446.ui.components
+package com.example.cs446.ui.components.pets
 
 import android.os.Build
 import androidx.annotation.RequiresApi

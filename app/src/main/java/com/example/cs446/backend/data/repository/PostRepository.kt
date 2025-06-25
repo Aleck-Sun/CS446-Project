@@ -172,7 +172,7 @@ class PostRepository {
     suspend fun loadPosts(
         createdAfter: Instant? = null,
         createdBefore: Instant? = null,
-        maxPosts: Long = 5
+        maxPosts: Long = 2
     ): List<Post> {
         return try {
             val postsRaw = postTable
@@ -234,14 +234,12 @@ class PostRepository {
                     imageUrls = it.imageUrls.map {
                         url -> getSignedImageUrl(url)
                     },
-                    userProfileUrl = user.avatarUrl,
+                    petImageUrl = pet.imageUrl,
                     authorName = user.username,
                     petName = pet.name,
                     comments = getCommentsForPost(it.id),
                     likes = likes,
                     liked = liked,
-
-
                 )
             }
             return posts

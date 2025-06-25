@@ -4,6 +4,7 @@ import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
+import io.github.jan.supabase.auth.auth
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -66,12 +67,17 @@ class UserRepository {
                 }
             }.decodeList<User>().map {
                 it.copy(
-                    avatarUrl = getSignedAvatarUrl(it.avatarUrl?:defaultAvatarUrl)
+                    avatarUrl = getSignedAvatarUrl(it.avatarUrl ?: defaultAvatarUrl)
                 )
             }
         } catch (e: Exception) {
             e.printStackTrace()
             return emptyList()
         }
+    }
+
+    fun getCurrentUserId(): UUID? {
+        val currentUser = SupabaseClient.supabase.auth.currentUserOrNull()?.id ?: return null
+        return UUID.fromString(currentUser)
     }
 }

@@ -17,30 +17,30 @@ import com.example.cs446.ui.pages.main.pets.FamilyScreen
 import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.pets.LogsScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
+import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
-    feedViewModel: FeedViewModel
+    petsViewModel: PetsViewModel,
+    feedViewModel: FeedViewModel,
+    onLogout: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-    val currentDestination = navBackStackEntry?.destination?.route?.let { route ->
-        // Handle routes with parameters
+    val currentMainDestination = currentDestination?.route?.let { route ->
         val baseRoute = route.split("/")[0]
         MainActivityDestination.entries.find { it.name.equals(baseRoute, ignoreCase = true) }
     } ?: MainActivityDestination.Pets
 
-    val navigateTo: (MainActivityDestination, String?) -> Unit = { destination, pathParam ->
-        if (destination != currentDestination) {
-            val route = if (!pathParam.isNullOrEmpty()) {
-                "${destination.name.lowercase()}/$pathParam"
-            } else {
-                destination.name.lowercase()
-            }
-            navController.navigate(route) {
+    val navigateTo: (MainActivityDestination, String?) -> Unit = { destination, param ->
+        if (param != null) {
+            navController.navigate("${destination.name.lowercase()}/$param")
+        } else {
+            navController.navigate(destination.name.lowercase()) {
                 popUpTo(navController.graph.startDestinationId) {
                     saveState = true
                 }
@@ -53,7 +53,7 @@ fun MainNavigator(
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
-                currentDestination = currentDestination,
+                currentDestination = currentMainDestination,
                 onNavigate = navigateTo
             )
         }
@@ -64,15 +64,15 @@ fun MainNavigator(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
-                PetsScreen(onNavigate = navigateTo)
+                PetsScreen(onNavigate = navigateTo, viewModel = petsViewModel)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = navigateTo, feedViewModel)
+                FeedScreen(onNavigate = navigateTo, viewModel = feedViewModel)
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
-                ProfileScreen(onNavigate = navigateTo)
+                ProfileScreen(onNavigate = navigateTo, onLogout = onLogout)
             }
-            composable( "${MainActivityDestination.Logs.name.toLowerCase()}/{petId}") { backStackEntry ->
+            composable( "${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
                 LogsScreen(
                     petId = petId,

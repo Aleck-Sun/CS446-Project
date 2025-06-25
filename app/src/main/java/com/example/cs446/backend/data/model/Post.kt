@@ -24,7 +24,7 @@ data class Post(
     val caption: String,
     val imageUrls: List<String>,
     val isPublic: Boolean = false,
-    val userProfileUrl: String? = null,
+    val petImageUrl: String? = null,
     val comments: List<Comment> = listOf<Comment>(),
     val location: Location? = null,
     val authorName: String? = null,

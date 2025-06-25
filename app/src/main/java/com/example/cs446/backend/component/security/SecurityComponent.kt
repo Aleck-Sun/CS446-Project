@@ -19,4 +19,8 @@ class SecurityComponent {
     ): AuthResult {
         return repository.registerWithSupabase(email, password)
     }
+
+    suspend fun logoutUser(): Boolean {
+        return repository.logout()
+    }
 }

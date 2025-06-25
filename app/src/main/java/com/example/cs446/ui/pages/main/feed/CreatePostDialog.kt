@@ -96,7 +96,7 @@ fun CreatePostDialog(
                 if (postResult is PostResult.Posting) {
                     return@TextButton
                 }
-                onDismiss
+                onDismiss()
             }) {
                 Text("Cancel")
             }

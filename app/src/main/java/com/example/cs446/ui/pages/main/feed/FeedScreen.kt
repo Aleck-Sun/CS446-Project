@@ -1,13 +1,18 @@
 import android.content.Context
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,8 +25,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -29,11 +36,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,11 +52,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Comment
 import com.example.cs446.backend.data.model.Pet
@@ -61,11 +66,24 @@ import com.example.cs446.ui.components.feed.IconWithText
 import com.example.cs446.ui.components.feed.ImageCarousel
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.feed.CreatePostDialog
-import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.datetime.Instant
 import java.util.UUID
+
+// helper function to calculate relative time
+fun getRelativeTime(timestamp: Instant): String {
+    val now = kotlinx.datetime.Clock.System.now()
+    val duration = now - timestamp
+    
+    return when {
+        duration.inWholeMinutes < 1 -> "now"
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m"
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}h"
+        duration.inWholeDays < 7 -> "${duration.inWholeDays}d"
+        else -> "${duration.inWholeDays / 7}w"
+    }
+}
 
 @Composable
 fun FeedScreen(
@@ -77,6 +95,7 @@ fun FeedScreen(
     val posts by viewModel.posts.collectAsState()
     val pets by viewModel.pets.collectAsState()
     val postResult by viewModel.postState.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
 
     fun onLoadMorePosts() {
         viewModel.loadMorePosts()
@@ -105,16 +124,25 @@ fun FeedScreen(
             isPublic = isPublic,
         )
     }
+    fun onSearchQueryChange(query: String) {
+        viewModel.updateSearchQuery(query)
+    }
+    fun onClearSearch() {
+        viewModel.clearSearch()
+    }
 
     FeedContent(
         posts,
         pets,
         postResult,
+        searchQuery,
         ::onLoadMorePosts,
         ::onLike,
         ::onComment,
         ::onShare,
         ::onCreatePost,
+        ::onSearchQueryChange,
+        ::onClearSearch,
     )
 }
 
@@ -124,11 +152,14 @@ fun FeedContent(
     posts: List<Post>,
     pets: List<Pet> = emptyList(),
     postResult: PostResult = PostResult.PostSuccess,
+    searchQuery: String = "",
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> }
+    onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
+    onSearchQueryChange: (String) -> Unit = {},
+    onClearSearch: () -> Unit = {}
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
@@ -148,27 +179,64 @@ fun FeedContent(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                items(posts.size + 1) { index ->
-                    if (index == 0) {
+                item {
+                    SearchBar(
+                        searchQuery = searchQuery,
+                        onSearchQueryChange = onSearchQueryChange,
+                        onClearSearch = onClearSearch
+                    )
+                }
+                // add post button (only show when not searching)
+                if (searchQuery.isBlank()) {
+                    item {
                         AddPostButton(
                             onClick = {
                                 showAddPostDialog = true
                             }
                         )
-                    } else {
-                        val post = posts[index-1]
-                        if (index >= posts.size - 2) {
-                            // Load more when near end of list
-                            onLoadMorePosts()
+                    }
+                }
+                itemsIndexed(posts) { index, post ->
+                    if (index >= posts.size - 2) {
+                        // Load more when near end of list
+                        onLoadMorePosts()
+                    }
+                    PostItem(
+                        post = post,
+                        isExpanded = expandedPostId == post.id,
+                        onLike = onLike,
+                        onComment = onComment,
+                        onOpenCommentSection = ::onOpenCommentSection,
+                        onShare = onShare
+                    )
+                }
+                // show a message when search returns no results
+                if (searchQuery.isNotBlank() && posts.isEmpty()) {
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "No posts found for \"$searchQuery\"",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Try searching for something else",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Gray
+                                )
+                            }
                         }
-                        PostItem(
-                            post = post,
-                            isExpanded = expandedPostId == post.id,
-                            onLike = onLike,
-                            onComment = onComment,
-                            onOpenCommentSection = ::onOpenCommentSection,
-                            onShare = onShare
-                        )
                     }
                 }
             }
@@ -181,8 +249,53 @@ fun FeedContent(
                 )
             }
         }
+    }
+}
 
-
+@Composable
+fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+    ) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            placeholder = { 
+                Text("Search posts, pets, or owners...") 
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = Color.Gray
+                )
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = onClearSearch) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear search",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
     }
 }
 
@@ -193,19 +306,42 @@ fun AddPostButton(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF8F9FA)
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(4.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            IconWithText(
-                Icons.Default.AddCircleOutline,
-                "Post Something...",
-                fontSize = 24.sp,
-                onClick = onClick
+            Icon(
+                imageVector = Icons.Default.AddCircleOutline,
+                contentDescription = "Add post",
+                tint = Color(0xFFcb85ed),
+                modifier = Modifier.size(28.dp)
             )
+            Text(
+                text = "Share something about your pet...",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF6C757D),
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Post", color = Color.White)
+            }
         }
     }
 }
@@ -229,10 +365,10 @@ fun PostItem(
         Column(modifier = Modifier.padding(12.dp)) {
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (post.userProfileUrl != null) {
-                    println(post.userProfileUrl)
+                if (post.petImageUrl != null) {
+                    println(post.petImageUrl)
                     Image(
-                        painter = rememberAsyncImagePainter(post.userProfileUrl),
+                        painter = rememberAsyncImagePainter(post.petImageUrl),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(40.dp)
@@ -261,7 +397,7 @@ fun PostItem(
                 Text(text = post.caption)
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = formatDate(post.createdAt),
+                    text = getRelativeTime(post.createdAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
@@ -311,16 +447,23 @@ fun PostItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Top Comments
-            if (isExpanded)
-            {
-                CommentSection(
-                    post,
-                    onComment
-                )
-            } else {
-                post.comments.firstOrNull()?.let {
-                    CommentText(author = it.authorName?:"User", comment = it.text)
+            AnimatedContent(
+                targetState = isExpanded,
+                transitionSpec = {
+                    fadeIn() + expandVertically() togetherWith fadeOut() + shrinkVertically()
+                }
+            ) { targetExpanded ->
+                if (targetExpanded) {
+                    CommentSection(
+                        post,
+                        onComment
+                    )
+                } else {
+                    CommentsPreview(
+                        post = post,
+                        onViewAllComments = { onOpenCommentSection(post.id) },
+                        onAddComment = onComment
+                    )
                 }
             }
 
@@ -330,51 +473,133 @@ fun PostItem(
 }
 
 @Composable
+fun CommentsPreview(
+    post: Post,
+    onViewAllComments: () -> Unit,
+    onAddComment: (UUID, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val previewCount = 2 // show top 2 comments in preview
+    val hasMoreComments = post.comments.size > previewCount
+    
+    Column(modifier = modifier) {
+        // preview
+        post.comments.take(previewCount).forEach { comment ->
+            CommentText(
+                author = comment.authorName ?: "User",
+                comment = comment.text,
+                timestamp = getRelativeTime(comment.createdAt),
+                modifier = Modifier.padding(vertical = 1.dp)
+            )
+        }
+        
+        // view all
+        if (hasMoreComments) {
+            Text(
+                text = "View all ${post.comments.size} comments",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .clickable { onViewAllComments() }
+            )
+        }
+        
+        var commentText by remember { mutableStateOf("") }
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = commentText,
+                onValueChange = { commentText = it },
+                placeholder = { Text("Add a comment...") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFcb85ed),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            Button(
+                onClick = {
+                    if (commentText.isNotBlank()) {
+                        onAddComment(post.id, commentText)
+                        commentText = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                modifier = Modifier.padding(start = 4.dp),
+                enabled = commentText.isNotBlank()
+            ) {
+                Text("Post", color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
 fun CommentSection(
     post: Post,
     onComment: (UUID, String) -> Unit
 ) {
-    var commentText by remember { mutableStateOf<String?>(null) }
+    var commentText by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.padding(top = 8.dp)) {
-        // Preview of existing comments
-        post.comments.forEach {
-            CommentText(author = it.authorName?:"User", comment = it.text)
+        post.comments.forEach { comment ->
+            CommentText(
+                author = comment.authorName ?: "User",
+                comment = comment.text,
+                timestamp = getRelativeTime(comment.createdAt),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
         }
 
-        OutlinedTextField(
-            value = commentText ?: "",
-            onValueChange = { commentText = it },
-            placeholder = {
-                Text(
-                    "Write a comment...",
-                    fontSize = 14.sp // slightly larger font helps readability
-                )
-            },
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .defaultMinSize(minHeight = 56.dp) // adaptive min height
-        )
-
-        Spacer(modifier = Modifier.padding(4.dp))
-
-        Button(
-            onClick = {
-                commentText?.let{
-                    onComment(post.id, it)
-                }
-                commentText = null
-            },
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFcb85ed)
-            )
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Post", color = Color.White)
+            OutlinedTextField(
+                value = commentText,
+                onValueChange = { commentText = it },
+                placeholder = { Text("Add a comment...") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFcb85ed),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            Button(
+                onClick = {
+                    if (commentText.isNotBlank()) {
+                        onComment(post.id, commentText)
+                        commentText = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                modifier = Modifier.padding(start = 4.dp),
+                enabled = commentText.isNotBlank()
+            ) {
+                Text("Post", color = Color.White)
+            }
         }
     }
 }
@@ -427,5 +652,8 @@ fun SocialFeedPreview() {
         )
     )
 
-    FeedContent(posts = samplePosts)
+    FeedContent(
+        posts = samplePosts,
+        searchQuery = "" // defaault
+    )
 }
