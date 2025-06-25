@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 
 class MainActivity : ComponentActivity() {
@@ -12,10 +13,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        val petsViewModel = PetsViewModel()
         val feedViewModel = FeedViewModel()
 
         setContent {
-            MainNavigator(feedViewModel)
+            MainNavigator(
+                petsViewModel = petsViewModel,
+                feedViewModel = feedViewModel
+            )
         }
     }
 }

@@ -35,6 +35,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import java.util.UUID
 
 import com.example.cs446.backend.data.model.Pet
@@ -63,12 +65,13 @@ import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.ui.pages.main.calculateAge
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.Permissions
-import com.example.cs446.backend.data.repository.petToRaw
-import kotlinx.datetime.Clock
+import com.example.cs446.view.pets.PetsViewModel
+
 
 @Composable
 fun PetsScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
+    viewModel: PetsViewModel,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -79,34 +82,19 @@ fun PetsScreen(
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
     var showRemovePetDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    var currentUserId by remember { mutableStateOf<UUID?>(null) }
-    var pets by remember { mutableStateOf(emptyList<Pet>()) }
-    var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
+    val currentUserId by viewModel.currentUserId.collectAsState()
+    val pets by viewModel.pets.collectAsState()
+    val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
+    val errorMessage by viewModel.error.collectAsState()
 
-    // Load pets the users created from backend. TODO: change to pets that have any relation with user
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            try {
-                currentUserId = UserRepository().getCurrentUserId()
-                    ?: throw IllegalStateException("User ID is null")
-                pets = petRepository.getPetsRelatedToUser(currentUserId!!)
-                selectedPetId = pets.firstOrNull()?.id
-            } catch (e: Exception) {
-                e.printStackTrace()
-                errorMessage = "Failed to initialize user and pets."
-            }
-        }
-    }
     LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            errorMessage = null
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearError()
         }
     }
-
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -119,23 +107,19 @@ fun PetsScreen(
         ) {
             // Top icons (pets + add pet)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 pets.forEach { pet ->
                     Column(
-                        modifier = Modifier.clickable { selectedPetId = pet.id },
+                        modifier = Modifier.clickable { viewModel.selectPet(pet.id) },
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (pet.imageUrl != null) {
                             Image(
                                 painter = rememberAsyncImagePainter(pet.imageUrl),
                                 contentDescription = pet.name,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.size(56.dp).clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
@@ -152,9 +136,7 @@ fun PetsScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable {
-                        showAddPetDialog = true
-                    }
+                    modifier = Modifier.clickable { showAddPetDialog = true }
                 ) {
                     Icon(Icons.Default.AddCircle, contentDescription = "Add Pet", modifier = Modifier.size(56.dp))
                     Text("Add Pet", fontSize = 14.sp)
@@ -287,51 +269,15 @@ fun PetsScreen(
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
             onAdd = { name, species, breed, birthdate, weight, imageUri ->
-                coroutineScope.launch {
-                    try {
-                        // TODO: get pet UUID from database insert rather than defining it on the client side
-                        val petId = UUID.randomUUID()
-                        var imageUrl: String? = null
-                        if (imageUri != null) {
-                            imageUrl = imageRepository.uploadPetImage(context, imageUri, petId)
-                            if (imageUrl == null) {
-                                errorMessage = "Failed to upload image."
-                            }
-                        }
-                        val newPet = Pet(
-                            id = petId,
-                            createdAt = Clock.System.now(),
-                            name = name,
-                            species = species,
-                            breed = breed,
-                            createdBy = currentUserId!!,
-                            birthdate = birthdate,
-                            weight = weight,
-                            imageUrl = imageUrl
-                        )
-                        petRepository.addPet(newPet)
-                        petRepository.addUserPetRelation(
-                            UserPetRelation(
-                                userId = currentUserId!!,
-                                petId = petId,
-                                relation = "Owner",
-                                permissions = Permissions(
-                                    editLogs = true,
-                                    setReminders = true,
-                                    inviteHandlers = true,
-                                    makePosts = true,
-                                    editPermissionsOfOthers = true
-                                )
-                            )
-                        )
-                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
-                        selectedPetId = petId
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        errorMessage = e.message
-//                        errorMessage = "Failed to add pet."
-                    }
-                }
+                viewModel.addPet(
+                    context = context,
+                    name = name,
+                    species = species,
+                    breed = breed,
+                    birthdate = birthdate,
+                    weight = weight,
+                    imageUri = imageUri
+                )
                 showAddPetDialog = false
             }
         )
@@ -342,34 +288,17 @@ fun PetsScreen(
             pet = selectedPet,
             onDismiss = { showEditPetDialog = false },
             onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, newImageUri ->
-                coroutineScope.launch {
-                    try {
-                        val newImageUrl: String? = if (newImageUri != null) {
-                            val url = imageRepository.uploadPetImage(context, newImageUri, selectedPet.id)
-                            if (url == null) {
-                                errorMessage = "Failed to upload image."
-                            }
-                            url
-                        } else {
-                            selectedPet.imageUrl
-                        }
-
-                        val updatedPet = selectedPet.copy(
-                            name = newName,
-                            species = newSpecies,
-                            breed = newBreed,
-                            birthdate = newBirthdate,
-                            weight = newWeight,
-                            imageUrl = newImageUrl
-                        )
-                        petRepository.updatePet(updatedPet)
-                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        errorMessage = "Failed to update pet."
-                    }
-                    showEditPetDialog = false
-                }
+                viewModel.updatePet(
+                    context = context,
+                    existingPet = selectedPet,
+                    newName = newName,
+                    newSpecies = newSpecies,
+                    newBreed = newBreed,
+                    newBirthdate = newBirthdate,
+                    newWeight = newWeight,
+                    newImageUri = newImageUri
+                )
+                showEditPetDialog = false
             }
         )
     }
@@ -378,21 +307,10 @@ fun PetsScreen(
         RemovePetDialog(
             petName = selectedPet.name,
             onConfirm = {
-                coroutineScope.launch {
-                    try {
-                        petRepository.deletePet(selectedPet.id)
-                        pets = petRepository.getPetsRelatedToUser(currentUserId!!)
-                        selectedPetId = pets.firstOrNull()?.id
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        errorMessage = "Failed to remove pet."
-                    }
-                    showRemovePetDialog = false
-                }
-            },
-            onDismiss = {
+                viewModel.deletePet(selectedPet.id)
                 showRemovePetDialog = false
-            }
+            },
+            onDismiss = { showRemovePetDialog = false }
         )
     }
 }
