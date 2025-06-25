@@ -40,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,19 +51,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import java.util.UUID
 
-import com.example.cs446.backend.data.model.Pet
-import com.example.cs446.backend.data.repository.ImageRepository
-import com.example.cs446.backend.data.repository.PetRepository
-import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.ui.pages.main.calculateAge
-import com.example.cs446.backend.data.model.UserPetRelation
-import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.view.pets.PetsViewModel
 
 
@@ -74,25 +64,20 @@ fun PetsScreen(
     viewModel: PetsViewModel,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val imageRepository = remember { ImageRepository() }
-    val petRepository = remember { PetRepository() }
     val snackbarHostState = remember { SnackbarHostState() }
-
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
     var showRemovePetDialog by remember { mutableStateOf(false) }
 
-    val currentUserId by viewModel.currentUserId.collectAsState()
     val pets by viewModel.pets.collectAsState()
     val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
-    val errorMessage by viewModel.error.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
             snackbarHostState.showSnackbar(it)
-            viewModel.clearError()
+            viewModel.clearErrorMessage()
         }
     }
 
@@ -290,7 +275,7 @@ fun PetsScreen(
             onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, newImageUri ->
                 viewModel.updatePet(
                     context = context,
-                    existingPet = selectedPet,
+                    originalPet = selectedPet,
                     newName = newName,
                     newSpecies = newSpecies,
                     newBreed = newBreed,

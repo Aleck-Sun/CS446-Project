@@ -31,11 +31,10 @@ class PetsViewModel : ViewModel() {
     private val _selectedPetId = MutableStateFlow<UUID?>(null)
     val selectedPetId: StateFlow<UUID?> = _selectedPetId
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _currentUserId = MutableStateFlow<UUID?>(null)
-    val currentUserId: StateFlow<UUID?> = _currentUserId
 
     init {
         loadPets(clearSelect = true)
@@ -52,7 +51,7 @@ class PetsViewModel : ViewModel() {
                     _selectedPetId.value = _pets.value.firstOrNull()?.id
                 }
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to load pets: ${e.message}"
+                _errorMessage.value = e.message ?: "Failed to load pets: ${e.message}"
             }
         }
     }
@@ -64,8 +63,8 @@ class PetsViewModel : ViewModel() {
     fun addPet(
         context: Context,
         name: String,
-        species: com.example.cs446.backend.data.model.Species,
-        breed: com.example.cs446.backend.data.model.Breed,
+        species: Species,
+        breed: Breed,
         birthdate: Instant,
         weight: Double,
         imageUri: Uri?
@@ -109,7 +108,7 @@ class PetsViewModel : ViewModel() {
                 loadPets()
                 _selectedPetId.value = petId
             } catch (e: Exception) {
-                _error.value =  "Failed to add pet: ${e.message}"
+                _errorMessage.value =  "Failed to add pet: ${e.message}"
             }
         }
     }
@@ -141,7 +140,7 @@ class PetsViewModel : ViewModel() {
                 petRepository.updatePet(updatedPet)
                 loadPets()
             } catch (e: Exception) {
-                _error.value = "Failed to update pet: ${e.message}"
+                _errorMessage.value = "Failed to update pet: ${e.message}"
             }
         }
     }
@@ -153,12 +152,12 @@ class PetsViewModel : ViewModel() {
                 loadPets(clearSelect = true)
                 _selectedPetId.value = _pets.value.firstOrNull()?.id
             } catch (e: Exception) {
-                _error.value = e.message ?: "Failed to delete pet: ${e.message}"
+                _errorMessage.value = e.message ?: "Failed to delete pet: ${e.message}"
             }
         }
     }
 
-    fun clearError() {
-        _error.value = null
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 }
