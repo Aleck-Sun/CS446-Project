@@ -41,4 +41,13 @@ class AuthRepository {
             return AuthResult.LoginError("Invalid credentials.")
         }
     }
+
+    suspend fun logout(): Boolean {
+        return try {
+            supabase.auth.signOut()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
 }

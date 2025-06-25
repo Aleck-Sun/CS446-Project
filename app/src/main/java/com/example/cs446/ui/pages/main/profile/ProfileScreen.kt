@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
@@ -30,12 +31,17 @@ import androidx.lifecycle.lifecycleScope
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.R
 import com.example.cs446.ui.pages.main.MainActivityDestination
+import com.example.cs446.backend.component.security.SecurityComponent
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
-    onNavigate: (MainActivityDestination, String?) -> Unit
+    onNavigate: (MainActivityDestination, String?) -> Unit,
+    onLogout: () -> Unit = {}
 ) {
+    val coroutineScope = rememberCoroutineScope()
+    val securityComponent = SecurityComponent()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -75,6 +81,24 @@ fun ProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Follow")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // logout button for testing
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    val success = securityComponent.logoutUser()
+                    if (success) {
+                        onLogout()
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+        ) {
+            Text("Logout", color = Color.White)
         }
 
         Spacer(modifier = Modifier.height(16.dp))
