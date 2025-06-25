@@ -1,6 +1,13 @@
 import android.content.Context
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -67,6 +75,21 @@ import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.datetime.Instant
 import java.util.UUID
+import kotlin.time.Duration.Companion.seconds
+
+// helper function to calculate relative time
+fun getRelativeTime(timestamp: Instant): String {
+    val now = kotlinx.datetime.Clock.System.now()
+    val duration = now - timestamp
+    
+    return when {
+        duration.inWholeMinutes < 1 -> "now"
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m"
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}h"
+        duration.inWholeDays < 7 -> "${duration.inWholeDays}d"
+        else -> "${duration.inWholeDays / 7}w"
+    }
+}
 
 @Composable
 fun FeedScreen(
@@ -352,7 +375,7 @@ fun PostItem(
                 Text(text = post.caption)
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = formatDate(post.createdAt),
+                    text = getRelativeTime(post.createdAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray
                 )
@@ -402,16 +425,23 @@ fun PostItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Top Comments
-            if (isExpanded)
-            {
-                CommentSection(
-                    post,
-                    onComment
-                )
-            } else {
-                post.comments.firstOrNull()?.let {
-                    CommentText(author = it.authorName?:"User", comment = it.text)
+            AnimatedContent(
+                targetState = isExpanded,
+                transitionSpec = {
+                    fadeIn() + expandVertically() togetherWith fadeOut() + shrinkVertically()
+                }
+            ) { targetExpanded ->
+                if (targetExpanded) {
+                    CommentSection(
+                        post,
+                        onComment
+                    )
+                } else {
+                    CommentsPreview(
+                        post = post,
+                        onViewAllComments = { onOpenCommentSection(post.id) },
+                        onAddComment = onComment
+                    )
                 }
             }
 
@@ -421,51 +451,133 @@ fun PostItem(
 }
 
 @Composable
+fun CommentsPreview(
+    post: Post,
+    onViewAllComments: () -> Unit,
+    onAddComment: (UUID, String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val previewCount = 2 // show top 2 comments in preview
+    val hasMoreComments = post.comments.size > previewCount
+    
+    Column(modifier = modifier) {
+        // preview
+        post.comments.take(previewCount).forEach { comment ->
+            CommentText(
+                author = comment.authorName ?: "User",
+                comment = comment.text,
+                timestamp = getRelativeTime(comment.createdAt),
+                modifier = Modifier.padding(vertical = 1.dp)
+            )
+        }
+        
+        // view all
+        if (hasMoreComments) {
+            Text(
+                text = "View all ${post.comments.size} comments",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .clickable { onViewAllComments() }
+            )
+        }
+        
+        var commentText by remember { mutableStateOf("") }
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = commentText,
+                onValueChange = { commentText = it },
+                placeholder = { Text("Add a comment...") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFcb85ed),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            Button(
+                onClick = {
+                    if (commentText.isNotBlank()) {
+                        onAddComment(post.id, commentText)
+                        commentText = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                modifier = Modifier.padding(start = 4.dp),
+                enabled = commentText.isNotBlank()
+            ) {
+                Text("Post", color = Color.White)
+            }
+        }
+    }
+}
+
+@Composable
 fun CommentSection(
     post: Post,
     onComment: (UUID, String) -> Unit
 ) {
-    var commentText by remember { mutableStateOf<String?>(null) }
+    var commentText by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.padding(top = 8.dp)) {
-        // Preview of existing comments
-        post.comments.forEach {
-            CommentText(author = it.authorName?:"User", comment = it.text)
+        post.comments.forEach { comment ->
+            CommentText(
+                author = comment.authorName ?: "User",
+                comment = comment.text,
+                timestamp = getRelativeTime(comment.createdAt),
+                modifier = Modifier.padding(vertical = 2.dp)
+            )
         }
 
-        OutlinedTextField(
-            value = commentText ?: "",
-            onValueChange = { commentText = it },
-            placeholder = {
-                Text(
-                    "Write a comment...",
-                    fontSize = 14.sp // slightly larger font helps readability
-                )
-            },
-            textStyle = LocalTextStyle.current.copy(fontSize = 14.sp),
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .defaultMinSize(minHeight = 56.dp) // adaptive min height
-        )
-
-        Spacer(modifier = Modifier.padding(4.dp))
-
-        Button(
-            onClick = {
-                commentText?.let{
-                    onComment(post.id, it)
-                }
-                commentText = null
-            },
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFcb85ed)
-            )
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Post", color = Color.White)
+            OutlinedTextField(
+                value = commentText,
+                onValueChange = { commentText = it },
+                placeholder = { Text("Add a comment...") },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                textStyle = MaterialTheme.typography.bodyMedium,
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFFcb85ed),
+                    unfocusedBorderColor = Color.LightGray
+                )
+            )
+            
+            Button(
+                onClick = {
+                    if (commentText.isNotBlank()) {
+                        onComment(post.id, commentText)
+                        commentText = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFcb85ed)
+                ),
+                modifier = Modifier.padding(start = 4.dp),
+                enabled = commentText.isNotBlank()
+            ) {
+                Text("Post", color = Color.White)
+            }
         }
     }
 }
