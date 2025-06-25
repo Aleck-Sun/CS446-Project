@@ -37,8 +37,8 @@ class FeedViewModel : ViewModel() {
     private var isLoading = false
     private var currentPage = 0
 
-    val _earliestLoadedTime = MutableStateFlow<Instant?>(null)
-    val _latestLoadedTime = MutableStateFlow<Instant?>(null)
+    private val _earliestLoadedTime = MutableStateFlow<Instant?>(null)
+    private val _latestLoadedTime = MutableStateFlow<Instant?>(null)
 
     init {
         filterPosts()
@@ -81,7 +81,8 @@ class FeedViewModel : ViewModel() {
         context: Context,
         petId: UUID,
         caption: String,
-        imageUris: List<Uri>
+        imageUris: List<Uri>,
+        isPublic: Boolean = false,
     ) {
         viewModelScope.launch {
             _postState.value = PostResult.Posting
@@ -94,7 +95,8 @@ class FeedViewModel : ViewModel() {
                 postRepository.uploadPost(
                     imageUrls,
                     petId,
-                    caption
+                    caption,
+                    isPublic
                 )
                 _postState.value = PostResult.PostSuccess
                 loadMorePosts()

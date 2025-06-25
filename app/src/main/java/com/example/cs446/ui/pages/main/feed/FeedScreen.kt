@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,6 +34,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,7 +55,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Comment
 import com.example.cs446.backend.data.model.Pet
@@ -67,7 +66,6 @@ import com.example.cs446.ui.components.feed.IconWithText
 import com.example.cs446.ui.components.feed.ImageCarousel
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.feed.CreatePostDialog
-import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.datetime.Instant
@@ -111,12 +109,19 @@ fun FeedScreen(
     fun onShare(postId: UUID) {
         // TODO
     }
-    fun onCreatePost(context: Context, text: String, petId: UUID, imageUris: List<Uri>) {
+    fun onCreatePost(
+        context: Context,
+        text: String,
+        petId: UUID,
+        imageUris: List<Uri>,
+        isPublic: Boolean
+    ) {
         viewModel.uploadPost(
             context = context,
             petId = petId,
             caption = text,
-            imageUris = imageUris
+            imageUris = imageUris,
+            isPublic = isPublic,
         )
     }
     fun onSearchQueryChange(query: String) {
@@ -141,6 +146,7 @@ fun FeedScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedContent(
     posts: List<Post>,
@@ -151,7 +157,7 @@ fun FeedContent(
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (UUID) -> Unit = {},
-    onCreatePost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ -> },
+    onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {}
 ) {
@@ -172,9 +178,7 @@ fun FeedContent(
             LazyColumn(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
             ) {
-                // search bar - always show
                 item {
                     SearchBar(
                         searchQuery = searchQuery,
@@ -182,7 +186,6 @@ fun FeedContent(
                         onClearSearch = onClearSearch
                     )
                 }
-                
                 // add post button (only show when not searching)
                 if (searchQuery.isBlank()) {
                     item {
@@ -193,9 +196,9 @@ fun FeedContent(
                         )
                     }
                 }
-                
                 itemsIndexed(posts) { index, post ->
-                    if (index >= posts.size - 3 && searchQuery.isBlank()) {
+                    if (index >= posts.size - 2) {
+                        // Load more when near end of list
                         onLoadMorePosts()
                     }
                     PostItem(
@@ -207,7 +210,6 @@ fun FeedContent(
                         onShare = onShare
                     )
                 }
-                
                 // show a message when search returns no results
                 if (searchQuery.isNotBlank() && posts.isEmpty()) {
                     item {
@@ -363,9 +365,10 @@ fun PostItem(
         Column(modifier = Modifier.padding(12.dp)) {
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (post.userProfileUrl != null) {
+                if (post.petImageUrl != null) {
+                    println(post.petImageUrl)
                     Image(
-                        painter = rememberAsyncImagePainter(post.userProfileUrl),
+                        painter = rememberAsyncImagePainter(post.petImageUrl),
                         contentDescription = "Profile Picture",
                         modifier = Modifier
                             .size(40.dp)

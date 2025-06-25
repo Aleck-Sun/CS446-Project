@@ -29,14 +29,16 @@ class PostRepository {
     suspend fun uploadPost(
         imageUrls: List<String>,
         petId: UUID,
-        caption: String
+        caption: String,
+        isPublic: Boolean = false
     ) {
         postTable.insert(
             mapOf (
                 "user_id" to auth.currentUserOrNull()?.id,
                 "pet_id" to petId,
                 "image_urls" to imageUrls,
-                "caption" to caption
+                "caption" to caption,
+                "is_public" to isPublic
             )
         )
     }
@@ -91,7 +93,6 @@ class PostRepository {
     suspend fun getSignedImageUrl(imageUrl: String): String {
         return try {
             storage.from(bucketName).createSignedUrl(
-                // TODO - this should be the URL of the poster, not the user
                 path = imageUrl,
                 expiresIn = Duration.parse("1h")  // expires in 1 hour
             )
@@ -170,7 +171,8 @@ class PostRepository {
 
     suspend fun loadPosts(
         createdAfter: Instant? = null,
-        createdBefore: Instant? = null
+        createdBefore: Instant? = null,
+        maxPosts: Long = 2
     ): List<Post> {
         return try {
             val postsRaw = postTable
@@ -186,13 +188,43 @@ class PostRepository {
                             }
                         }
                     }
+                    limit(maxPosts)
                 }
                 .decodeList<PostRaw>()
+
+            // Get all users associated with loaded posts
+            val allUsers = userRepository.getUsersByIds(
+                postsRaw.map {
+                    it.userId
+                }.toSet().toList()
+            ).associateBy { it.id }
+
+            // Get all pets associated with loaded posts
+            val allPets = petRepository.getPetsByIds(
+                postsRaw.map {
+                    it.petId
+                }.toSet().toList()
+            ).associateBy { it.id }
+
+            // Get all likes associated with loaded posts
+            val allPostIds = postsRaw.map{ it.id }.toSet().toList()
+            val userPostLikes = likeTable.select {
+                filter {
+                    isIn("post_id", allPostIds)
+                    isIn("user_id", allUsers.keys.toList())
+                    eq("liked", true)
+                }
+            }.decodeList<Like>()
+
             val posts = postsRaw.map {
-                val user = userRepository.getUserById(it.userId)
-                val pet = petRepository.getPet(it.petId)
-                val likes = getLikesForPost(it.id)
-                val liked = getIfUserLikedPost(it.id)
+                val user = allUsers.getValue(it.userId)
+                val pet = allPets.getValue(it.petId)
+                val likes = userPostLikes.count { like ->
+                    like.postId == it.id
+                }
+                val liked = userPostLikes.any { like ->
+                    like.postId == it.id && like.userId == user.id
+                }
                 Post(
                     id = it.id,
                     userId = it.userId,
@@ -202,12 +234,12 @@ class PostRepository {
                     imageUrls = it.imageUrls.map {
                         url -> getSignedImageUrl(url)
                     },
-                    userProfileUrl = user?.avatarUrl,
-                    authorName = user?.username,
+                    petImageUrl = pet.imageUrl,
+                    authorName = user.username,
                     petName = pet.name,
                     comments = getCommentsForPost(it.id),
                     likes = likes,
-                    liked = liked
+                    liked = liked,
                 )
             }
             return posts

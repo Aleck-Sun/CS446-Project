@@ -12,7 +12,8 @@ data class PostRaw(
     @Json(name = "created_at") val createdAt: Instant,
     val caption: String,
     @Json(name = "image_urls") val imageUrls: List<String>,
-    val location: String? = null, // Loaded as string from database
+    val location: String? = null, // Loaded as string from database,
+    @Json(name = "is_public") val isPublic: Boolean
 )
 
 data class Post(
@@ -22,12 +23,13 @@ data class Post(
     val createdAt: Instant,
     val caption: String,
     val imageUrls: List<String>,
-    val userProfileUrl: String? = null,
+    val isPublic: Boolean = false,
+    val petImageUrl: String? = null,
     val comments: List<Comment> = listOf<Comment>(),
     val location: Location? = null,
     val authorName: String? = null,
     val petName: String? = null,
     val likes: Int = 0,
     val liked: Boolean = false,
-    val isFollowing: Boolean = false
+    val isFollowing: Boolean = false,
 )

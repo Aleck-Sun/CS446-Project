@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -55,7 +57,7 @@ import java.util.UUID
 fun CreatePostDialog(
     pets: List<Pet> = emptyList<Pet>(),
     onDismiss: () -> Unit = {},
-    onPost: (Context, String, UUID, List<Uri>) -> Unit = {_, _, _, _ ->  },
+    onPost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ ->  },
     postResult: PostResult = PostResult.Idling
 ) {
 
@@ -63,6 +65,7 @@ fun CreatePostDialog(
     val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var text by remember { mutableStateOf<String>("") }
     var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
+    var makePublic by remember { mutableStateOf<Boolean>(false) }
 
     val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -82,7 +85,7 @@ fun CreatePostDialog(
                     return@TextButton
                 }
                 selectedPet?.let {
-                    onPost(context, text, it.id, selectedImagesUri)
+                    onPost(context, text, it.id, selectedImagesUri, makePublic)
                 }
             }) {
                 Text("Add")
@@ -180,6 +183,18 @@ fun CreatePostDialog(
                     label = { Text("Add a caption...") },
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = makePublic,
+                        onCheckedChange = { makePublic = it },
+                        modifier = Modifier,
+                        enabled = true,
+                    )
+                    Text("Make post public?")
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
                 when (postResult) {
