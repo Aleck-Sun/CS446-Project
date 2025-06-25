@@ -17,11 +17,13 @@ import com.example.cs446.ui.pages.main.pets.FamilyScreen
 import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.pets.LogsScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
+import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
+    petsViewModel: PetsViewModel,
     feedViewModel: FeedViewModel
 ) {
     val navController = rememberNavController()
@@ -64,15 +66,15 @@ fun MainNavigator(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
-                PetsScreen(onNavigate = navigateTo)
+                PetsScreen(onNavigate = navigateTo, viewModel = petsViewModel)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = navigateTo, feedViewModel)
+                FeedScreen(onNavigate = navigateTo, viewModel = feedViewModel)
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo)
             }
-            composable( "${MainActivityDestination.Logs.name.toLowerCase()}/{petId}") { backStackEntry ->
+            composable( "${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
                 LogsScreen(
                     petId = petId,

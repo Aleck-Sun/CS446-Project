@@ -50,28 +50,38 @@ import kotlinx.datetime.todayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.atStartOfDayIn
 
+import com.example.cs446.backend.data.model.Breed
+import com.example.cs446.backend.data.model.Species
+import com.example.cs446.backend.data.model.speciesOfBreed
+import com.example.cs446.ui.components.DropdownSelector
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPetDialog(
     onDismiss: () -> Unit,
-    onAdd: (String, String, String, Instant, Uri?) -> Unit
+    onAdd: (name: String, species: Species, breed: Breed, birthdate: Instant, weight: Double, imageUri: Uri?) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var breed by remember { mutableStateOf("") }
+    var selectedSpecies by remember { mutableStateOf<Species?>(null) }
+    var selectedBreed by remember { mutableStateOf<Breed?>(null) }
+    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
     var weight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     var showDatePicker by remember { mutableStateOf(false) }
-    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
+    var speciesError by remember { mutableStateOf(false) }
+    var breedError by remember { mutableStateOf(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedImageUri = uri
     }
-
+    
+    // TODO: figure out date picker off by 1 issue
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
             selectableDates = object : SelectableDates {
@@ -107,14 +117,19 @@ fun AddPetDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                // Validation logic
+                // Validation
                 nameError = name.isBlank()
+                speciesError = selectedSpecies == null
+                breedError = selectedBreed == null
+
                 val weightValue = weight.toDoubleOrNull()
                 weightError = weightValue == null || weightValue <= 0.0
 
-                if (!nameError && !weightError) {
-                    val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
-                    onAdd(name, breed, weight, birthdateInstant, selectedImageUri)
+                val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
+                val birthdateError = birthdateInstant > Clock.System.now()
+
+                if (!nameError && !speciesError && !breedError && !birthdateError && !weightError) {
+                    onAdd(name, selectedSpecies!!, selectedBreed!!, birthdateInstant, weightValue!!, selectedImageUri)
                 }
             }) {
                 Text("Add")
@@ -172,6 +187,7 @@ fun AddPetDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Name
                 OutlinedTextField(
                     value = name,
                     onValueChange = {
@@ -182,25 +198,49 @@ fun AddPetDialog(
                     isError = nameError,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (nameError) {
-                    Text(
-                        "Name cannot be empty.",
-                        color = MaterialTheme.colorScheme.error,
-                        fontSize = 12.sp
-                    )
-                }
+                if (nameError) Text("Name cannot be empty.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = breed,
-                    onValueChange = { breed = it },
-                    label = { Text("Breed") },
+                // Species
+                DropdownSelector(
+                    label = "Species",
+                    selectedValue = selectedSpecies,
+                    options = Species.entries.toList(),
+                    onValueSelected = { newSpecies ->
+                        // Reset breed if species has changed
+                        if (newSpecies != selectedSpecies) {
+                            selectedBreed = null
+                        }
+                        selectedSpecies = newSpecies
+                        speciesError = false
+                    },
+                    isError = speciesError,
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (speciesError) Text("Please select a species.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Breed
+                DropdownSelector(
+                    label = "Breed",
+                    selectedValue = selectedBreed,
+                    options = selectedSpecies?.let { species ->
+                        Breed.entries.filter { it == Breed.OTHER || speciesOfBreed(it) == species }
+                    } ?: emptyList(),
+                    onValueSelected = {
+                        selectedBreed = it
+                        breedError = false
+                    },
+                    isError = breedError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (breedError) Text("Please select a breed.", color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Birthdate
                 OutlinedTextField(
                     value = birthdate.toString(),
                     onValueChange = { },
@@ -221,6 +261,7 @@ fun AddPetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // Weight
                 OutlinedTextField(
                     value = weight,
                     onValueChange = {

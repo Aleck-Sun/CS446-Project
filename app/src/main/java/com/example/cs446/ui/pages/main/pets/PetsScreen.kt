@@ -1,6 +1,5 @@
 package com.example.cs446.ui.pages.main.pets
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,11 +35,11 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,88 +51,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.backend.data.model.Pet
-import com.example.cs446.backend.data.repository.ImageRepository
-import com.example.cs446.backend.data.repository.PetRepository
+
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.formatDate
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
-import java.time.LocalDate
-import java.time.LocalDate.ofEpochDay
-import java.time.Period
-import java.util.UUID
+import com.example.cs446.ui.pages.main.calculateAge
+import com.example.cs446.view.pets.PetsViewModel
+
 
 @Composable
 fun PetsScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
+    viewModel: PetsViewModel,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val imageRepository = remember { ImageRepository() }
-    val petRepository = remember { PetRepository() }
     val snackbarHostState = remember { SnackbarHostState() }
-
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
     var showRemovePetDialog by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // TODO: implement backend
-    var pets by remember {
-        mutableStateOf(
-            listOf(
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2021-02-03T00:00:00Z"),
-                    "Charlie",
-                    "Dog", "Golden Retriever",
-                    UUID.randomUUID(),
-                    Instant.parse("2025-05-28T00:00:00Z"),
-                    65.0
-                ),
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2024-11-06T00:00:00Z"),
-                    "Colin",
-                    "Dog", "Beagle",
-                    UUID.randomUUID(),
-                    Instant.parse("2024-01-15T00:00:00Z"),
-                    40.0
-                ),
-                Pet(
-                    UUID.randomUUID(),
-                    Instant.parse("2025-02-08T00:00:00Z"),
-                    "Robin",
-                    "Dog",
-                    "Poodle",
-                    UUID.randomUUID(),
-                    Instant.parse("2023-11-02T00:00:00Z"),
-                    30.0
-                )
-            )
-        )
-    }
-
-    var selectedPetId by remember { mutableStateOf(pets.firstOrNull()?.id) }
+    val pets by viewModel.pets.collectAsState()
+    val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
+    val errorMessage by viewModel.errorMessage.collectAsState()
 
     LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            snackbarHostState.showSnackbar(message)
-            errorMessage = null
-        }
-    }
-
-    @SuppressLint("NewApi") // TODO this gets rid of the compiler errors idk why
-    fun calculateAge(birthdate: Instant): String {
-        val birthLocalDate = ofEpochDay(birthdate.toEpochMilliseconds() / (24 * 60 * 60 * 1000))
-        val today = LocalDate.now()
-        val period = Period.between(birthLocalDate, today)
-        return when {
-            period.years > 0 -> "${period.years} year${if (period.years > 1) "s" else ""}"
-            period.months > 0 -> "${period.months} month${if (period.months > 1) "s" else ""}"
-            else -> "${period.days} day${if (period.days > 1) "s" else ""}"
+        errorMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearErrorMessage()
         }
     }
 
@@ -148,23 +92,19 @@ fun PetsScreen(
         ) {
             // Top icons (pets + add pet)
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 pets.forEach { pet ->
                     Column(
-                        modifier = Modifier.clickable { selectedPetId = pet.id },
+                        modifier = Modifier.clickable { viewModel.selectPet(pet.id) },
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (pet.imageUrl != null) {
                             Image(
                                 painter = rememberAsyncImagePainter(pet.imageUrl),
                                 contentDescription = pet.name,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape),
+                                modifier = Modifier.size(56.dp).clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
@@ -181,9 +121,7 @@ fun PetsScreen(
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clickable {
-                        showAddPetDialog = true
-                    }
+                    modifier = Modifier.clickable { showAddPetDialog = true }
                 ) {
                     Icon(Icons.Default.AddCircle, contentDescription = "Add Pet", modifier = Modifier.size(56.dp))
                     Text("Add Pet", fontSize = 14.sp)
@@ -198,7 +136,7 @@ fun PetsScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 if (selectedPet != null) {
-                    // Display pet info
+                    // Display pet info (Breed, Weight, Date of Birth, Age)
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -220,16 +158,14 @@ fun PetsScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        val birthdateString = formatDate(selectedPet.birthdate)
-
                         Row {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Breed", fontWeight = FontWeight.Medium)
-                                Text(selectedPet.breed ?: "Unknown")
+                                Text(selectedPet.breed.toString())
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Date of Birth", fontWeight = FontWeight.Medium)
-                                Text("${formatDate(selectedPet.birthdate)} (${calculateAge(selectedPet.birthdate)} old)")
+                                Text("Weight", fontWeight = FontWeight.Medium)
+                                Text("%.2f lbs".format(selectedPet.weight))
                             }
                         }
 
@@ -237,12 +173,12 @@ fun PetsScreen(
 
                         Row {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Sex", fontWeight = FontWeight.Medium)
-                                Text("Unknown")
+                                Text("Date of Birth", fontWeight = FontWeight.Medium)
+                                Text(formatDate(selectedPet.birthdate))
                             }
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Weight", fontWeight = FontWeight.Medium)
-                                Text("${selectedPet.weight} lbs")
+                                Text("Age", fontWeight = FontWeight.Medium)
+                                Text("${calculateAge(selectedPet.birthdate)} Old")
                             }
                         }
                     }
@@ -317,46 +253,16 @@ fun PetsScreen(
     if (showAddPetDialog) {
         AddPetDialog(
             onDismiss = { showAddPetDialog = false },
-            onAdd = { name, breed, weightStr, birthdate, imageUri ->
-                // TODO: get pet UUID from database insert rather than defining it on the client side
-                val petId = UUID.randomUUID()
-                val newPet = Pet(
-                    id = petId,
-                    createdAt = Instant.parse("2024-01-01T00:00:00Z"),
+            onAdd = { name, species, breed, birthdate, weight, imageUri ->
+                viewModel.addPet(
+                    context = context,
                     name = name,
-                    species = "Dog",
+                    species = species,
                     breed = breed,
-                    createdBy = UUID.randomUUID(),
                     birthdate = birthdate,
-                    weight = weightStr.toDoubleOrNull() ?: 0.0,
-                    imageUrl = null
+                    weight = weight,
+                    imageUri = imageUri
                 )
-                
-                pets = pets.toMutableList().apply { add(newPet) }
-                selectedPetId = newPet.id
-                
-                // if image was selected, upload it
-                if (imageUri != null) {
-                    coroutineScope.launch {
-                        try {
-                            val imageUrl = imageRepository.uploadPetImage(context, imageUri, petId)
-                            if (imageUrl != null) {
-                                // update pet with image URL
-                                val updatedPet = newPet.copy(imageUrl = imageUrl)
-                                val updatedList = pets.toMutableList()
-                                val index = updatedList.indexOfFirst { it.id == petId }
-                                if (index != -1) {
-                                    updatedList[index] = updatedPet
-                                    pets = updatedList
-                                }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            errorMessage = "Failed to upload pet image. Please try again."
-                        }
-                    }
-                }
-                
                 showAddPetDialog = false
             }
         )
@@ -366,42 +272,17 @@ fun PetsScreen(
         EditPetDialog(
             pet = selectedPet,
             onDismiss = { showEditPetDialog = false },
-            onSave = { newName, newBreed, newWeightStr, newBirthdate, imageUri ->
-                val updatedList = pets.toMutableList()
-                val updatedPet = selectedPet.copy(
-                    name = newName,
-                    breed = newBreed,
-                    weight = newWeightStr.toDoubleOrNull() ?: selectedPet.weight,
-                    birthdate = newBirthdate
+            onSave = { newName, newSpecies, newBreed, newBirthdate, newWeight, newImageUri ->
+                viewModel.updatePet(
+                    context = context,
+                    originalPet = selectedPet,
+                    newName = newName,
+                    newSpecies = newSpecies,
+                    newBreed = newBreed,
+                    newBirthdate = newBirthdate,
+                    newWeight = newWeight,
+                    newImageUri = newImageUri
                 )
-                val index = updatedList.indexOfFirst { it.id == selectedPetId }
-                if (index != -1) {
-                    updatedList[index] = updatedPet
-                    pets = updatedList
-                }
-                
-                // if new image was selected, upload it
-                if (imageUri != null) {
-                    coroutineScope.launch {
-                        try {
-                            val imageUrl = imageRepository.uploadPetImage(context, imageUri, selectedPet.id)
-                            if (imageUrl != null) {
-                                // update pet with new image URL
-                                val finalUpdatedPet = updatedPet.copy(imageUrl = imageUrl)
-                                val finalUpdatedList = pets.toMutableList()
-                                val finalIndex = finalUpdatedList.indexOfFirst { it.id == selectedPetId }
-                                if (finalIndex != -1) {
-                                    finalUpdatedList[finalIndex] = finalUpdatedPet
-                                    pets = finalUpdatedList
-                                }
-                            }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                            errorMessage = "Failed to update pet image. Please try again."
-                        }
-                    }
-                }
-                
                 showEditPetDialog = false
             }
         )
@@ -411,23 +292,10 @@ fun PetsScreen(
         RemovePetDialog(
             petName = selectedPet.name,
             onConfirm = {
-                val removeIndex = pets.indexOfFirst { it.id == selectedPetId }
-                if (removeIndex != -1) {
-                    val updatedList = pets.toMutableList()
-                    updatedList.removeAt(removeIndex)
-                    pets = updatedList
-
-                    selectedPetId = when {
-                        updatedList.isEmpty() -> null
-                        removeIndex >= updatedList.size -> updatedList.last().id
-                        else -> updatedList[removeIndex].id
-                    }
-                    showRemovePetDialog = false
-                }
-            },
-            onDismiss = {
+                viewModel.deletePet(selectedPet.id)
                 showRemovePetDialog = false
-            }
+            },
+            onDismiss = { showRemovePetDialog = false }
         )
     }
 }

@@ -7,8 +7,20 @@ data class Pet(
     val id: UUID,
     @Json(name = "created_at") val createdAt: Instant,
     val name: String,
-    val species: String, // TODO: This should be an enum, once we actually start working on pet logic
-    val breed: String?,
+    val species: Species,
+    val breed: Breed,
+    @Json(name = "created_by") val createdBy: UUID,
+    val birthdate: Instant,
+    val weight: Double,
+    @Json(name = "image_url") val imageUrl: String? = null
+)
+
+data class PetRaw(
+    val id: UUID,
+    @Json(name = "created_at") val createdAt: Instant,
+    val name: String,
+    val species: String,
+    val breed: String,
     @Json(name = "created_by") val createdBy: UUID,
     val birthdate: Instant,
     val weight: Double,

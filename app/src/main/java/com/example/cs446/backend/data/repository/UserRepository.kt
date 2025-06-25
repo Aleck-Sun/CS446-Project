@@ -3,6 +3,7 @@ package com.example.cs446.backend.data.repository
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.auth.auth
 import java.util.UUID
 
 class UserRepository {
@@ -35,5 +36,10 @@ class UserRepository {
             e.printStackTrace()
             return null
         }
+    }
+
+    fun getCurrentUserId(): UUID? {
+        val currentUser = SupabaseClient.supabase.auth.currentUserOrNull()?.id ?: return null
+        return UUID.fromString(currentUser)
     }
 }
