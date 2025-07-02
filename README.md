@@ -30,5 +30,9 @@
 | 2025-06-24 | Implement ViewModel for pets                    |                |                |               | 1.5             |               |                |
 | 2025-06-24 | Profile screen functionality                    |                |                |               |                 |               | 1              |
 | 2025-06-25 | Social feed likes and avatars                   | 3              |                |               |                 |               | 1              |
+| 2025-07-01 | Add back button for logs screen                 |                |                |               |                 | 1             |                |
+| 2025-07-01 | Fix log screen no selected pet bug              |                |                |               |                 | 0.5           |                |
+| 2025-07-01 | Add activity log table and backend              |                |                |               |                 | 3             |                |
 | 2025-07-02 | Reformatted the Handler View Model              |                |                | 2             |                 |               |                |                
 | 2025-07-02 | Linked up Permissions with Database             |                |                | 13            |                 |               |                |                
+

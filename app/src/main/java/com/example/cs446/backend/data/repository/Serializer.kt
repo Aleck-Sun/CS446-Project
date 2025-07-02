@@ -1,5 +1,7 @@
 package com.example.cs446.backend.data.repository
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Pet
@@ -27,6 +29,16 @@ class InstantAdapter {
 
     @ToJson
     fun toJson(value: Instant?): String? = value?.toString()
+}
+
+// TODO: Merge with kotlin instant adapter
+class JavaTimeInstantAdapter {
+    @RequiresApi(Build.VERSION_CODES.O)
+    @FromJson
+    fun fromJson(value: String?): java.time.Instant? = value?.let { java.time.Instant.parse(it) }
+
+    @ToJson
+    fun toJson(value: java.time.Instant?): String? = value?.toString()
 }
 
 fun parsePermissions(list: List<String>): Permissions {

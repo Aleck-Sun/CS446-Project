@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -29,6 +31,7 @@ import com.example.cs446.backend.data.model.ActivityLog
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.repository.PetRepository
+import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.components.pets.ActivityLogComponent
 import com.example.cs446.ui.components.pets.ActivityLogForm
 import com.example.cs446.ui.pages.main.MainActivityDestination
@@ -47,15 +50,22 @@ fun LogsScreen(
     val coroutineScope = rememberCoroutineScope()
     var showActivityLogModal by remember { mutableStateOf(false) }
     val activityLogRepository = remember { ActivityLogRepository() }
+    val userRepository = remember { UserRepository() }
     val petRepository = remember { PetRepository() }
 
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
     var pet by remember { mutableStateOf<Pet?>(null) }
 
+    fun fetchActivityLogsAndPet() {
+        coroutineScope.launch {
+            activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
+            pet = petRepository.getPet(UUID.fromString(petId))
+        }
+    }
+
     // Launch a coroutine to load logs when petId changes
     LaunchedEffect(petId) {
-        activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
-        pet = petRepository.getPet(UUID.fromString(petId))
+        fetchActivityLogsAndPet()
     }
 
     Box(
@@ -67,12 +77,25 @@ fun LogsScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "${pet?.name ?: "Pet"} Activity Logs",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(8.dp)
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { onNavigate(MainActivityDestination.Pets, null) }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${pet?.name ?: "Pet"} Activity Logs",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -138,6 +161,7 @@ fun LogsScreen(
                             onSubmit = { activityDate, activityType, comment, makePost, imageUri ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(
+                                        userRepository = userRepository,
                                         activityLogRepository = activityLogRepository,
                                         activityDate = activityDate,
                                         activityType = activityType,
@@ -147,6 +171,7 @@ fun LogsScreen(
                                         petId = UUID.fromString(petId)
                                     )
                                     showActivityLogModal = false
+                                    fetchActivityLogsAndPet()
                                 }
                             }
                         )
@@ -158,6 +183,7 @@ fun LogsScreen(
 }
 
 private suspend fun handleActivitySubmission(
+    userRepository: UserRepository,
     activityLogRepository: ActivityLogRepository,
     activityDate: Instant,
     activityType: String,
@@ -166,11 +192,17 @@ private suspend fun handleActivitySubmission(
     imageUri: Uri?,
     petId: UUID,
 ) {
+    val userId = userRepository.getCurrentUserId()
+    if (userId == null) {
+        // TODO: Add error handling
+        return
+    }
+
     if (makePost) {
         // TODO: Implement posting logic
     }
     activityLogRepository.addActivityLog(ActivityLog(
-        userId = UUID.randomUUID(), // TODO: Have a way to globally get current user Id
+        userId = userId,
         petId = petId,
         activityType = activityType,
         comment = comment,

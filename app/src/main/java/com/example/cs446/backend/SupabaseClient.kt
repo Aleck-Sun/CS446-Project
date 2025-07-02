@@ -2,6 +2,7 @@ package com.example.cs446.backend
 
 import com.example.cs446.BuildConfig
 import com.example.cs446.backend.data.repository.InstantAdapter
+import com.example.cs446.backend.data.repository.JavaTimeInstantAdapter
 import com.example.cs446.backend.data.repository.UUIDAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -27,6 +28,7 @@ object SupabaseClient {
             .add(UUIDAdapter())
             .add(KotlinJsonAdapterFactory())
             .add(InstantAdapter())
+            .add(JavaTimeInstantAdapter())
             .add(KotlinJsonAdapterFactory())
             .build()
         defaultSerializer = MoshiSerializer(moshi)
