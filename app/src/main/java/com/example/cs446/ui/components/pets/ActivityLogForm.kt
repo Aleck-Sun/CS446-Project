@@ -6,6 +6,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,22 +17,39 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.ui.components.DatePickerTextField
 import com.example.cs446.ui.theme.CS446Theme
 import java.time.Instant
@@ -40,7 +61,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ActivityLogForm(
     modifier: Modifier = Modifier,
-    onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, imageUri: Uri?) -> Unit
+    onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, makePublic: Boolean, selectedImagesUri: List<Uri>) -> Unit
 ) {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
@@ -48,12 +69,18 @@ fun ActivityLogForm(
     var activityType by remember { mutableStateOf("") }
     var comment by remember { mutableStateOf("") }
     var makePost by remember { mutableStateOf(false) }
-    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    var currentImageIndex by remember { mutableStateOf<Int?>(null) }
+    val selectedImagesUri = remember { mutableStateListOf<Uri>() }
+    var makePublic by remember { mutableStateOf<Boolean>(false) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUri = uri
+        uri?.let {
+            selectedImagesUri.add(it)
+        }
+        currentImageIndex = selectedImagesUri.size-1
     }
 
     Column(
@@ -104,24 +131,72 @@ fun ActivityLogForm(
         }
 
         if (makePost) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Pet Photos", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Spacer(modifier = Modifier.height(4.dp))
 
-            Button(
-                onClick = { imagePickerLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             ) {
-                Text("Select an Image")
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 64.dp)
+                ) {
+                    items(selectedImagesUri.size + 1) {
+                            index ->
+                        if (index < selectedImagesUri.size)
+                        {
+                            Image(
+                                painter = rememberAsyncImagePainter(selectedImagesUri[index]),
+                                contentDescription = "Selected pet image",
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .border(
+                                        width = if (index == currentImageIndex) 3.dp else 0.dp,
+                                        color = if (index == currentImageIndex) Color.Magenta else Color.Transparent,
+                                        shape = RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable { currentImageIndex = index },
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(100.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { imagePickerLauncher.launch("image/*") },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = "Add photo",
+                                        modifier = Modifier.size(32.dp),
+                                        tint = Color.Gray
+                                    )
+                                    Text("Add photo", color = Color.Gray, fontSize = 12.sp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            imageUri?.let {
-                Spacer(modifier = Modifier.height(8.dp))
-                Image(
-                    painter = rememberAsyncImagePainter(it),
-                    contentDescription = "Selected Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = makePublic,
+                    onCheckedChange = { makePublic = it },
+                    modifier = Modifier,
+                    enabled = true,
                 )
+                Text("Make post public?")
             }
         }
 
@@ -134,7 +209,8 @@ fun ActivityLogForm(
                     activityType,
                     comment,
                     makePost,
-                    imageUri
+                    makePublic,
+                    selectedImagesUri
                 )
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -150,7 +226,7 @@ fun ActivityLogForm(
 fun ActivityLogFormPreview() {
     CS446Theme {
         ActivityLogForm(
-            onSubmit = { _, _, _, _, _ -> }
+            onSubmit = { _, _, _, _, _, _ -> }
         )
     }
 }

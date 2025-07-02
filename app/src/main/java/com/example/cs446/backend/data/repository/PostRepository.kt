@@ -74,8 +74,8 @@ class PostRepository {
 
     suspend fun uploadComment(postId: UUID, text: String): Comment? {
         return try {
-            val authorId = auth.currentUserOrNull()?.id
-            commentTable.insert(
+            val authorId = auth.currentUserOrNull()!!.id
+            val result = commentTable.insert(
                 mapOf(
                     "author_id" to authorId,
                     "text" to text,
@@ -84,6 +84,8 @@ class PostRepository {
             ) {
                 select()
             }.decodeSingle<Comment>()
+            val user = userRepository.getUserById(UUID.fromString(authorId))
+            return result.copy(authorName = user?.username)
         } catch(e: Exception) {
             e.printStackTrace()
             null
