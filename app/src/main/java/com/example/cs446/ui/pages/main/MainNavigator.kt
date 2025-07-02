@@ -92,6 +92,7 @@ fun MainNavigator(
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
                 LogsScreen(
                     petId = petId,
+                    viewModel = feedViewModel,
                     onNavigate = navigateTo
                 )
             }

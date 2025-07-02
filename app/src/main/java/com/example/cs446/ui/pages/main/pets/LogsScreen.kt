@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.pets
 
+import android.content.Context
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +38,7 @@ import com.example.cs446.ui.components.pets.ActivityLogComponent
 import com.example.cs446.ui.components.pets.ActivityLogForm
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.theme.CS446Theme
+import com.example.cs446.view.social.FeedViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
@@ -45,6 +48,7 @@ import java.util.UUID
 fun LogsScreen(
     modifier: Modifier = Modifier,
     petId: String,
+    viewModel: FeedViewModel,
     onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -53,6 +57,7 @@ fun LogsScreen(
     val userRepository = remember { UserRepository() }
     val petRepository = remember { PetRepository() }
 
+    val context = LocalContext.current
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
     var pet by remember { mutableStateOf<Pet?>(null) }
 
@@ -158,17 +163,20 @@ fun LogsScreen(
                         )
 
                         ActivityLogForm(
-                            onSubmit = { activityDate, activityType, comment, makePost, imageUri ->
+                            onSubmit = { activityDate, activityType, comment, makePost, makePublic, imageUris ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(
+                                        context = context,
+                                        viewModel = viewModel,
                                         userRepository = userRepository,
                                         activityLogRepository = activityLogRepository,
                                         activityDate = activityDate,
                                         activityType = activityType,
                                         comment = comment,
                                         makePost = makePost,
-                                        imageUri = imageUri,
-                                        petId = UUID.fromString(petId)
+                                        makePublic = makePublic,
+                                        imageUris = imageUris,
+                                        pet = pet,
                                     )
                                     showActivityLogModal = false
                                     fetchActivityLogsAndPet()
@@ -183,41 +191,42 @@ fun LogsScreen(
 }
 
 private suspend fun handleActivitySubmission(
+    context: Context,
+    viewModel: FeedViewModel,
     userRepository: UserRepository,
     activityLogRepository: ActivityLogRepository,
     activityDate: Instant,
     activityType: String,
     comment: String,
     makePost: Boolean,
-    imageUri: Uri?,
-    petId: UUID,
+    makePublic: Boolean,
+    imageUris: List<Uri>,
+    pet: Pet?,
 ) {
     val userId = userRepository.getCurrentUserId()
-    if (userId == null) {
-        // TODO: Add error handling
+    if (userId == null || pet == null) {
+        // TODO: This should never happen -- raise error if it does
         return
     }
 
     if (makePost) {
-        // TODO: Implement posting logic
+        val templates = listOf(
+            "${pet.name} just did a $activityType!",
+            "Look at ${pet.name} go! They did a $activityType!",
+            "${pet.name} completed a $activityType!",
+            "${pet.name} has completed the $activityType activity!",
+            "Another $activityType done by ${pet.name}!",
+            "${pet.name} crushed it with a $activityType!"
+        )
+
+        val caption = templates.random()
+        viewModel.uploadPost(context, pet.id, caption, imageUris, makePublic)
     }
     activityLogRepository.addActivityLog(ActivityLog(
         userId = userId,
-        petId = petId,
+        petId = pet.id,
         activityType = activityType,
         comment = comment,
         createdAt = activityDate
     ))
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun LogsScreenPreview() {
-    CS446Theme {
-        LogsScreen(
-            petId = "",
-            onNavigate = { } as (MainActivityDestination, String?) -> Unit
-        )
-    }
 }

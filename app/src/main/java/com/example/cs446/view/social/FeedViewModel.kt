@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 import java.util.UUID
 
-class FeedViewModel : ViewModel() {
+open class FeedViewModel : ViewModel() {
     private val _allPosts = MutableStateFlow<List<Post>>(listOf())
     private val _searchQuery = MutableStateFlow("")
     private val _filteredPosts = MutableStateFlow<List<Post>>(listOf())
