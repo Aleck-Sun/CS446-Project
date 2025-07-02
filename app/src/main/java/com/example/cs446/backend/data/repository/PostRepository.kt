@@ -248,4 +248,77 @@ class PostRepository {
             return emptyList<Post>()
         }
     }
+
+    suspend fun loadProfilePosts(
+        userID: UUID? = null,
+        petID: UUID? = null
+    ): List<Post> {
+        return try {
+            val postsRaw = postTable
+                .select {
+                    order("created_at", Order.DESCENDING)
+                    filter{
+                        userID?.let {
+                            eq("user_id", userID)
+                        }
+                    }
+                }
+                .decodeList<PostRaw>()
+
+            // Get all users associated with loaded posts
+            val allUsers = userRepository.getUsersByIds(
+                postsRaw.map {
+                    it.userId
+                }.toSet().toList()
+            ).associateBy { it.id }
+
+            // Get all pets associated with loaded posts
+            val allPets = petRepository.getPetsByIds(
+                postsRaw.map {
+                    it.petId
+                }.toSet().toList()
+            ).associateBy { it.id }
+
+            // Get all likes associated with loaded posts
+            val allPostIds = postsRaw.map{ it.id }.toSet().toList()
+            val userPostLikes = likeTable.select {
+                filter {
+                    isIn("post_id", allPostIds)
+                    isIn("user_id", allUsers.keys.toList())
+                    eq("liked", true)
+                }
+            }.decodeList<Like>()
+
+            val posts = postsRaw.map {
+                val user = allUsers.getValue(it.userId)
+                val pet = allPets.getValue(it.petId)
+                val likes = userPostLikes.count { like ->
+                    like.postId == it.id
+                }
+                val liked = userPostLikes.any { like ->
+                    like.postId == it.id && like.userId == user.id
+                }
+                Post(
+                    id = it.id,
+                    userId = it.userId,
+                    petId = it.petId,
+                    createdAt = it.createdAt,
+                    caption = it.caption,
+                    imageUrls = it.imageUrls.map {
+                            url -> getSignedImageUrl(url)
+                    },
+                    petImageUrl = pet.imageUrl,
+                    authorName = user.username,
+                    petName = pet.name,
+                    comments = getCommentsForPost(it.id),
+                    likes = likes,
+                    liked = liked,
+                )
+            }
+            return posts
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList<Post>()
+        }
+    }
 }

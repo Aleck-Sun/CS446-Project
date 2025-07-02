@@ -9,6 +9,7 @@ import com.example.cs446.ui.pages.login.LoginActivity
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.pets.HandlerViewModel
+import com.example.cs446.view.social.ProfileViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
         val petsViewModel = PetsViewModel()
         val feedViewModel = FeedViewModel()
+        val profileViewModel = ProfileViewModel()
         val handlerViewModel = HandlerViewModel()
 
         val onLogout = {
@@ -31,6 +33,7 @@ class MainActivity : ComponentActivity() {
             MainNavigator(
                 petsViewModel = petsViewModel,
                 feedViewModel = feedViewModel,
+                profileViewModel = profileViewModel,
                 onLogout = onLogout,
                 handlerViewModel = handlerViewModel
             )

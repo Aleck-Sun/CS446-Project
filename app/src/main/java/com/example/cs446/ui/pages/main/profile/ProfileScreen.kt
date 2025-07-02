@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,17 +31,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
+import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.R
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.backend.component.security.SecurityComponent
+import com.example.cs446.backend.data.model.Post
+import com.example.cs446.view.social.ProfileViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun ProfileScreen(
+    viewModel : ProfileViewModel,
     onNavigate: (MainActivityDestination, String?) -> Unit,
     onLogout: () -> Unit = {}
 ) {
+    val posts by viewModel.posts.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val securityComponent = SecurityComponent()
 
@@ -103,23 +111,7 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Posts", fontWeight = FontWeight.Bold)
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(20) { index ->
-                Image(
-                    painter = painterResource(id = R.drawable.sample_post),
-                    contentDescription = "Post $index",
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                )
-            }
-        }
+        PostsItem(posts = posts)
     }
 }
 
@@ -131,39 +123,25 @@ fun ProfileStat(label: String, count: String) {
     }
 }
 
-
-/*import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.cs446.ui.pages.main.MainActivityDestination
-
 @Composable
-fun ProfileScreen(
-    modifier: Modifier = Modifier,
-    onNavigate: (MainActivityDestination, String?) -> Unit
+fun PostsItem(
+    posts : List<Post>
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = "Profile Page",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-            Text(
-                text = "Hello Profile Page!",
-                fontSize = 18.sp
-            )
+    Text("Posts", fontWeight = FontWeight.Bold)
 
-            Spacer(modifier = Modifier.height(24.dp))
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        itemsIndexed(posts) { index, post ->
+            Image(
+                painter = rememberAsyncImagePainter(post.imageUrls[0]),
+                contentDescription = "Post $index",
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .padding(2.dp)
+                    .clip(RoundedCornerShape(4.dp))
+            )
         }
     }
-}*/
+}

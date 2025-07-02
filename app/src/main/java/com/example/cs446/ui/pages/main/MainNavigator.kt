@@ -20,12 +20,14 @@ import com.example.cs446.ui.pages.main.profile.ProfileScreen
 import com.example.cs446.view.pets.HandlerViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
+import com.example.cs446.view.social.ProfileViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MainNavigator(
     petsViewModel: PetsViewModel,
     feedViewModel: FeedViewModel,
+    profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
     handlerViewModel: HandlerViewModel
 ) {
@@ -86,7 +88,7 @@ fun MainNavigator(
                 FeedScreen(onNavigate = navigateTo, viewModel = feedViewModel)
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
-                ProfileScreen(onNavigate = navigateTo, onLogout = onLogout)
+                ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel)
             }
             composable("${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
