@@ -33,6 +33,6 @@
 | 2025-07-01 | Add back button for logs screen                 |                |                |               |                 | 1             |                |
 | 2025-07-01 | Fix log screen no selected pet bug              |                |                |               |                 | 0.5           |                |
 | 2025-07-01 | Add activity log table and backend              |                |                |               |                 | 3             |                |
-| 2025-07-02 | Reformatted the Handler View Model              |                |                | 2             |                 |               |                |                
-| 2025-07-02 | Linked up Permissions with Database             |                |                | 13            |                 |               |                |                
+| 2025-07-01 | Reformatted the Handler View Model              |                |                | 2             |                 |               |                |                
+| 2025-07-01 | Linked up Permissions with Database             |                |                | 13            |                 |               |                |                
 
