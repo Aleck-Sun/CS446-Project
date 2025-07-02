@@ -218,6 +218,7 @@ fun PetsScreen(
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
                     onClick = { onNavigate(MainActivityDestination.Logs, selectedPetId.toString()) },
+                    enabled = selectedPetId != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Menu, contentDescription = null)
