@@ -1,17 +1,16 @@
 package com.example.cs446.backend.data.repository
 
 import com.example.cs446.backend.data.model.Breed
-import com.squareup.moshi.FromJson
-import com.squareup.moshi.ToJson
-import kotlinx.datetime.Instant
-import java.util.UUID
-
 import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.PetRaw
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.UserPetRelationRaw
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.ToJson
+import kotlinx.datetime.Instant
+import java.util.UUID
 
 class UUIDAdapter {
 
@@ -84,5 +83,20 @@ fun userPetRelationToRaw(userPetRelation: UserPetRelation): UserPetRelationRaw {
         petId = userPetRelation.petId,
         relation = userPetRelation.relation,
         permissions = userPetRelation.permissions.toList()
+    )
+}
+
+fun userPetRelationFromRaw(userPetRelationRaw: UserPetRelationRaw): UserPetRelation {
+    return UserPetRelation(
+        userId = userPetRelationRaw.userId,
+        petId = userPetRelationRaw.petId,
+        relation = userPetRelationRaw.relation,
+        permissions = Permissions(
+            editLogs = "edit_logs" in userPetRelationRaw.permissions,
+            setReminders = "set_reminders" in userPetRelationRaw.permissions,
+            inviteHandlers = "invite_handlers" in userPetRelationRaw.permissions,
+            makePosts = "make_posts" in userPetRelationRaw.permissions,
+            editPermissionsOfOthers = "edit_permissions_of_others" in userPetRelationRaw.permissions
+        )
     )
 }

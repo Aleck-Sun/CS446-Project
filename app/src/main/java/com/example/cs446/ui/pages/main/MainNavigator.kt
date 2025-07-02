@@ -13,10 +13,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.cs446.ui.components.BottomNavigationBar
-import com.example.cs446.ui.pages.main.pets.FamilyScreen
-import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.pets.LogsScreen
+import com.example.cs446.ui.pages.main.pets.PermissionsScreen
+import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
+import com.example.cs446.view.pets.HandlerViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 
@@ -25,7 +26,8 @@ import com.example.cs446.view.social.FeedViewModel
 fun MainNavigator(
     petsViewModel: PetsViewModel,
     feedViewModel: FeedViewModel,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    handlerViewModel: HandlerViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -72,15 +74,20 @@ fun MainNavigator(
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo, onLogout = onLogout)
             }
-            composable( "${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
+            composable("${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
                 LogsScreen(
                     petId = petId,
                     onNavigate = navigateTo
                 )
             }
-            composable(MainActivityDestination.Family.name.lowercase()) {
-                FamilyScreen(onNavigate = navigateTo)
+            composable("${MainActivityDestination.Handlers.name.lowercase()}/{petId}") { backStackEntry ->
+                val petId = backStackEntry.arguments?.getString("petId") ?: ""
+                PermissionsScreen(
+                    petId = petId,
+                    onNavigate = navigateTo,
+                    viewModel = handlerViewModel
+                )
             }
         }
     }

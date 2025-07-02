@@ -8,7 +8,16 @@ data class UserPetRelationRaw(
     @Json(name = "pet_id") val petId: UUID,
     val relation: String?,
     val permissions: List<String>
-)
+){
+    fun toUserPetRelation(): UserPetRelation {
+        return UserPetRelation(
+            userId = this.userId,
+            petId = this.petId,
+            relation = this.relation,
+            permissions = Permissions.fromList(this.permissions)
+        )
+    }
+}
 
 data class UserPetRelation(
     @Json(name = "user_id") val userId: UUID,
