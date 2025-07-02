@@ -5,5 +5,5 @@ enum class MainActivityDestination {
     Feed,
     Profile,
     Logs,
-    Family
+    Handlers
 }

@@ -16,4 +16,16 @@ data class Permissions(
         if (editPermissionsOfOthers) result.add("edit_permissions_of_others")
         return result
     }
+
+    companion object {
+        fun fromList(permissions: List<String>): Permissions {
+            return Permissions(
+                editLogs = "edit_logs" in permissions,
+                setReminders = "set_reminders" in permissions,
+                inviteHandlers = "invite_handlers" in permissions,
+                makePosts = "make_posts" in permissions,
+                editPermissionsOfOthers = "edit_permissions_of_others" in permissions
+            )
+        }
+    }
 }

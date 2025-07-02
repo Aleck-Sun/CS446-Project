@@ -35,8 +35,8 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,10 +51,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-
 import com.example.cs446.ui.pages.main.MainActivityDestination
-import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.ui.pages.main.calculateAge
+import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.view.pets.PetsViewModel
 
 
@@ -92,7 +91,9 @@ fun PetsScreen(
         ) {
             // Top icons (pets + add pet)
             Row(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 pets.forEach { pet ->
@@ -104,7 +105,9 @@ fun PetsScreen(
                             Image(
                                 painter = rememberAsyncImagePainter(pet.imageUrl),
                                 contentDescription = pet.name,
-                                modifier = Modifier.size(56.dp).clip(CircleShape),
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .clip(CircleShape),
                                 contentScale = ContentScale.Crop
                             )
                         } else {
@@ -123,7 +126,11 @@ fun PetsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.clickable { showAddPetDialog = true }
                 ) {
-                    Icon(Icons.Default.AddCircle, contentDescription = "Add Pet", modifier = Modifier.size(56.dp))
+                    Icon(
+                        Icons.Default.AddCircle,
+                        contentDescription = "Add Pet",
+                        modifier = Modifier.size(56.dp)
+                    )
                     Text("Add Pet", fontSize = 14.sp)
                 }
             }
@@ -239,14 +246,14 @@ fun PetsScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Family button
+            // Permissions button
             Button(
-                onClick = { onNavigate(MainActivityDestination.Family, null) },
+                onClick = { onNavigate(MainActivityDestination.Handlers, selectedPetId.toString()) },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Family")
+                Text("Handlers")
             }
         }
     }

@@ -77,7 +77,7 @@ class UserRepository {
     }
 
     fun getCurrentUserId(): UUID? {
-        val currentUser = SupabaseClient.supabase.auth.currentUserOrNull()?.id ?: return null
-        return UUID.fromString(currentUser)
+        val currentUserId = SupabaseClient.supabase.auth.currentUserOrNull()?.id
+        return currentUserId?.let { UUID.fromString(it) }
     }
 }
