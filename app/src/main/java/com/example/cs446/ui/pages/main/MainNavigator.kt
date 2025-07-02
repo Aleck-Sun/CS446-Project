@@ -37,15 +37,29 @@ fun MainNavigator(
     } ?: MainActivityDestination.Pets
 
     val navigateTo: (MainActivityDestination, String?) -> Unit = { destination, param ->
-        if (param != null) {
-            navController.navigate("${destination.name.lowercase()}/$param")
-        } else {
-            navController.navigate(destination.name.lowercase()) {
-                popUpTo(navController.graph.startDestinationId) {
-                    saveState = true
+        val route = if (param != null) "${destination.name.lowercase()}/$param"
+        else destination.name.lowercase()
+
+        val currentFullRoute = navController.currentDestination?.route
+        val currentRoute = currentFullRoute?.split("/")?.firstOrNull() ?: currentFullRoute
+
+        if (route != currentRoute) {
+            if (
+                currentRoute == MainActivityDestination.Logs.name.lowercase()
+                && route == MainActivityDestination.Pets.name.lowercase()
+                && param == null) {
+                navController.popBackStack()
+            } else if (param != null) {
+                navController.navigate(route)
+            } else {
+                navController.navigate(destination.name.lowercase()) {
+                    popUpTo(navController.graph.startDestinationId) {
+                        inclusive = false
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
                 }
-                launchSingleTop = true
-                restoreState = true
             }
         }
     }

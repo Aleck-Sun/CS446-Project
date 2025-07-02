@@ -30,3 +30,4 @@
 | 2025-06-24 | Implement ViewModel for pets                    |                |                |               | 1.5             |               |                |
 | 2025-06-24 | Profile screen functionality                    |                |                |               |                 |               | 1              |
 | 2025-06-25 | Social feed likes and avatars                   | 3              |                |               |                 |               | 1              |
+| 2025-07-01 | Add back button for logs screen                 |                |                |               |                 | 1             |                |
