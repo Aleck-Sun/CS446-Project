@@ -5,8 +5,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,22 +19,31 @@ import com.example.cs446.backend.data.model.Pet
 @Composable
 fun DropdownPetSelector(
     petList: List<Pet>,           // e.g. list of pet names or pet objects
-    selectedPet: Int,
     onPetSelected: (Int) -> Unit
 ) {
+    var selectedPetIndex = 0
     var expanded by remember { mutableStateOf(false) }
+    var selectedPetName by remember { mutableStateOf(petList[selectedPetIndex].name) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
+        onExpandedChange = {
+            expanded = !expanded
+            println(expanded)
+        }
     ) {
-        TextField(
-            value = petList[selectedPet].name,
-            onValueChange = {},
+        // Display selected pet's name
+        OutlinedTextField(
             readOnly = true,
+            value = selectedPetName,
+            onValueChange = {},
             label = { Text("Select Pet") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            modifier = Modifier.fillMaxWidth()
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
         )
 
         ExposedDropdownMenu(
@@ -47,6 +56,8 @@ fun DropdownPetSelector(
                     onClick = {
                         onPetSelected(i)
                         expanded = false
+                        selectedPetIndex = i
+                        selectedPetName = petList[selectedPetIndex].name
                     }
                 )
             }

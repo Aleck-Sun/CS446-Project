@@ -112,7 +112,6 @@ fun CreatePostDialog(
                 } else {
                     DropdownPetSelector(
                         pets,
-                        0
                     ) { i -> selectedPet = pets[i]}
                 }
                 Spacer(modifier = Modifier.height(4.dp))
