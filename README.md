@@ -36,3 +36,5 @@
 | 2025-07-01 | Reformatted the Handler View Model              |                |                | 2             |                 |               |                |                
 | 2025-07-01 | Linked up Permissions with Database             |                |                | 13            |                 |               |                |
 | 2025-07-02 | Add posting logic to activity log               |                |                |               |                 | 4             |                |
+| 2025-07-02 | Profile posts retrieve from database            |                | 2              |               |                 |               |                |
+ 
