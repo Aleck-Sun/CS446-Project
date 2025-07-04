@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.components.HandlerCard
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.view.pets.PermissionsViewModel
+import kotlinx.coroutines.delay
 import java.util.UUID
 
 @Composable
@@ -49,80 +51,99 @@ fun PermissionsScreen(
     var pet by remember { mutableStateOf<Pet?>(null) }
     val handlers by viewModel.handlers.collectAsState()
     var loggedInUserId by remember { mutableStateOf<UUID?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
     val currentHandler = handlers.find { it.userId == loggedInUserId }
     val canAddHandlers by remember(currentHandler) {
         derivedStateOf { currentHandler?.permissions?.inviteHandlers ?: false }
     }
 
     LaunchedEffect(petId) {
+        isLoading = true
+        val startTime = System.currentTimeMillis()
+
         pet = petRepository.getPet(UUID.fromString(petId))
         loggedInUserId = userRepository.getCurrentUserId()
         viewModel.loadHandlers(UUID.fromString(petId))
 
+        val elapsed = System.currentTimeMillis() - startTime
+        val minLoadingTime = 450L // ms
+        if (elapsed < minLoadingTime) {
+            delay(minLoadingTime - elapsed)
+        }
+        isLoading = false
     }
 
-    Scaffold(
-        bottomBar = {
-            if (canAddHandlers) {
-                Button(
-                    onClick = {
-                        // TODO: Implement action for adding a new handler
-
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 48.dp)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    Text("Add handler")
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-                .padding(top = 16.dp)
+    if (isLoading || pet == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "${pet?.name ?: "My Pet"}'s Family",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                )
-
-                IconButton(
-                    onClick = { onNavigate(MainActivityDestination.Pets, null) },
-                    modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back"
-                    )
+            CircularProgressIndicator()
+        }
+    } else {
+        Scaffold(
+            bottomBar = {
+                if (canAddHandlers) {
+                    Button(
+                        onClick = {
+                            // TODO: Implement action for adding a new handler
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 48.dp)
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text("Add handler")
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyColumn {
-                items(handlers) { handler ->
-                    HandlerCard(
-                        handler = handler,
-                        onPermissionChange = { perm, value ->
-                            viewModel.updatePermission(
-                                handler.name,
-                                perm,
-                                value,
-                                UUID.fromString(petId)
-                            )
-                        }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "${pet?.name ?: "My Pet"}'s Family",
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+
+                    IconButton(
+                        onClick = { onNavigate(MainActivityDestination.Pets, null) },
+                        modifier = Modifier.align(Alignment.CenterStart)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn {
+                    items(handlers) { handler ->
+                        HandlerCard(
+                            handler = handler,
+                            onPermissionChange = { perm, value ->
+                                viewModel.updatePermission(
+                                    handler.name,
+                                    perm,
+                                    value,
+                                    UUID.fromString(petId)
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
