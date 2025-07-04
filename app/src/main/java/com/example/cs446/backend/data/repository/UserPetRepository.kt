@@ -12,7 +12,7 @@ class UserPetRepository {
     private val userPetsTable = SupabaseClient.supabase.from("user-pet-relations")
     private val userRepository = UserRepository()
 
-    suspend fun getUsersForPet(petId: UUID): List<UserPetRelation?> {
+    private suspend fun getUsersForPet(petId: UUID): List<UserPetRelation?> {
         return try {
             userPetsTable
                 .select {
@@ -75,33 +75,14 @@ class UserPetRepository {
 
     suspend fun updateRelation(userPetRelation: UserPetRelation) {
         val userPetRelationRaw = userPetRelationToRaw(userPetRelation)
-//        userPetsTable.update({
-//            set("relation", userPetRelationRaw.relation)
-//            set("permissions", userPetRelationRaw.permissions)
-//        }) {
-//            filter {
-//                eq("pet_id", userPetRelationRaw.petId)
-//                eq("user_id", userPetRelationRaw.userId)
-//            }
-//        }
-        val updateResult = userPetsTable.update({
+        userPetsTable.update({
             set("relation", userPetRelationRaw.relation)
-            set("permissions", "{" + userPetRelationRaw.permissions.joinToString(",") + "}")
+            set("permissions", userPetRelationRaw.permissions)
         }) {
             filter {
-                eq("pet_id", userPetRelation.petId)
-                eq("user_id", userPetRelation.userId)
+                eq("pet_id", userPetRelationRaw.petId)
+                eq("user_id", userPetRelationRaw.userId)
             }
         }
-
-        val result = userPetsTable.select {
-            filter {
-                eq("pet_id", userPetRelation.petId)
-                eq("user_id", userPetRelation.userId)
-            }
-        }
-
-        Log.d("SupabaseCheck", "Select result: ${result.data}")
-
     }
 }

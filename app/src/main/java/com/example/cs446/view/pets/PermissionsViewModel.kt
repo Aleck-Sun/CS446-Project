@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-class HandlerViewModel : ViewModel() {
+class PermissionsViewModel : ViewModel() {
     private val userPetRepository = UserPetRepository()
 
     private val _handlers = MutableStateFlow<List<Handler>>(emptyList())
