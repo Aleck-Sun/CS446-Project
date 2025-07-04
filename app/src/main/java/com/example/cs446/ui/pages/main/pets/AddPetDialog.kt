@@ -1,8 +1,10 @@
 package com.example.cs446.ui.pages.main.pets
 
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,20 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SelectableDates
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,15 +43,16 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.atStartOfDayIn
+import java.time.format.DateTimeFormatter
 
 import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.speciesOfBreed
 import com.example.cs446.ui.components.DropdownSelector
+import com.example.cs446.ui.components.DatePickerTextField
 
-@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddPetDialog(
     onDismiss: () -> Unit,
@@ -64,53 +61,21 @@ fun AddPetDialog(
     var name by remember { mutableStateOf("") }
     var selectedSpecies by remember { mutableStateOf<Species?>(null) }
     var selectedBreed by remember { mutableStateOf<Breed?>(null) }
-    var birthdate by remember { mutableStateOf(Clock.System.todayIn(TimeZone.currentSystemDefault())) }
+    var birthdate by remember { mutableStateOf(java.time.LocalDate.now()) }
     var weight by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-
-    var showDatePicker by remember { mutableStateOf(false) }
 
     var nameError by remember { mutableStateOf(false) }
     var weightError by remember { mutableStateOf(false) }
     var speciesError by remember { mutableStateOf(false) }
     var breedError by remember { mutableStateOf(false) }
 
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         selectedImageUri = uri
-    }
-    
-    // TODO: figure out date picker off by 1 issue
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    return utcTimeMillis <= System.currentTimeMillis()
-                }
-            }
-        )
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { millis ->
-                        val instant = Instant.fromEpochMilliseconds(millis)
-                        birthdate = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-                    }
-                    showDatePicker = false
-                }) {
-                    Text("OK")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancel")
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
     }
 
     AlertDialog(
@@ -125,7 +90,11 @@ fun AddPetDialog(
                 val weightValue = weight.toDoubleOrNull()
                 weightError = weightValue == null || weightValue <= 0.0
 
-                val birthdateInstant = birthdate.atStartOfDayIn(TimeZone.currentSystemDefault())
+                val birthdateInstant = kotlinx.datetime.LocalDate(
+                    birthdate.year,
+                    birthdate.monthValue,
+                    birthdate.dayOfMonth
+                ).atStartOfDayIn(TimeZone.currentSystemDefault())
                 val birthdateError = birthdateInstant > Clock.System.now()
 
                 if (!nameError && !speciesError && !breedError && !birthdateError && !weightError) {
@@ -240,23 +209,11 @@ fun AddPetDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Birthdate
-                OutlinedTextField(
-                    value = birthdate.toString(),
-                    onValueChange = { },
-                    label = { Text("Date of Birth") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDatePicker = true },
-                    enabled = true,
-                    readOnly = true,
-                    trailingIcon = {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = "Select date",
-                            modifier = Modifier.clickable { showDatePicker = true }
-                        )
-                    }
+                DatePickerTextField(
+                    date = birthdate,
+                    label = "Date of Birth",
+                    formatter = formatter,
+                    onDateChange = { birthdate = it }
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
