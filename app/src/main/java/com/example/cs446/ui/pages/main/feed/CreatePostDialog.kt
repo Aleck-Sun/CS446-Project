@@ -195,6 +195,13 @@ fun CreatePostDialog(
                     Text("Make post public?")
                 }
 
+                if (makePublic) {
+                    Text(
+                        text = "Having a public post on your profile will make your pet profile public!",
+                        color = Color(0xFFDEBC11)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 when (postResult) {
                     is PostResult.Posting -> Text(

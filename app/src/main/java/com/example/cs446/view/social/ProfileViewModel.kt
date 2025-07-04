@@ -2,7 +2,7 @@ package com.example.cs446.view.social
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow

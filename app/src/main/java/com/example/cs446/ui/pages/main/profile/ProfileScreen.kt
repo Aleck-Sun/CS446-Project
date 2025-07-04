@@ -1,9 +1,5 @@
 package com.example.cs446.ui.pages.main.profile
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -28,15 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.R
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.backend.component.security.SecurityComponent
-import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.view.social.ProfileViewModel
 import kotlinx.coroutines.launch
 
