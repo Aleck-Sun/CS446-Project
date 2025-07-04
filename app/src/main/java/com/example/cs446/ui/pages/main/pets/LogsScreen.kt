@@ -9,8 +9,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.*
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -36,12 +39,17 @@ import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.components.pets.ActivityLogComponent
 import com.example.cs446.ui.components.pets.ActivityLogForm
+import com.example.cs446.ui.components.pets.ActivityLogCalendar
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
+
+enum class LogViewMode {
+    LIST, CALENDAR
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -53,6 +61,8 @@ fun LogsScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showActivityLogModal by remember { mutableStateOf(false) }
+    var viewMode by remember { mutableStateOf(LogViewMode.LIST) }
+    var searchText by remember { mutableStateOf("") }
     val activityLogRepository = remember { ActivityLogRepository() }
     val userRepository = remember { UserRepository() }
     val petRepository = remember { PetRepository() }
@@ -60,6 +70,17 @@ fun LogsScreen(
     val context = LocalContext.current
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
     var pet by remember { mutableStateOf<Pet?>(null) }
+
+    val filteredLogs = remember(activityLogs, searchText) {
+        if (searchText.isBlank()) {
+            activityLogs
+        } else {
+            activityLogs.filter { log ->
+                log.activityType.contains(searchText, ignoreCase = true) ||
+                log.comment.contains(searchText, ignoreCase = true)
+            }
+        }
+    }
 
     fun fetchActivityLogsAndPet() {
         coroutineScope.launch {
@@ -102,12 +123,89 @@ fun LogsScreen(
                 )
             }
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+            // search bar
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                label = { Text("Search activities...") },
+                placeholder = { Text("e.g. Walk, Feeding, Vet") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                singleLine = true,
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = { searchText = "" }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            )
+
+            if (searchText.isNotEmpty()) {
+                Text(
+                    text = if (filteredLogs.isEmpty()) 
+                        "No activities found matching \"$searchText\""
+                    else 
+                        "Found ${filteredLogs.size} of ${activityLogs.size} activities",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
             ) {
-                items(activityLogs) { log ->
-                    ActivityLogComponent(activityLog = log)
+                FilterChip(
+                    onClick = { viewMode = LogViewMode.LIST },
+                    label = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("List")
+                        }
+                    },
+                    selected = viewMode == LogViewMode.LIST,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                
+                FilterChip(
+                    onClick = { viewMode = LogViewMode.CALENDAR },
+                    label = { 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Calendar")
+                        }
+                    },
+                    selected = viewMode == LogViewMode.CALENDAR
+                )
+            }
+
+            when (viewMode) {
+                LogViewMode.LIST -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(vertical = 8.dp)
+                    ) {
+                        items(filteredLogs) { log ->
+                            ActivityLogComponent(activityLog = log)
+                        }
+                    }
+                }
+                LogViewMode.CALENDAR -> {
+                    ActivityLogCalendar(
+                        activityLogs = filteredLogs,
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
             }
         }

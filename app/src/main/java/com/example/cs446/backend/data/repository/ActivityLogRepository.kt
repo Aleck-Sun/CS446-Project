@@ -17,7 +17,7 @@ class ActivityLogRepository {
             filter({
                 eq("pet_id", petId)
             })
-        }.decodeList<ActivityLog>()
+        }.decodeList<ActivityLog>().sortedByDescending { it.createdAt }
     }
 
     suspend fun addActivityLog(activityLog: ActivityLog) {
