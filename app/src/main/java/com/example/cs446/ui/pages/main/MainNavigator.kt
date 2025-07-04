@@ -17,7 +17,7 @@ import com.example.cs446.ui.pages.main.pets.LogsScreen
 import com.example.cs446.ui.pages.main.pets.PermissionsScreen
 import com.example.cs446.ui.pages.main.pets.PetsScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
-import com.example.cs446.view.pets.HandlerViewModel
+import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
@@ -29,7 +29,7 @@ fun MainNavigator(
     feedViewModel: FeedViewModel,
     profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
-    handlerViewModel: HandlerViewModel
+    permissionsViewModel: PermissionsViewModel
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -103,7 +103,7 @@ fun MainNavigator(
                 PermissionsScreen(
                     petId = petId,
                     onNavigate = navigateTo,
-                    viewModel = handlerViewModel
+                    viewModel = permissionsViewModel
                 )
             }
         }

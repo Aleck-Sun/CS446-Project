@@ -22,7 +22,7 @@ import com.example.cs446.backend.data.repository.UserPetRepository
 import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.components.HandlerCard
 import com.example.cs446.ui.pages.main.MainActivityDestination
-import com.example.cs446.view.pets.HandlerViewModel
+import com.example.cs446.view.pets.PermissionsViewModel
 import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -30,14 +30,13 @@ import java.util.UUID
 fun PermissionsScreen(
     petId: String,
     onNavigate: (MainActivityDestination, String?) -> Unit,
-    viewModel: HandlerViewModel
+    viewModel: PermissionsViewModel
 ) {
     val coroutineScope = rememberCoroutineScope()
     val petRepository = remember { PetRepository() }
     val userRepository = remember { UserRepository() }
 
     var pet by remember { mutableStateOf<Pet?>(null) }
-//    var handlers by remember { mutableStateOf<List<Handler>>(emptyList()) }
     val handlers by viewModel.handlers.collectAsState()
     var loggedInUserId by remember { mutableStateOf<UUID?>(null) }
     val currentHandler = handlers.find { it.userId == loggedInUserId }
@@ -48,7 +47,6 @@ fun PermissionsScreen(
     LaunchedEffect(petId) {
         pet = petRepository.getPet(UUID.fromString(petId))
         loggedInUserId = userRepository.getCurrentUserId()
-//        handlers = userPetRepository.getHandlersForPet(UUID.fromString(petId))
         viewModel.loadHandlers(UUID.fromString(petId))
 
     }
@@ -59,6 +57,7 @@ fun PermissionsScreen(
                 Button(
                     onClick = {
                         // TODO: Implement action for adding a new handler
+
                     },
                     modifier = Modifier
                         .fillMaxWidth()

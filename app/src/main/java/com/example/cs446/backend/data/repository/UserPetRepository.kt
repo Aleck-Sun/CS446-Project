@@ -3,6 +3,7 @@ package com.example.cs446.backend.data.repository
 import android.util.Log
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.Handler
+import com.example.cs446.backend.data.model.Like
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.UserPetRelationRaw
 import io.github.jan.supabase.postgrest.from
@@ -75,33 +76,14 @@ class UserPetRepository {
 
     suspend fun updateRelation(userPetRelation: UserPetRelation) {
         val userPetRelationRaw = userPetRelationToRaw(userPetRelation)
-//        userPetsTable.update({
-//            set("relation", userPetRelationRaw.relation)
-//            set("permissions", userPetRelationRaw.permissions)
-//        }) {
-//            filter {
-//                eq("pet_id", userPetRelationRaw.petId)
-//                eq("user_id", userPetRelationRaw.userId)
-//            }
-//        }
-        val updateResult = userPetsTable.update({
+        userPetsTable.update({
             set("relation", userPetRelationRaw.relation)
-            set("permissions", "{" + userPetRelationRaw.permissions.joinToString(",") + "}")
+            set("permissions", userPetRelationRaw.permissions)
         }) {
             filter {
-                eq("pet_id", userPetRelation.petId)
-                eq("user_id", userPetRelation.userId)
+                eq("pet_id", userPetRelationRaw.petId)
+                eq("user_id", userPetRelationRaw.userId)
             }
         }
-
-        val result = userPetsTable.select {
-            filter {
-                eq("pet_id", userPetRelation.petId)
-                eq("user_id", userPetRelation.userId)
-            }
-        }
-
-        Log.d("SupabaseCheck", "Select result: ${result.data}")
-
     }
 }
