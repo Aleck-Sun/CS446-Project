@@ -51,7 +51,13 @@ fun MainNavigator(
             if (
                 currentRoute == MainActivityDestination.Logs.name.lowercase()
                 && route == MainActivityDestination.Pets.name.lowercase()
-                && param == null) {
+                && param == null
+            ) {
+                navController.popBackStack()
+            } else if (currentRoute == MainActivityDestination.Handlers.name.lowercase()
+                && route == MainActivityDestination.Pets.name.lowercase()
+                && param == null
+            ) {
                 navController.popBackStack()
             } else if (param != null) {
                 navController.navigate(route)
@@ -102,8 +108,8 @@ fun MainNavigator(
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
                 PermissionsScreen(
                     petId = petId,
-                    onNavigate = navigateTo,
-                    viewModel = permissionsViewModel
+                    viewModel = permissionsViewModel,
+                    onNavigate = navigateTo
                 )
             }
         }

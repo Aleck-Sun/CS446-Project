@@ -3,7 +3,6 @@ package com.example.cs446.backend.data.repository
 import android.util.Log
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.Handler
-import com.example.cs446.backend.data.model.Like
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.UserPetRelationRaw
 import io.github.jan.supabase.postgrest.from
@@ -13,7 +12,7 @@ class UserPetRepository {
     private val userPetsTable = SupabaseClient.supabase.from("user-pet-relations")
     private val userRepository = UserRepository()
 
-    suspend fun getUsersForPet(petId: UUID): List<UserPetRelation?> {
+    private suspend fun getUsersForPet(petId: UUID): List<UserPetRelation?> {
         return try {
             userPetsTable
                 .select {

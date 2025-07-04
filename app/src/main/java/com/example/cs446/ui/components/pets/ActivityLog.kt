@@ -62,19 +62,19 @@ fun ActivityLogComponent(activityLog: ActivityLog) {
     }
 }
 
-//@RequiresApi(Build.VERSION_CODES.O)
-//@Preview(showBackground = true)
-//@Composable
-//fun ActivityLogComponentPreview() {
-//    MaterialTheme {
-//        ActivityLogComponent(
-//            activityLog = ActivityLog(
-//                userId = UUID.randomUUID(),
-//                petId = UUID.randomUUID(),
-//                createdAt = Instant.parse("2025-06-18T10:30:00Z"),
-//                activityType = "Vet Visit",
-//                comment = "Routine check-up with Dr. Smith. All good!"
-//            )
-//        )
-//    }
-//}
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview(showBackground = true)
+@Composable
+fun ActivityLogComponentPreview() {
+    MaterialTheme {
+        ActivityLogComponent(
+            activityLog = ActivityLog(
+                userId = UUID.randomUUID(),
+                petId = UUID.randomUUID(),
+                createdAt = Instant.parse("2025-06-18T10:30:00Z"),
+                activityType = "Vet Visit",
+                comment = "Routine check-up with Dr. Smith. All good!"
+            )
+        )
+    }
+}
