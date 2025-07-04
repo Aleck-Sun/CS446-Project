@@ -1,6 +1,7 @@
-package com.example.cs446.backend.data.model
+package com.example.cs446.backend.data.model.post
 
 import android.location.Location
+import com.example.cs446.backend.data.model.post.Comment
 import com.squareup.moshi.Json
 import kotlinx.datetime.Instant
 import java.util.UUID

@@ -112,35 +112,27 @@ class PetRepository {
     }
 
     suspend fun getPet(petId: UUID): Pet {
-        // TODO: Remove mocked data
-        return Pet(
-            petId,
-            kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
-            "Charlie",
-            Species.DOG, Breed.GOLDEN_RETRIEVER,
-            UUID.randomUUID(),
-            kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
-            65.0
-        )
-//        return petsTable.select {
-//            filter {
-//                eq("id", petId)
-//            }
-//        }.decodeSingle()
+        return parsePet(
+            petsTable.select {
+                filter {
+                    eq("id", petId)
+                }
+            }.decodeSingle<PetRaw>()
+        ).let {
+            it.copy(
+                imageUrl = getSignedPetImageUrl(it.imageUrl?:"user.png")
+            )
+        }
     }
 
     suspend fun getPetsByIds(petIds: List<UUID>): List<Pet> {
-        // TODO: Remove mocked data
-        return petIds.map{
-            Pet(
-                it,
-                kotlinx.datetime.Instant.parse("2021-02-03T00:00:00Z"),
-                "Charlie",
-                Species.DOG, Breed.GOLDEN_RETRIEVER,
-                UUID.randomUUID(),
-                kotlinx.datetime.Instant.parse("2025-05-28T00:00:00Z"),
-                65.0,
-                imageUrl = getSignedPetImageUrl("placeholder.png")
+        return petsTable.select {
+            filter {
+                isIn("id", petIds)
+            }
+        }.decodeList<PetRaw>().map{
+            parsePet(it).copy(
+                imageUrl = getSignedPetImageUrl(it.imageUrl?:"user.png")
             )
         }
     }

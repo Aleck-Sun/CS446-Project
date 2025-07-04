@@ -4,9 +4,8 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cs446.backend.data.model.Comment
 import com.example.cs446.backend.data.model.Pet
-import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.result.PostResult

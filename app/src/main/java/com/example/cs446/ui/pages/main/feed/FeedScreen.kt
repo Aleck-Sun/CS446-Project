@@ -56,9 +56,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.backend.data.model.Comment
+import com.example.cs446.backend.data.model.post.Comment
 import com.example.cs446.backend.data.model.Pet
-import com.example.cs446.backend.data.model.Post
+import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.CommentText
 import com.example.cs446.ui.components.feed.FollowButton

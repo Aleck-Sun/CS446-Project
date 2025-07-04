@@ -1,7 +1,6 @@
-package com.example.cs446.backend.data.model
+package com.example.cs446.backend.data.model.post
 
 import com.squareup.moshi.Json
-import kotlinx.datetime.Instant
 import java.util.UUID
 
 data class Like(

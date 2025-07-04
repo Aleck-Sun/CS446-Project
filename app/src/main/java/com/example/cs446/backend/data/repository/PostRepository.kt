@@ -3,10 +3,11 @@ package com.example.cs446.backend.data.repository
 import android.content.Context
 import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
-import com.example.cs446.backend.data.model.Comment
-import com.example.cs446.backend.data.model.Like
-import com.example.cs446.backend.data.model.Post
-import com.example.cs446.backend.data.model.PostRaw
+import com.example.cs446.backend.data.model.post.Comment
+import com.example.cs446.backend.data.model.post.Follow
+import com.example.cs446.backend.data.model.post.Like
+import com.example.cs446.backend.data.model.post.Post
+import com.example.cs446.backend.data.model.post.PostRaw
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.*
 import io.github.jan.supabase.postgrest.query.Count
@@ -25,6 +26,7 @@ class PostRepository {
     private val likeTable = SupabaseClient.supabase.from("likes")
     private val userRepository = UserRepository()
     private val petRepository = PetRepository()
+    private val followTable = SupabaseClient.supabase.from("pet-followers")
 
     suspend fun uploadPost(
         imageUrls: List<String>,
@@ -174,10 +176,11 @@ class PostRepository {
     suspend fun loadPosts(
         createdAfter: Instant? = null,
         createdBefore: Instant? = null,
-        maxPosts: Long = 2
+        maxPosts: Long = 3,
+        maxPublic: Long = 1
     ): List<Post> {
         return try {
-            val postsRaw = postTable
+            var postsRaw = postTable
                 .select {
                     order("created_at", Order.DESCENDING)
                     filter{
@@ -189,10 +192,31 @@ class PostRepository {
                                 gt("created_at", createdAfter)
                             }
                         }
+                        eq("is_public", true)
                     }
-                    limit(maxPosts)
+                    limit(maxPublic)
                 }
                 .decodeList<PostRaw>()
+
+            postsRaw = postsRaw + postTable
+                .select {
+                    order("created_at", Order.DESCENDING)
+                    filter{
+                        or {
+                            createdBefore?.let {
+                                lt("created_at", it)
+                            }
+                            createdAfter?.let{
+                                gt("created_at", createdAfter)
+                            }
+                        }
+                        eq("is_public", false)
+                    }
+                    limit(maxPosts-postsRaw.size)
+                }
+                .decodeList<PostRaw>()
+
+            postsRaw = postsRaw.distinctBy { it.id }
 
             // Get all users associated with loaded posts
             val allUsers = userRepository.getUsersByIds(
@@ -207,6 +231,14 @@ class PostRepository {
                     it.petId
                 }.toSet().toList()
             ).associateBy { it.id }
+
+            // Get list of pets following associated with loaded posts
+            val followedPets = followTable.select {
+                filter {
+                    eq("user_id", userRepository.getCurrentUserId()?:"")
+                    isIn("pet_id", allPets.keys.toList())
+                }
+            }.decodeList<Follow>()
 
             // Get all likes associated with loaded posts
             val allPostIds = postsRaw.map{ it.id }.toSet().toList()
@@ -227,6 +259,9 @@ class PostRepository {
                 val liked = userPostLikes.any { like ->
                     like.postId == it.id && like.userId == user.id
                 }
+                val followed = followedPets.any {
+                    follow -> follow.petId == pet.id
+                }
                 Post(
                     id = it.id,
                     userId = it.userId,
@@ -242,6 +277,7 @@ class PostRepository {
                     comments = getCommentsForPost(it.id),
                     likes = likes,
                     liked = liked,
+                    isFollowing = followed
                 )
             }
             return posts
