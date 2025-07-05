@@ -1,4 +1,5 @@
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.expandVertically
@@ -52,12 +53,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.backend.data.model.post.Comment
 import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.model.post.Comment
 import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.CommentText
@@ -66,30 +69,18 @@ import com.example.cs446.ui.components.feed.IconWithText
 import com.example.cs446.ui.components.feed.ImageCarousel
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.feed.CreatePostDialog
+import com.example.cs446.ui.pages.main.getRelativeTime
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
 import kotlinx.datetime.Instant
 import java.util.UUID
-
-// helper function to calculate relative time
-fun getRelativeTime(timestamp: Instant): String {
-    val now = kotlinx.datetime.Clock.System.now()
-    val duration = now - timestamp
-    
-    return when {
-        duration.inWholeMinutes < 1 -> "now"
-        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m"
-        duration.inWholeHours < 24 -> "${duration.inWholeHours}h"
-        duration.inWholeDays < 7 -> "${duration.inWholeDays}d"
-        else -> "${duration.inWholeDays / 7}w"
-    }
-}
 
 @Composable
 fun FeedScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
     viewModel: FeedViewModel,
     modifier: Modifier = Modifier,
+    onShare: (Context, String, String) -> Unit = {_,_,_->}
 ) {
     viewModel.getPetsWithPostPermissions()
     val posts by viewModel.posts.collectAsState()
@@ -105,9 +96,6 @@ fun FeedScreen(
     }
     fun onComment(postId: UUID, text: String) {
         viewModel.uploadComment(postId, text)
-    }
-    fun onShare(postId: UUID) {
-        // TODO
     }
     fun onCreatePost(
         context: Context,
@@ -139,7 +127,7 @@ fun FeedScreen(
         ::onLoadMorePosts,
         ::onLike,
         ::onComment,
-        ::onShare,
+        onShare,
         ::onCreatePost,
         ::onSearchQueryChange,
         ::onClearSearch,
@@ -156,7 +144,7 @@ fun FeedContent(
     onLoadMorePosts: () -> Unit = {},
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
-    onShare: (UUID) -> Unit = {},
+    onShare: (Context, String, String) -> Unit = {_, _, _ ->},
     onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {}
@@ -353,7 +341,7 @@ fun PostItem(
     onLike: (UUID) -> Unit,
     onComment: (UUID, String) -> Unit,
     onOpenCommentSection: (UUID) -> Unit,
-    onShare: (UUID) -> Unit
+    onShare: (Context, String, String) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -362,11 +350,11 @@ fun PostItem(
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
+        val context = LocalContext.current
         Column(modifier = Modifier.padding(12.dp)) {
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (post.petImageUrl != null) {
-                    println(post.petImageUrl)
                     Image(
                         painter = rememberAsyncImagePainter(post.petImageUrl),
                         contentDescription = "Profile Picture",
@@ -423,7 +411,6 @@ fun PostItem(
                     count = post.likes,
                     tint = if (post.liked) Color.Red else Color.Unspecified,
                     onClick = {
-                        println("Click!")
                         onLike(post.id)
                     }
                 )
@@ -440,7 +427,7 @@ fun PostItem(
                     icon = Icons.Default.Share,
                     count = 0,
                     onClick = {
-                        onShare(post.id)
+                        onShare(context, post.caption, post.imageUrls.firstOrNull()?:"")
                     }
                 )
             }

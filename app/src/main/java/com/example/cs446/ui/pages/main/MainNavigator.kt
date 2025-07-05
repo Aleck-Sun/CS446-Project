@@ -21,6 +21,7 @@ import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
+import android.content.Context
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -29,7 +30,8 @@ fun MainNavigator(
     feedViewModel: FeedViewModel,
     profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
-    permissionsViewModel: PermissionsViewModel
+    permissionsViewModel: PermissionsViewModel,
+    onShare: (Context, String, String) -> Unit = {_,_,_->}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -91,7 +93,11 @@ fun MainNavigator(
                 PetsScreen(onNavigate = navigateTo, viewModel = petsViewModel)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = navigateTo, viewModel = feedViewModel)
+                FeedScreen(
+                    onNavigate = navigateTo,
+                    viewModel = feedViewModel,
+                    onShare = onShare
+                )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel)

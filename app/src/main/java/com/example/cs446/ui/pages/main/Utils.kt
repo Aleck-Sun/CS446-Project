@@ -27,3 +27,17 @@ fun calculateAge(birthdate: Instant): String {
         else -> "${period.days} Day${if (period.days > 1) "s" else ""}"
     }
 }
+
+// helper function to calculate relative time
+fun getRelativeTime(timestamp: Instant): String {
+    val now = Clock.System.now()
+    val duration = now - timestamp
+
+    return when {
+        duration.inWholeMinutes < 1 -> "now"
+        duration.inWholeMinutes < 60 -> "${duration.inWholeMinutes}m"
+        duration.inWholeHours < 24 -> "${duration.inWholeHours}h"
+        duration.inWholeDays < 7 -> "${duration.inWholeDays}d"
+        else -> "${duration.inWholeDays / 7}w"
+    }
+}
