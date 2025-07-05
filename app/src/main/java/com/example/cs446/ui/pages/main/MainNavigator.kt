@@ -22,6 +22,7 @@ import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
 import android.content.Context
+import android.net.Uri
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -31,7 +32,10 @@ fun MainNavigator(
     profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
     permissionsViewModel: PermissionsViewModel,
-    onShare: (Context, String, String) -> Unit = {_,_,_->}
+    onShare: (Context, String, String) -> Unit = {_,_,_->},
+    shareContent: Boolean = false,
+    sharedText: String? = null,
+    sharedImageUri: Uri? = null
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -86,7 +90,8 @@ fun MainNavigator(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = MainActivityDestination.Pets.name.lowercase(),
+            startDestination = if (shareContent) MainActivityDestination.Feed.toString().lowercase()
+                    else MainActivityDestination.Pets.name.lowercase(),
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
@@ -96,7 +101,10 @@ fun MainNavigator(
                 FeedScreen(
                     onNavigate = navigateTo,
                     viewModel = feedViewModel,
-                    onShare = onShare
+                    onShare = onShare,
+                    routeOnShare = shareContent,
+                    sharedText = sharedText,
+                    sharedImageUri = sharedImageUri
                 )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {

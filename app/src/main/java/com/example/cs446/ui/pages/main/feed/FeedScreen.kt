@@ -77,10 +77,12 @@ import java.util.UUID
 
 @Composable
 fun FeedScreen(
+    routeOnShare: Boolean = false,
     onNavigate: (MainActivityDestination, String?) -> Unit,
     viewModel: FeedViewModel,
-    modifier: Modifier = Modifier,
-    onShare: (Context, String, String) -> Unit = {_,_,_->}
+    onShare: (Context, String, String) -> Unit = {_,_,_->},
+    sharedText: String? = null,
+    sharedImageUri: Uri? = null
 ) {
     viewModel.getPetsWithPostPermissions()
     val posts by viewModel.posts.collectAsState()
@@ -120,6 +122,7 @@ fun FeedScreen(
     }
 
     FeedContent(
+        routeOnShare,
         posts,
         pets,
         postResult,
@@ -131,12 +134,15 @@ fun FeedScreen(
         ::onCreatePost,
         ::onSearchQueryChange,
         ::onClearSearch,
+        sharedText,
+        sharedImageUri
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedContent(
+    routeOnShare: Boolean,
     posts: List<Post>,
     pets: List<Pet> = emptyList(),
     postResult: PostResult = PostResult.PostSuccess,
@@ -147,9 +153,11 @@ fun FeedContent(
     onShare: (Context, String, String) -> Unit = {_, _, _ ->},
     onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
     onSearchQueryChange: (String) -> Unit = {},
-    onClearSearch: () -> Unit = {}
+    onClearSearch: () -> Unit = {},
+    sharedText: String? = null,
+    sharedImageUri: Uri? = null
 ) {
-    var showAddPostDialog by remember { mutableStateOf(false) }
+    var showAddPostDialog by remember { mutableStateOf(routeOnShare) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
     LaunchedEffect(postResult) {
         if (postResult is PostResult.PostSuccess)
@@ -233,7 +241,9 @@ fun FeedContent(
                     pets = pets,
                     onPost = onCreatePost,
                     onDismiss = { showAddPostDialog = false },
-                    postResult = postResult
+                    postResult = postResult,
+                    sharedText = sharedText?:"",
+                    sharedImageUris = sharedImageUri?.let{listOf(it)}?:emptyList()
                 )
             }
         }
@@ -640,6 +650,7 @@ fun SocialFeedPreview() {
     )
 
     FeedContent(
+        routeOnShare = false,
         posts = samplePosts,
         searchQuery = "" // defaault
     )

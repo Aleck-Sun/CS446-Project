@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URL
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
 
@@ -34,6 +35,15 @@ class MainActivity : ComponentActivity() {
         val profileViewModel = ProfileViewModel()
         val permissionsViewModel = PermissionsViewModel()
 
+        val shareContent = intent.getBooleanExtra("share_post", false)
+        val sharedText = intent.getStringExtra("shared_text")
+        val sharedImageUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra("shared_image_uri", Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra("shared_image_uri")
+        }
+
         val onLogout = {
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -45,7 +55,7 @@ class MainActivity : ComponentActivity() {
             context: Context,
             imageUrl: String
         ): Uri = withContext(Dispatchers.IO) {
-            val file = File(context.cacheDir, "shared_image.jpg")
+            val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
             URL(imageUrl).openStream().use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             }
@@ -77,7 +87,10 @@ class MainActivity : ComponentActivity() {
                 profileViewModel = profileViewModel,
                 onLogout = onLogout,
                 permissionsViewModel = permissionsViewModel,
-                onShare = ::onShare
+                onShare = ::onShare,
+                shareContent = shareContent,
+                sharedText = sharedText,
+                sharedImageUri = sharedImageUri
             )
         }
     }

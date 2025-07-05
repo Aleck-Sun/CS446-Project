@@ -47,6 +47,23 @@
             </intent-filter>
 
         </activity>
+        <activity android:name=".receiver.ShareReceiverActivity"
+            android:exported="true"
+            android:label="Share to Petfolio"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" /> <!-- or image/*, etc -->
+            </intent-filter>
+
+            <!-- Optional: To support multiple types -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
