@@ -31,6 +31,7 @@
 | 2025-06-24 | Profile screen functionality                    |                |                |               |                 |               | 1              |
 | 2025-06-25 | Social feed likes and avatars                   | 3              |                |               |                 |               |                |
 | 2025-06-25 | Small bug fixes and refactoring                 | 1.5            |                |               |                 |               |                |
+| 2025-06-25 | Remove pet mock data                            | 1              |                |               |                 |               |                |
 | 2025-07-01 | Add back button for logs screen                 |                |                |               |                 | 1             |                |
 | 2025-07-01 | Fix log screen no selected pet bug              |                |                |               |                 | 0.5           |                |
 | 2025-07-01 | Implement full activity log calender component  |                |                |               |                 |               | 6.5            |
@@ -40,4 +41,5 @@
 | 2025-07-02 | Add posting logic to activity log               |                |                |               |                 | 4             |                |
 | 2025-07-02 | Date picker bug fixes                           |                |                |               |                 |               | 1              |
 | 2025-07-02 | Profile posts retrieve from database            |                | 2              |               |                 |               |                |
-| 2025-06-25 | Remove pet mock data                            | 1              |                |               |                 |               |                |
+| 2025-07-04 | Fixed backwards navigation for permissions page |                |                | 1.5           |                 |               |                |
+| 2025-07-04 | Added loading sequence while data loads         |                |                | .5            |                 |               |                |
