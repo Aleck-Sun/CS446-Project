@@ -21,6 +21,8 @@ import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
+import android.content.Context
+import android.net.Uri
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -29,7 +31,11 @@ fun MainNavigator(
     feedViewModel: FeedViewModel,
     profileViewModel: ProfileViewModel,
     onLogout: () -> Unit = {},
-    permissionsViewModel: PermissionsViewModel
+    permissionsViewModel: PermissionsViewModel,
+    onShare: (Context, String, String) -> Unit = {_,_,_->},
+    shareContent: Boolean = false,
+    sharedText: String? = null,
+    sharedImageUri: Uri? = null
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -84,14 +90,22 @@ fun MainNavigator(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = MainActivityDestination.Pets.name.lowercase(),
+            startDestination = if (shareContent) MainActivityDestination.Feed.toString().lowercase()
+                    else MainActivityDestination.Pets.name.lowercase(),
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
                 PetsScreen(onNavigate = navigateTo, viewModel = petsViewModel)
             }
             composable(MainActivityDestination.Feed.name.lowercase()) {
-                FeedScreen(onNavigate = navigateTo, viewModel = feedViewModel)
+                FeedScreen(
+                    onNavigate = navigateTo,
+                    viewModel = feedViewModel,
+                    onShare = onShare,
+                    routeOnShare = shareContent,
+                    sharedText = sharedText,
+                    sharedImageUri = sharedImageUri
+                )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
                 ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel)

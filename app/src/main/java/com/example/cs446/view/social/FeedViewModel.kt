@@ -2,6 +2,7 @@ package com.example.cs446.view.social
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.Pet
@@ -9,10 +10,14 @@ import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.result.PostResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
+import java.io.File
+import java.net.URL
 import java.util.UUID
 
 open class FeedViewModel : ViewModel() {

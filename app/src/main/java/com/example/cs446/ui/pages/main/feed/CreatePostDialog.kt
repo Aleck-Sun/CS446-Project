@@ -58,12 +58,13 @@ fun CreatePostDialog(
     pets: List<Pet> = emptyList<Pet>(),
     onDismiss: () -> Unit = {},
     onPost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ ->  },
-    postResult: PostResult = PostResult.Idling
+    postResult: PostResult = PostResult.Idling,
+    sharedText: String = "",
+    sharedImageUris: List<Uri> = emptyList<Uri>()
 ) {
-
     var currentImageIndex by remember { mutableStateOf<Int?>(null) }
-    val selectedImagesUri = remember { mutableStateListOf<Uri>() }
-    var text by remember { mutableStateOf<String>("") }
+    val selectedImagesUri = remember {sharedImageUris.toMutableList() }
+    var text by remember { mutableStateOf<String>(sharedText) }
     var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
 
