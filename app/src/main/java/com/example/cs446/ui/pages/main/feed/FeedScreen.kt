@@ -111,6 +111,7 @@ fun FeedScreen(
             imageUris = imageUris,
             isPublic = isPublic,
         )
+        viewModel.clearSharedData()
     }
     fun onSearchQueryChange(query: String) {
         viewModel.updateSearchQuery(query)
@@ -159,12 +160,19 @@ fun FeedContent(
     sharedText: String? = null,
     sharedImageUri: Uri? = null
 ) {
-    var showAddPostDialog by remember { mutableStateOf(routeOnShare) }
+    var showAddPostDialog by remember { mutableStateOf(false) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
     LaunchedEffect(postResult) {
         if (postResult is PostResult.PostSuccess)
         {
             showAddPostDialog = false
+        }
+    }
+    if (routeOnShare) {
+        LaunchedEffect(pets) {
+            if (pets.isNotEmpty()) {
+                showAddPostDialog = true
+            }
         }
     }
 

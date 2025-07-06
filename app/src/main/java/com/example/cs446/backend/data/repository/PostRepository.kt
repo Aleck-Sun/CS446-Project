@@ -33,8 +33,8 @@ class PostRepository {
         petId: UUID,
         caption: String,
         isPublic: Boolean = false
-    ) {
-        postTable.insert(
+    ): UUID {
+        return postTable.insert(
             mapOf (
                 "user_id" to auth.currentUserOrNull()?.id,
                 "pet_id" to petId,
@@ -42,7 +42,9 @@ class PostRepository {
                 "caption" to caption,
                 "is_public" to isPublic
             )
-        )
+        ) {
+            select()
+        }.decodeSingle<PostRaw>().id
     }
 
     suspend fun uploadPostImages(
@@ -173,6 +175,66 @@ class PostRepository {
         }
     }
 
+    suspend fun loadPost(
+        postId: UUID
+    ): Post? {
+        return try {
+            var postRaw = postTable
+                .select {
+                    order("created_at", Order.DESCENDING)
+                    filter{
+                        eq("id", postId)
+                    }
+                }
+                .decodeSingle<PostRaw>()
+
+            // Get all users associated with loaded posts
+            val user = userRepository.getUserById(userRepository.getCurrentUserId()!!)
+
+            // Get all pets associated with loaded posts
+            val pet = petRepository.getPet(postRaw.petId)
+
+            // Get all likes associated with loaded posts
+            val userPostLikes = likeTable.select {
+                filter {
+                    eq("post_id", postId)
+                    eq("liked", true)
+                }
+            }.decodeList<Like>()
+
+            val posts = postRaw.let {
+                val likes = userPostLikes.count { like ->
+                    like.postId == it.id
+                }
+                val liked = userPostLikes.any { like ->
+                    like.postId == it.id && like.userId == user?.id
+                }
+                val followed = true
+                Post(
+                    id = it.id,
+                    userId = it.userId,
+                    petId = it.petId,
+                    createdAt = it.createdAt,
+                    caption = it.caption,
+                    imageUrls = it.imageUrls.map {
+                            url -> getSignedImageUrl(url)
+                    },
+                    petImageUrl = pet.imageUrl,
+                    authorName = user?.username,
+                    petName = pet.name,
+                    comments = getCommentsForPost(it.id),
+                    likes = likes,
+                    liked = liked,
+                    isFollowing = followed
+                )
+            }
+            return posts
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
     suspend fun loadPosts(
         createdAfter: Instant? = null,
         createdBefore: Instant? = null,
@@ -245,7 +307,6 @@ class PostRepository {
             val userPostLikes = likeTable.select {
                 filter {
                     isIn("post_id", allPostIds)
-                    isIn("user_id", allUsers.keys.toList())
                     eq("liked", true)
                 }
             }.decodeList<Like>()
@@ -322,7 +383,6 @@ class PostRepository {
             val userPostLikes = likeTable.select {
                 filter {
                     isIn("post_id", allPostIds)
-                    isIn("user_id", allUsers.keys.toList())
                     eq("liked", true)
                 }
             }.decodeList<Like>()

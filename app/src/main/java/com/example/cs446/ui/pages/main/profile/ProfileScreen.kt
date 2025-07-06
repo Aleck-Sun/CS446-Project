@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.R
 import com.example.cs446.ui.pages.main.MainActivityDestination
-import com.example.cs446.backend.component.security.SecurityComponent
+import com.example.cs446.common.SecurityComponent
 import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.view.social.ProfileViewModel
 import kotlinx.coroutines.launch

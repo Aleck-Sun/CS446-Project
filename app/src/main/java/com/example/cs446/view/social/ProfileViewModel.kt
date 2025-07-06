@@ -5,9 +5,12 @@ import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.repository.UserRepository
+import com.example.cs446.common.AppEvent
+import com.example.cs446.common.EventBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 class ProfileViewModel : ViewModel() {
     private val _allPosts = MutableStateFlow<List<Post>>(listOf())
@@ -23,6 +26,22 @@ class ProfileViewModel : ViewModel() {
         loadMorePosts()
     }
 
+    suspend fun loadNewPost(postId: UUID) {
+        try {
+            postRepository.loadPost(
+                postId
+            )?.let {
+                _allPosts.value = (_allPosts.value + listOf(it)).sortedByDescending {
+                    it.createdAt
+                }.toMutableList()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            isLoading = false
+        }
+    }
+
     fun loadMorePosts() {
         if (isLoading) return
         isLoading = true
@@ -32,7 +51,6 @@ class ProfileViewModel : ViewModel() {
                 val newPosts = postRepository.loadProfilePosts(
                     userID = userRepository.getCurrentUserId()
                 )
-                println(newPosts[0].petImageUrl)
                 _allPosts.value = (_allPosts.value + newPosts).sortedByDescending {
                     it.createdAt
                 }.toMutableList()
@@ -40,6 +58,13 @@ class ProfileViewModel : ViewModel() {
                 e.printStackTrace()
             } finally {
                 isLoading = false
+            }
+
+            EventBus.events.collect { event ->
+                when (event) {
+                    is AppEvent.PostCreated -> loadNewPost(event.postId)
+                    else -> null
+                }
             }
         }
     }

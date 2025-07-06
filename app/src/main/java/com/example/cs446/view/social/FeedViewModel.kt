@@ -10,6 +10,8 @@ import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.result.PostResult
+import com.example.cs446.common.AppEvent
+import com.example.cs446.common.EventBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -117,7 +119,7 @@ open class FeedViewModel : ViewModel() {
                     imageUris,
                     petId
                 )
-                postRepository.uploadPost(
+                val postId = postRepository.uploadPost(
                     imageUrls,
                     petId,
                     caption,
@@ -125,6 +127,11 @@ open class FeedViewModel : ViewModel() {
                 )
                 _postState.value = PostResult.PostSuccess
                 loadMorePosts()
+                EventBus.emit(
+                    AppEvent.PostCreated(
+                        postId
+                    )
+                )
             } catch (_: Exception) {
                 _postState.value = PostResult.PostError("Failed to post.")
             }
