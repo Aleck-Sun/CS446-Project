@@ -44,10 +44,31 @@ open class FeedViewModel : ViewModel() {
     private val _earliestLoadedTime = MutableStateFlow<Instant?>(null)
     private val _latestLoadedTime = MutableStateFlow<Instant?>(null)
 
+    private val _sharedText = MutableStateFlow<String?>(null)
+    val sharedText: StateFlow<String?> = _sharedText
+
+    private val _sharedImageUri = MutableStateFlow<Uri?>(null)
+    val sharedImageUri: StateFlow<Uri?> = _sharedImageUri
+
+    private val _shareContent = MutableStateFlow<Boolean>(false)
+    val shareContent: StateFlow<Boolean> = _shareContent
+
     init {
         filterPosts()
         loadMorePosts()
         getPetsWithPostPermissions()
+    }
+
+    fun setSharedData(text: String?, imageUri: Uri?) {
+        _shareContent.value = true
+        _sharedText.value = text
+        _sharedImageUri.value = imageUri
+    }
+
+    fun clearSharedData() {
+        _shareContent.value = false
+        _sharedText.value = null
+        _sharedImageUri.value = null
     }
 
     private fun filterPosts() {

@@ -23,6 +23,7 @@ import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
 import android.content.Context
 import android.net.Uri
+import androidx.compose.runtime.collectAsState
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -33,13 +34,11 @@ fun MainNavigator(
     onLogout: () -> Unit = {},
     permissionsViewModel: PermissionsViewModel,
     onShare: (Context, String, String) -> Unit = {_,_,_->},
-    shareContent: Boolean = false,
-    sharedText: String? = null,
-    sharedImageUri: Uri? = null
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val shareContent by feedViewModel.shareContent.collectAsState()
 
     val currentMainDestination = currentDestination?.route?.let { route ->
         val baseRoute = route.split("/")[0]
@@ -102,9 +101,6 @@ fun MainNavigator(
                     onNavigate = navigateTo,
                     viewModel = feedViewModel,
                     onShare = onShare,
-                    routeOnShare = shareContent,
-                    sharedText = sharedText,
-                    sharedImageUri = sharedImageUri
                 )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {

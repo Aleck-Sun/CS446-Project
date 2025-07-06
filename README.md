@@ -43,3 +43,4 @@
 | 2025-07-02 | Profile posts retrieve from database            |                | 2              |               |                 |               |                |
 | 2025-07-04 | Fixed backwards navigation for permissions page |                |                | 1.5           |                 |               |                |
 | 2025-07-04 | Added loading sequence while data loads         |                |                | 0.5           |                 |               |                |
+| 2025-06-25 | Added post sharing feature                      | 2.5            |                |               |                 |               |                |

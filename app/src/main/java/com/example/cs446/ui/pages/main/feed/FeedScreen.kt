@@ -80,9 +80,7 @@ fun FeedScreen(
     routeOnShare: Boolean = false,
     onNavigate: (MainActivityDestination, String?) -> Unit,
     viewModel: FeedViewModel,
-    onShare: (Context, String, String) -> Unit = {_,_,_->},
-    sharedText: String? = null,
-    sharedImageUri: Uri? = null
+    onShare: (Context, String, String) -> Unit = {_,_,_->}
 ) {
     viewModel.getPetsWithPostPermissions()
     val posts by viewModel.posts.collectAsState()
@@ -120,6 +118,10 @@ fun FeedScreen(
     fun onClearSearch() {
         viewModel.clearSearch()
     }
+
+    val sharedText by viewModel.sharedText.collectAsState()
+    val sharedImageUri by viewModel.sharedImageUri.collectAsState()
+    val routeOnShare by viewModel.shareContent.collectAsState()
 
     FeedContent(
         routeOnShare,

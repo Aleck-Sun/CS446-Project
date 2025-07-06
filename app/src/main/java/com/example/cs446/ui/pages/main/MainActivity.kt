@@ -43,6 +43,9 @@ class MainActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra("shared_image_uri")
         }
+        if (shareContent) {
+            feedViewModel.setSharedData(sharedText, sharedImageUri)
+        }
 
         val onLogout = {
             val intent = Intent(this, LoginActivity::class.java)
@@ -88,9 +91,6 @@ class MainActivity : ComponentActivity() {
                 onLogout = onLogout,
                 permissionsViewModel = permissionsViewModel,
                 onShare = ::onShare,
-                shareContent = shareContent,
-                sharedText = sharedText,
-                sharedImageUri = sharedImageUri
             )
         }
     }
