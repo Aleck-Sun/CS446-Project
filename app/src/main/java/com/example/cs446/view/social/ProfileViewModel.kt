@@ -1,5 +1,6 @@
 package com.example.cs446.view.social
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.post.Post
@@ -13,6 +14,14 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ProfileViewModel : ViewModel() {
+    private val _avatar = MutableStateFlow<Uri?>(null)
+    private val _username = MutableStateFlow<String>("TEMP_USERNAME")
+    private val _bio = MutableStateFlow<String>("TEMP_USERNAME")
+
+    val avatar: StateFlow<Uri?> = _avatar
+    val username: StateFlow<String> = _username
+    val bio: StateFlow<String> = _bio
+
     private val _allPosts = MutableStateFlow<List<Post>>(listOf())
 
     val posts: StateFlow<List<Post>> = _allPosts
@@ -24,6 +33,15 @@ class ProfileViewModel : ViewModel() {
 
     init {
         loadMorePosts()
+    }
+
+    fun updateProfile(
+        avatar: Uri?,
+        username: String,
+        bio: String
+    ) {
+        viewModelScope.launch {
+        }
     }
 
     suspend fun loadNewPost(postId: UUID) {
