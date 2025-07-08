@@ -64,11 +64,16 @@ fun CreatePostDialog(
     sharedImageUris: List<Uri> = emptyList<Uri>()
 ) {
     var currentImageIndex by remember { mutableStateOf<Int?>(null) }
-    val selectedImagesUri = remember {sharedImageUris.toMutableList() }
+    val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var text by remember { mutableStateOf<String>(sharedText) }
     var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
 
+    sharedImageUris.forEach {
+        if (it !in selectedImagesUri) {
+            selectedImagesUri.add(it)
+        }
+    }
     val context = LocalContext.current
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -142,7 +147,7 @@ fun CreatePostDialog(
                                         .clip(RoundedCornerShape(8.dp))
                                         .border(
                                             width = if (index == currentImageIndex) 3.dp else 0.dp,
-                                            color = if (index == currentImageIndex) Color.Magenta else Color.Transparent,
+                                            color = Color.Transparent,
                                             shape = RoundedCornerShape(8.dp)
                                         )
                                         .clickable { currentImageIndex = index },
