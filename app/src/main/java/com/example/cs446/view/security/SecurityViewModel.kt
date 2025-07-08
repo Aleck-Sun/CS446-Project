@@ -2,7 +2,7 @@ package com.example.cs446.view.security
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.cs446.common.SecurityComponent
+import com.example.cs446.common.security.SecurityComponent
 import com.example.cs446.backend.data.result.AuthResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

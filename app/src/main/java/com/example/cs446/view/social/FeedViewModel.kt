@@ -126,12 +126,13 @@ open class FeedViewModel : ViewModel() {
                     isPublic
                 )
                 _postState.value = PostResult.PostSuccess
-                loadMorePosts()
                 EventBus.emit(
                     AppEvent.PostCreated(
+                        petId,
                         postId
                     )
                 )
+                loadMorePosts()
             } catch (_: Exception) {
                 _postState.value = PostResult.PostError("Failed to post.")
             }

@@ -1,4 +1,4 @@
-package com.example.cs446.common
+package com.example.cs446.common.security
 
 import com.example.cs446.backend.data.repository.AuthRepository
 import com.example.cs446.backend.data.result.AuthResult

@@ -19,6 +19,8 @@ import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
+import com.example.cs446.common.AppEvent
+import com.example.cs446.common.EventBus
 
 class PetsViewModel : ViewModel() {
     private val petRepository = PetRepository()
@@ -138,6 +140,11 @@ class PetsViewModel : ViewModel() {
                     imageUrl = imageUrl
                 )
                 petRepository.updatePet(updatedPet)
+                if (originalPet.imageUrl != updatedPet.imageUrl) {
+                    EventBus.emit(
+                        AppEvent.ImageUploaded(originalPet.id)
+                    )
+                }
                 loadPets()
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update pet: ${e.message}"
