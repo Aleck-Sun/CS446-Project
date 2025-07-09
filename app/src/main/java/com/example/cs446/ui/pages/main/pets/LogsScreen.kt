@@ -261,6 +261,8 @@ fun LogsScreen(
                         )
 
                         ActivityLogForm(
+                            petId = pet!!.id,
+                            activityLogRepository = activityLogRepository,
                             onSubmit = { activityDate, activityType, comment, makePost, makePublic, imageUris ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(
