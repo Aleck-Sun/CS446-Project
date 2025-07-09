@@ -8,19 +8,24 @@ load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+print(SUPABASE_KEY, SUPABASE_URL)
 
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+# supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = FastAPI()
 
 @app.get("/")
-async def log_activity(petId: str, userId: str, type: str):
-    data = {
-        "pet_id": petId,
-        "user_id": userId,
-        "activityType": type,
-        "comment": f"Qr code log for {type}",
-    }
+def test():
+    return {"message": "Hello from Railway"}
 
-    supabase.table("activity-logs").insert(data).execute()
-    return JSONResponse(content={"message": "Activity logged successfully."}, status_code=201)
+# @app.get("/")
+# async def log_activity(petId: str, userId: str, type: str):
+#     data = {
+#         "pet_id": petId,
+#         "user_id": userId,
+#         "activityType": type,
+#         "comment": f"Qr code log for {type}",
+#     }
+
+#     supabase.table("activity-logs").insert(data).execute()
+#     return JSONResponse(content={"message": "Activity logged successfully."}, status_code=201)
