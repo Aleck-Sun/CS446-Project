@@ -14,10 +14,6 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = FastAPI()
 
 @app.get("/")
-def test():
-    return {"message": "Hello from Railway"}
-
-@app.get("/")
 async def log_activity(petId: str, userId: str, type: str):
     data = {
         "pet_id": petId,
