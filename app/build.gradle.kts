@@ -104,4 +104,6 @@ dependencies {
     implementation(libs.moshi.kotlin)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.material.icons.extended)
+
+    implementation("com.google.zxing:core:3.5.1")
 }

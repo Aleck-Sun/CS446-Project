@@ -45,4 +45,5 @@
 | 2025-07-04 | Added loading sequence while data loads         |                |                | 0.5           |                 |               |                |
 | 2025-06-25 | Added post sharing feature                      | 2.5            |                |               |                 |               |                |
 | 2025-06-25 | Update profile on post                          | 1.5            |                |               |                 |               |                |
-| 2025-07-09 | Add dynamic activity types                      |                |                |               |                 | 6             |                |
+| 2025-07-08 | Add dynamic activity types                      |                |                |               |                 | 6             |                |
+| 2025-07-09 | Add dynamic activity types                      |                |                |               |                 | 10            |                |
