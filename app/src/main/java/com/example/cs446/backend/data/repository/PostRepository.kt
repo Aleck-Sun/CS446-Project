@@ -158,6 +158,20 @@ class PostRepository {
         }
     }
 
+    suspend fun getNumberOfPosts(petId: UUID): Int {
+        return try {
+            postTable.select {
+                filter {
+                    eq("pet_id", petId)
+                }
+                count(Count.EXACT)
+            }.countOrNull()!!.toInt()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
+        }
+    }
+
     suspend fun getIfUserLikedPost(postId: UUID): Boolean {
         return try {
             likeTable.select {

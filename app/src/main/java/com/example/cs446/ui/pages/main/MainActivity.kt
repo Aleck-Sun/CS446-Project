@@ -11,12 +11,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
+import com.example.cs446.common.badges.BadgeComponent
 import com.example.cs446.ui.pages.login.LoginActivity
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.social.ProfileViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -34,6 +37,7 @@ class MainActivity : ComponentActivity() {
         val feedViewModel = FeedViewModel()
         val profileViewModel = ProfileViewModel()
         val permissionsViewModel = PermissionsViewModel()
+        val badgeComponent = BadgeComponent()
 
         val shareContent = intent.getBooleanExtra("share_post", false)
         val sharedText = intent.getStringExtra("shared_text")
@@ -81,6 +85,10 @@ class MainActivity : ComponentActivity() {
                 }
                 context.startActivity(Intent.createChooser(shareIntent, "Share post via"))
             }
+        }
+
+        lifecycleScope.launch {
+            badgeComponent.startObserving(scope = CoroutineScope(SupervisorJob() + Dispatchers.Default))
         }
 
         setContent {
