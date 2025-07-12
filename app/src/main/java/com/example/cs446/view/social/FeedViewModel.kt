@@ -213,4 +213,26 @@ open class FeedViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateFollowStatus(petId: UUID, isFollowing: Boolean) {
+        viewModelScope.launch {
+            try {
+                if (postRepository.updateFollowStatus(petId, isFollowing)) {
+                    _allPosts.value = _allPosts.value.map {
+                            post ->
+                        if (post.petId == petId) {
+                            post.copy(isFollowing = !isFollowing)
+                        } else {
+                            post
+                        }
+                    }
+                }
+
+                filterPosts()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+    }
 }

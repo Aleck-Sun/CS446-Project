@@ -95,6 +95,22 @@ class PostRepository {
             null
         }
     }
+
+    suspend fun updateFollowStatus(petId: UUID, isFollowing: Boolean): Boolean {
+        try {
+            followTable.upsert(
+                Follow(
+                    userRepository.getCurrentUserId()!!,
+                    petId,
+                    !isFollowing
+                )
+            )
+            return true
+        } catch(e: Exception) {
+            e.printStackTrace()
+        }
+        return false
+    }
     
     suspend fun getSignedImageUrl(imageUrl: String): String {
         return try {
@@ -312,6 +328,7 @@ class PostRepository {
             val followedPets = followTable.select {
                 filter {
                     eq("user_id", userRepository.getCurrentUserId()?:"")
+                    eq("followed", true)
                     isIn("pet_id", allPets.keys.toList())
                 }
             }.decodeList<Follow>()

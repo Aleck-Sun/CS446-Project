@@ -48,3 +48,4 @@
 | 2025-07-08 | Add dynamic activity types                      |                |                |               |                 | 6             |                |
 | 2025-07-09 | Add dynamic activity types                      |                |                |               |                 | 10            |                |
 | 2025-07-09 | Add badge system                                | 8              |                |               |                 |               |                |
+| 2025-07-09 | Add follow/unfollow                             | 1              |                |               |                 |               |                |
