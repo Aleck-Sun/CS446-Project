@@ -41,7 +41,7 @@ fun ActivityLogComponent(activityLog: ActivityLog) {
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = activityLog.activityType,
+                    text = activityLog.activityType.uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(

@@ -33,6 +33,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -43,26 +44,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
-import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.backend.data.model.ActivityLogType
+import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.ui.components.DatePickerTextField
-import com.example.cs446.ui.theme.CS446Theme
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O) // For modern dates
 @Composable
 fun ActivityLogForm(
     modifier: Modifier = Modifier,
+    petId: UUID,
+    activityLogRepository: ActivityLogRepository,
     onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, makePublic: Boolean, selectedImagesUri: List<Uri>) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
     var activityDate by remember { mutableStateOf(LocalDate.now()) }
@@ -73,6 +78,12 @@ fun ActivityLogForm(
     var currentImageIndex by remember { mutableStateOf<Int?>(null) }
     val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
+    var activityTypeOptions = remember { mutableStateListOf<String>() }
+
+    LaunchedEffect(petId) {
+        val types = activityLogRepository.getActivityLogsTypeTableForPet(petId)
+        activityTypeOptions.addAll(types.map { it.activityType} )
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -103,11 +114,26 @@ fun ActivityLogForm(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        OutlinedTextField(
-            value = activityType,
-            onValueChange = { activityType = it },
-            label = { Text("Activity Type") },
-            modifier = Modifier.fillMaxWidth()
+        ActivityTypeSelector(
+            activityType = activityType,
+            onActivityTypeChange = { activityType = it },
+            activityTypeOptions = activityTypeOptions,
+            onNewTypeConfirmed = { newType ->
+                if (!activityTypeOptions.contains(newType.lowercase())) {
+                    activityTypeOptions.add(newType.lowercase())
+
+                    // Save new activity type in DB
+                    coroutineScope.launch {
+                        activityLogRepository.addActivityLogsType(
+                            ActivityLogType(
+                                activityType = newType.lowercase(),
+                                petId = petId,
+                                createdAt = Instant.now(),
+                            )
+                        )
+                    }
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -217,16 +243,5 @@ fun ActivityLogForm(
         ) {
             Text("Log Activity")
         }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun ActivityLogFormPreview() {
-    CS446Theme {
-        ActivityLogForm(
-            onSubmit = { _, _, _, _, _, _ -> }
-        )
     }
 }

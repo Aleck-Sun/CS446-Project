@@ -6,6 +6,7 @@
 *.aab
 *.dex
 *.class
+*.env
 
 # Generated files + build folders
 /build/

@@ -126,12 +126,13 @@ open class FeedViewModel : ViewModel() {
                     isPublic
                 )
                 _postState.value = PostResult.PostSuccess
-                loadMorePosts()
                 EventBus.emit(
                     AppEvent.PostCreated(
+                        petId,
                         postId
                     )
                 )
+                loadMorePosts()
             } catch (_: Exception) {
                 _postState.value = PostResult.PostError("Failed to post.")
             }
@@ -210,6 +211,28 @@ open class FeedViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    fun updateFollowStatus(petId: UUID, isFollowing: Boolean) {
+        viewModelScope.launch {
+            try {
+                if (postRepository.updateFollowStatus(petId, isFollowing)) {
+                    _allPosts.value = _allPosts.value.map {
+                            post ->
+                        if (post.petId == petId) {
+                            post.copy(isFollowing = !isFollowing)
+                        } else {
+                            post
+                        }
+                    }
+                }
+
+                filterPosts()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
         }
     }
 }

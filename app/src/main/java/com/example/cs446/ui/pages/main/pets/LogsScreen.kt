@@ -1,9 +1,16 @@
 package com.example.cs446.ui.pages.main.pets
 
+import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
+import android.graphics.Color
+import android.os.Environment
+import android.provider.MediaStore
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.cs446.backend.data.model.ActivityLog
+import com.example.cs446.backend.data.model.ActivityLogType
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.repository.PetRepository
@@ -43,9 +52,12 @@ import com.example.cs446.ui.components.pets.ActivityLogCalendar
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.social.FeedViewModel
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
+import androidx.core.graphics.createBitmap
 
 enum class LogViewMode {
     LIST, CALENDAR
@@ -70,6 +82,11 @@ fun LogsScreen(
     val context = LocalContext.current
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
     var pet by remember { mutableStateOf<Pet?>(null) }
+    var activityTypes by remember {mutableStateOf<List<ActivityLogType>>(emptyList())}
+    var showActivityTypesModal by remember { mutableStateOf(false) }
+
+    var showQrDialog by remember { mutableStateOf(false) }
+    var qrContent by remember { mutableStateOf("") }
 
     val filteredLogs = remember(activityLogs, searchText) {
         if (searchText.isBlank()) {
@@ -86,6 +103,7 @@ fun LogsScreen(
         coroutineScope.launch {
             activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
             pet = petRepository.getPet(UUID.fromString(petId))
+            activityTypes = activityLogRepository.getActivityLogsTypeTableForPet(UUID.fromString(petId))
         }
     }
 
@@ -223,9 +241,84 @@ fun LogsScreen(
             )
         }
 
+        Button(
+            onClick = { showActivityTypesModal = true },
+            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
+        ) {
+            Text("View Activity Types")
+        }
+
+        if (showActivityTypesModal) {
+            AlertDialog(
+                onDismissRequest = { showActivityTypesModal = false },
+                title = { Text("Activity Types") },
+                text = {
+                    Column {
+                        activityTypes.forEach { type ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(type.activityType.uppercase(), fontSize = 16.sp)
+                                Button(onClick = {
+                                    val userId = userRepository.getCurrentUserId()
+                                    val url = "https://cs446-project-production.up.railway.app"
+                                    qrContent = "$url?petId=$petId&userId=$userId&type=${type.activityType}"
+                                    showQrDialog = true
+                                }) {
+                                    Text("Create QR Code")
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = { showActivityTypesModal = false }) {
+                        Text("Close")
+                    }
+                }
+            )
+        }
+
+        if (showQrDialog) {
+            AlertDialog(
+                onDismissRequest = { showQrDialog = false },
+                title = { Text("QR Code") },
+                text = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val qrBitmap = generateQrCodeBitmap(qrContent)
+                        qrBitmap?.let {
+                            Image(
+                                bitmap = it.asImageBitmap(),
+                                contentDescription = "QR Code",
+                                modifier = Modifier.size(200.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(onClick = {
+                            qrBitmap?.let { saveQrToGallery(context, it) }
+                        }) {
+                            Text("Save QR Code")
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = { showQrDialog = false }) {
+                        Text("Close")
+                    }
+                }
+            )
+        }
+
         if (showActivityLogModal) {
             Dialog(
-                onDismissRequest = { showActivityLogModal = false },
+                onDismissRequest = {
+                    showActivityLogModal = false
+                    fetchActivityLogsAndPet()
+                },
                 properties = DialogProperties(
                     usePlatformDefaultWidth = false
                 )
@@ -261,6 +354,8 @@ fun LogsScreen(
                         )
 
                         ActivityLogForm(
+                            petId = pet!!.id,
+                            activityLogRepository = activityLogRepository,
                             onSubmit = { activityDate, activityType, comment, makePost, makePublic, imageUris ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(
@@ -284,6 +379,41 @@ fun LogsScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+private fun generateQrCodeBitmap(content: String): Bitmap? {
+    val size = 512
+    return try {
+        val bits = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size)
+        createBitmap(size, size, Bitmap.Config.RGB_565).apply {
+            for (x in 0 until size) {
+                for (y in 0 until size) {
+                    setPixel(x, y, if (bits[x, y]) Color.BLACK else Color.WHITE)
+                }
+            }
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+fun saveQrToGallery(context: Context, bitmap: Bitmap, fileName: String = "qr_code_${System.currentTimeMillis()}") {
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
+        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+        put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+    }
+
+    val resolver = context.contentResolver
+    val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+
+    uri?.let {
+        resolver.openOutputStream(it)?.use { outputStream ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            Toast.makeText(context, "QR code saved to gallery", Toast.LENGTH_SHORT).show()
         }
     }
 }

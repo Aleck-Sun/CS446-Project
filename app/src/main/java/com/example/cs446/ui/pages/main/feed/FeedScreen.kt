@@ -57,7 +57,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.post.Comment
@@ -77,7 +76,6 @@ import java.util.UUID
 
 @Composable
 fun FeedScreen(
-    routeOnShare: Boolean = false,
     onNavigate: (MainActivityDestination, String?) -> Unit,
     viewModel: FeedViewModel,
     onShare: (Context, String, String) -> Unit = {_,_,_->}
@@ -119,6 +117,9 @@ fun FeedScreen(
     fun onClearSearch() {
         viewModel.clearSearch()
     }
+    fun onFollow(petId: UUID, isFollowing: Boolean) {
+        viewModel.updateFollowStatus(petId, isFollowing)
+    }
 
     val sharedText by viewModel.sharedText.collectAsState()
     val sharedImageUri by viewModel.sharedImageUri.collectAsState()
@@ -134,6 +135,7 @@ fun FeedScreen(
         ::onLike,
         ::onComment,
         onShare,
+        ::onFollow,
         ::onCreatePost,
         ::onSearchQueryChange,
         ::onClearSearch,
@@ -154,6 +156,7 @@ fun FeedContent(
     onLike: (UUID) -> Unit = {},
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (Context, String, String) -> Unit = {_, _, _ ->},
+    onFollow: (UUID, Boolean) -> Unit = {_, _ ->},
     onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {},
@@ -213,7 +216,8 @@ fun FeedContent(
                         onLike = onLike,
                         onComment = onComment,
                         onOpenCommentSection = ::onOpenCommentSection,
-                        onShare = onShare
+                        onShare = onShare,
+                        onFollow = onFollow
                     )
                 }
                 // show a message when search returns no results
@@ -361,7 +365,8 @@ fun PostItem(
     onLike: (UUID) -> Unit,
     onComment: (UUID, String) -> Unit,
     onOpenCommentSection: (UUID) -> Unit,
-    onShare: (Context, String, String) -> Unit
+    onShare: (Context, String, String) -> Unit,
+    onFollow: (UUID, Boolean) -> Unit = {_, _ ->},
 ) {
     Card(
         modifier = Modifier
@@ -389,7 +394,12 @@ fun PostItem(
                     Text(text = "From ${post.authorName}", fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                FollowButton(post.isFollowing)
+                FollowButton(
+                    post.isFollowing,
+                    onClick = {
+                        onFollow(post.petId, post.isFollowing)
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
