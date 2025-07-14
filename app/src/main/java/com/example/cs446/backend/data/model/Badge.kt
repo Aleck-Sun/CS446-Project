@@ -10,7 +10,9 @@ data class Badge(
     @Json(name = "pet_id") val petId: UUID,
     val tier: BadgeTier,
     @Json(name = "last_updated") val lastUpdated: Instant,
-    @Json(name = "created_at") val createdAt: Instant
+    @Json(name = "created_at") val createdAt: Instant,
+    val imageUrl: String? = null,
+    val text: String? = null
 )
 
 @JsonClass(generateAdapter = false)
@@ -61,7 +63,7 @@ fun getBadgeText(type: BadgeType, tier: BadgeTier): String = when (type) {
     BadgeType.UPLOAD_PHOTO -> {
         when (tier) {
             BadgeTier.FIRST -> "Upload a picture of your pet."
-            else -> throw NotImplementedError("No tier for photo.")
+            else -> ""
         }
     }
     BadgeType.LOG_ACTIVITY -> {
@@ -72,7 +74,7 @@ fun getBadgeText(type: BadgeType, tier: BadgeTier): String = when (type) {
             BadgeTier.HUNDREDTH -> "Log 100 activities for your pet."
             BadgeTier.FIVE_HUNDREDTH -> "Log 500 activities for your pet."
             BadgeTier.THOUSANDTH -> "Log 1000 activities for your pet. Good work!"
-            else -> throw NotImplementedError("No tier for activity log.")
+            else -> ""
         }
     }
     BadgeType.MAKE_POST -> {
@@ -81,12 +83,14 @@ fun getBadgeText(type: BadgeType, tier: BadgeTier): String = when (type) {
             BadgeTier.TENTH -> "Make 10 posts about your pet"
             BadgeTier.FIFTIETH -> "Make 50 posts about your pet."
             BadgeTier.HUNDREDTH -> "Make 100 posts about your pet."
-            else -> throw NotImplementedError("No tier for posts.")
+            BadgeTier.FIVE_HUNDREDTH -> "Make 500 posts about your pet."
+            BadgeTier.THOUSANDTH -> "Make 1000 posts about your pet."
+            else -> ""
         }
     }
     BadgeType.DAYS_IN_APP -> {
         when (tier) {
-            BadgeTier.FIRST -> "Starting out. You've added your pet to Petfolio!"
+            BadgeTier.FIRST -> "You've added your pet to Petfolio. Glad to have you here!"
             BadgeTier.TENTH -> "Your pet has been in Petfolio for 10 days."
             BadgeTier.FIFTIETH -> "Your pet has been in Petfolio for 50 days."
             BadgeTier.HUNDREDTH -> "Your pet has been in Petfolio for 100 days."
@@ -94,8 +98,12 @@ fun getBadgeText(type: BadgeType, tier: BadgeTier): String = when (type) {
             BadgeTier.TWO_YEAR -> "Your pet has been in Petfolio for 2 years."
             BadgeTier.THREE_YEAR -> "Your pet has been in Petfolio for 3 years. Wow!"
             BadgeTier.FIVE_YEAR -> "Your pet has been in Petfolio for 5 years. How the time passes!"
-            else -> throw NotImplementedError("No tier for days active.")
+            else -> ""
         }
     }
-    else -> throw NotImplementedError("Badge does not exist.")
+    else -> ""
+}
+
+fun getUrlEndingForBadge(type: BadgeType): String {
+    return "${type.name.lowercase()}.png"
 }

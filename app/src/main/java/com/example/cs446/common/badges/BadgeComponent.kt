@@ -70,6 +70,7 @@ class BadgeComponent {
             )
         )
         loadBadges()
+        EventBus.emit(AppEvent.BadgeEarned(petId, type, tier))
     }
 
     suspend fun updateExistingBadge(
@@ -83,6 +84,7 @@ class BadgeComponent {
             )
         )
         loadBadges()
+        EventBus.emit(AppEvent.BadgeEarned(badge.petId, badge.type, tier))
     }
 
     suspend fun checkDaysInApp(pet: Pet) {

@@ -55,6 +55,7 @@ import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.calculateAge
 import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.view.pets.PetsViewModel
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -72,6 +73,9 @@ fun PetsScreen(
     val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val badges by viewModel.badges.collectAsState()
+    var showToolTip by remember { mutableStateOf(false) }
+    var toolTipText by remember { mutableStateOf("") }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -142,7 +146,7 @@ fun PetsScreen(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
-                if (selectedPet != null) {
+                selectedPet?.let {
                     // Display pet info (Breed, Weight, Date of Birth, Age)
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -186,6 +190,45 @@ fun PetsScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Age", fontWeight = FontWeight.Medium)
                                 Text("${calculateAge(selectedPet.birthdate)} Old")
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        badges[selectedPet.id]?.let {
+                            Row {
+                                it.forEach {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(it.imageUrl),
+                                        contentDescription = it.text,
+                                        modifier = Modifier
+                                            .size(12.dp)
+                                            .clickable {
+                                                showToolTip = true
+                                                toolTipText = it.text?:"Unknown badge."
+                                            },
+                                        contentScale = ContentScale.Crop
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                }
+                            }
+
+                            if (showToolTip) {
+                                // Automatically hide after 2 seconds
+                                LaunchedEffect(Unit) {
+                                    delay(2000)
+                                    showToolTip = false
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .offset(y = (12).dp)
+                                        .background(
+                                            Color.Black.copy(alpha = 0.75f),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ).padding(8.dp)
+                                ) {
+                                    Text(text = toolTipText, color = Color.White, fontSize = 12.sp)
+                                }
                             }
                         }
                     }
