@@ -68,6 +68,8 @@ fun ProfileScreen(
             username,
             bio
         )
+
+        showEditProfile = false
     }
 
     Column(
