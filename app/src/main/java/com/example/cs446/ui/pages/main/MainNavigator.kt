@@ -104,7 +104,7 @@ fun MainNavigator(
                 )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
-                ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel)
+                ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel, onLogout = onLogout)
             }
             composable("${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""
