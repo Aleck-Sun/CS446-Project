@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
@@ -202,7 +203,7 @@ fun PetsScreen(
                                         painter = rememberAsyncImagePainter(it.imageUrl),
                                         contentDescription = it.text,
                                         modifier = Modifier
-                                            .size(12.dp)
+                                            .size(24.dp)
                                             .clickable {
                                                 showToolTip = true
                                                 toolTipText = it.text?:"Unknown badge."
