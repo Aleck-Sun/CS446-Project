@@ -1,10 +1,8 @@
 package com.example.cs446.backend.data.repository
 
 import com.example.cs446.backend.SupabaseClient
-import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.model.PetRaw
-import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.UserPetRelationRaw
 import io.github.jan.supabase.auth.auth
@@ -17,6 +15,7 @@ class PetRepository {
     private val petsTable = SupabaseClient.supabase.from("pets")
     private val relationsTable = SupabaseClient.supabase.from("user-pet-relations")
     private val storage = SupabaseClient.supabase.storage
+    val defaultImageUrl = "default.png"
 
     suspend fun getPetsCreatedByUser(userId: UUID): List<Pet> {
         val petRawList = petsTable.select {
@@ -36,14 +35,7 @@ class PetRepository {
             .decodeList<UserPetRelationRaw>()
             .map { it.petId }
 
-        if (relatedPetIds.isEmpty()) {
-            return emptyList()
-        }
-        val petRawList = petsTable.select()
-            .decodeList<PetRaw>()
-            .filter { relatedPetIds.contains(it.id) }
-
-        return petRawList.map { parsePet(it) }
+        return getPetsByIds(relatedPetIds)
     }
 
     suspend fun getPetsByPostPermission(): List<Pet> {
@@ -120,7 +112,7 @@ class PetRepository {
             }.decodeSingle<PetRaw>()
         ).let {
             it.copy(
-                imageUrl = getSignedPetImageUrl(it.imageUrl?:"user.png")
+                imageUrl = getSignedPetImageUrl(it.imageUrl?:defaultImageUrl)
             )
         }
     }
@@ -132,20 +124,20 @@ class PetRepository {
             }
         }.decodeList<PetRaw>().map{
             parsePet(it).copy(
-                imageUrl = getSignedPetImageUrl(it.imageUrl?:"user.png")
+                imageUrl = getSignedPetImageUrl(it.imageUrl?:defaultImageUrl)
             )
         }
     }
 
     suspend fun getSignedPetImageUrl(imageUrl: String): String {
         return try {
-            storage.from("avatars").createSignedUrl( // TODO - this is for user avatars, need to fetch from pets
+            storage.from("images").createSignedUrl( // TODO - this is for user avatars, need to fetch from pets
                 path = imageUrl,
                 expiresIn = Duration.parse("12h")  // expires in 12 hours
             )
         } catch (e: Exception) {
             e.printStackTrace()
-            ""
+            defaultImageUrl
         }
     }
 }
