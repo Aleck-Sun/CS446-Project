@@ -16,7 +16,7 @@ import java.util.UUID
 class ProfileViewModel : ViewModel() {
     private val _avatar = MutableStateFlow<Uri?>(null)
     private val _username = MutableStateFlow<String>("TEMP_USERNAME")
-    private val _bio = MutableStateFlow<String>("TEMP_USERNAME")
+    private val _bio = MutableStateFlow<String>("TEMP_BIO")
 
     val avatar: StateFlow<Uri?> = _avatar
     val username: StateFlow<String> = _username
@@ -36,12 +36,13 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun updateProfile(
-        avatar: Uri?,
-        username: String,
-        bio: String
+        newAvatar: Uri?,
+        newUsername: String,
+        newBio: String
     ) {
-        viewModelScope.launch {
-        }
+        _avatar.value = newAvatar
+        _username.value = newUsername
+        _bio.value = newBio
     }
 
     suspend fun loadNewPost(postId: UUID) {
