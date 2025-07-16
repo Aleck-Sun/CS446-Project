@@ -36,13 +36,13 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun updateProfile(
-        newAvatar: Uri?,
-        newUsername: String,
-        newBio: String
+        Avatar: Uri?,
+        Username: String,
+        Bio: String
     ) {
-        _avatar.value = newAvatar
-        _username.value = newUsername
-        _bio.value = newBio
+        _avatar.value = Avatar
+        _username.value = Username
+        _bio.value = Bio
     }
 
     suspend fun loadNewPost(postId: UUID) {
