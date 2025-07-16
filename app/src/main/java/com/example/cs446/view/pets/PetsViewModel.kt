@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cs446.backend.data.model.Badge
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,6 +20,7 @@ import com.example.cs446.backend.data.model.UserPetRelation
 import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
+import com.example.cs446.backend.data.repository.BadgeRepository
 import com.example.cs446.common.AppEvent
 import com.example.cs446.common.EventBus
 
@@ -26,9 +28,13 @@ class PetsViewModel : ViewModel() {
     private val petRepository = PetRepository()
     private val imageRepository = ImageRepository()
     private val userRepository = UserRepository()
+    private val badgeRepository = BadgeRepository()
 
     private val _pets = MutableStateFlow<List<Pet>>(emptyList())
     val pets: StateFlow<List<Pet>> = _pets
+
+    private val _badges = MutableStateFlow<Map<UUID, List<Badge>>>(mapOf())
+    val badges: StateFlow<Map<UUID, List<Badge>>> = _badges
 
     private val _selectedPetId = MutableStateFlow<UUID?>(null)
     val selectedPetId: StateFlow<UUID?> = _selectedPetId
@@ -52,6 +58,9 @@ class PetsViewModel : ViewModel() {
                 if (clearSelect) {
                     _selectedPetId.value = _pets.value.firstOrNull()?.id
                 }
+                _badges.value = badgeRepository.getAllBadgesForPets(
+                    _pets.value.map {it.id}
+                )
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to load pets: ${e.message}"
             }
@@ -109,6 +118,12 @@ class PetsViewModel : ViewModel() {
                 )
                 loadPets()
                 _selectedPetId.value = petId
+
+                newPet.imageUrl.let {
+                    EventBus.emit(
+                        AppEvent.ImageUploaded(petId)
+                    )
+                }
             } catch (e: Exception) {
                 _errorMessage.value =  "Failed to add pet: ${e.message}"
             }
