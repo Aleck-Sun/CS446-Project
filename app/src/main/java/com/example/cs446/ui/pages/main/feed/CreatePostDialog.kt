@@ -117,9 +117,13 @@ fun CreatePostDialog(
                         color = Color.Red
                     )
                 } else {
+                    if (selectedPet == null) {
+                        selectedPet = pets.first()
+                    }
                     DropdownPetSelector(
                         pets,
-                    ) { i -> selectedPet = pets[i]}
+                        selectedPet!!,
+                    ) { pet -> selectedPet = pet}
                 }
                 Spacer(modifier = Modifier.height(4.dp))
 

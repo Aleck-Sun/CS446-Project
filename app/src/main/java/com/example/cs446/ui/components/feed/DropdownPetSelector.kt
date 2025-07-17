@@ -14,53 +14,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.cs446.backend.data.model.Pet
+import com.example.cs446.ui.components.DropdownSelector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DropdownPetSelector(
-    petList: List<Pet>,           // e.g. list of pet names or pet objects
-    onPetSelected: (Int) -> Unit
+    petList: List<Pet>,
+    selectedPet: Pet,
+    onPetSelected: (Pet) -> Unit,
 ) {
-    var selectedPetIndex = 0
-    var expanded by remember { mutableStateOf(false) }
-    var selectedPetName by remember { mutableStateOf(petList[selectedPetIndex].name) }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {
-            expanded = !expanded
-            println(expanded)
+    DropdownSelector<Pet>(
+        label = "Select Pet",
+        selectedValue = selectedPet,
+        options = petList,
+        onValueSelected = onPetSelected,
+        toStringFunc = {
+            it.name
         }
-    ) {
-        // Display selected pet's name
-        OutlinedTextField(
-            readOnly = true,
-            value = selectedPetName,
-            onValueChange = {},
-            label = { Text("Select Pet") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            petList.forEachIndexed { i, pet ->
-                DropdownMenuItem(
-                    text = { Text(pet.name) },
-                    onClick = {
-                        onPetSelected(i)
-                        expanded = false
-                        selectedPetIndex = i
-                        selectedPetName = petList[selectedPetIndex].name
-                    }
-                )
-            }
-        }
-    }
+    )
 }
