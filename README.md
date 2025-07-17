@@ -52,3 +52,4 @@
 | 2025-07-09 | Add follow/unfollow                             | 1              |                |               |                 |               |                |
 | 2025-07-15 | Add badge icons                                 | 2.5            |                |               |                 |               |                |
 | 2025-07-15 | Add pet images                                  | 1              |                |               |                 |               |                |
+| 2025-07-15 | Add logs bar graph                              | 3              |                |               |                 |               |                |
