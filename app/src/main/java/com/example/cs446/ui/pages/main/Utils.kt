@@ -6,11 +6,17 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
 import java.text.SimpleDateFormat
+import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 
-fun formatDate(instant: Instant): String {
-    val formatter = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+fun formatDate(instant: Instant, unit: ChronoUnit = ChronoUnit.DAYS): String {
+    val formatter = when(unit) {
+        ChronoUnit.DAYS -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        ChronoUnit.WEEKS -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        ChronoUnit.MONTHS -> SimpleDateFormat("MMMM, yyyy", Locale.getDefault())
+        else -> SimpleDateFormat("yyyy", Locale.getDefault())
+    }
     val millis = instant.toEpochMilliseconds()
     val date = Date(millis)
     return formatter.format(date)

@@ -259,7 +259,9 @@ fun LogsScreen(
                 LogViewMode.CHART -> {
                     TrendChart(
                         activityLogs = filteredLogs,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .padding(bottom = 48.dp)
+                            .fillMaxSize()
                     )
                 }
             }
