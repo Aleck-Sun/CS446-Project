@@ -14,11 +14,18 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ProfileViewModel : ViewModel() {
-    private val _avatar = MutableStateFlow<Uri?>(null)
+    private val postRepository = PostRepository()
+    private val userRepository = UserRepository()
+
+    // Temporary values until type conversion between Uri? and String? is complete
+    private val _tempAvatar = MutableStateFlow<Uri?>(null)
+    val tempAvatar: StateFlow<Uri?> = _tempAvatar
+
+    private val _avatarUrl = MutableStateFlow<String?>(null)
     private val _username = MutableStateFlow<String>("TEMP_USERNAME")
     private val _bio = MutableStateFlow<String>("TEMP_BIO")
 
-    val avatar: StateFlow<Uri?> = _avatar
+    val avatar: StateFlow<String?> = _avatarUrl
     val username: StateFlow<String> = _username
     val bio: StateFlow<String> = _bio
 
@@ -28,19 +35,20 @@ class ProfileViewModel : ViewModel() {
 
     var isLoading = false;
 
-    private val postRepository = PostRepository()
-    private val userRepository = UserRepository()
+
 
     init {
         loadMorePosts()
+        loadProfileInfo()
     }
 
     fun updateProfile(
-        avatar: Uri?,
+        avatarUrl: Uri?,
         username: String,
         bio: String
     ) {
-        _avatar.value = avatar
+        // TODO: Work out type conversion
+        //_avatarUrl.value = avatarUrl
         _username.value = username
         _bio.value = bio
     }
@@ -84,6 +92,33 @@ class ProfileViewModel : ViewModel() {
                     is AppEvent.PostCreated -> loadNewPost(event.postId)
                     else -> null
                 }
+            }
+        }
+    }
+
+    fun loadProfileInfo() {
+//        if (isLoading) return
+//        isLoading = true
+
+        viewModelScope.launch {
+            try {
+                val userID = userRepository.getCurrentUserId()
+
+                if (userID == null) {
+                    throw Exception("userID = null")
+                }
+                val user = userRepository.getUserById(userID)
+
+                if (user == null) {
+                    throw Exception("user = null")
+                }
+                _avatarUrl.value = user.avatarUrl
+                _username.value = user.username
+                _bio.value = userRepository.getBioByUser(user)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isLoading = false
             }
         }
     }

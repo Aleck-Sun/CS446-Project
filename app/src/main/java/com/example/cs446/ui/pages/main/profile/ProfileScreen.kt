@@ -49,6 +49,7 @@ fun ProfileScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
     onLogout: () -> Unit = {}
 ) {
+    // val avatar by viewModel.tempAvatar.collectAsState()
     val avatar by viewModel.avatar.collectAsState()
     val username by viewModel.username.collectAsState()
     val bio by viewModel.bio.collectAsState()
@@ -138,6 +139,9 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text("Pets", fontWeight = FontWeight.Bold)
+        //Button()
+
         PostsItem(posts = posts)
 
         if (showEditProfile) {
@@ -146,7 +150,7 @@ fun ProfileScreen(
                 onSave = ::onSaveProfile,
                 usernameDefault = username,
                 bioDefault = bio,
-                avatarDefault = avatar
+                avatarDefault = null
             )
         }
     }

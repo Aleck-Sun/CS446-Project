@@ -13,6 +13,8 @@ class UserRepository {
     val storage = SupabaseClient.supabase.storage
 
     val defaultAvatarUrl = "user.png"
+    // TODO: Add Bio attribute to users table
+    val defaultBio = "Add Biography"
 
     suspend fun createNewUser(userId: String, email: String): User {
         usersTable.insert(
@@ -40,6 +42,10 @@ class UserRepository {
             e.printStackTrace()
             ""
         }
+    }
+
+    suspend fun getBioByUser(user: User): String {
+        return defaultBio
     }
 
     suspend fun getUserById(userId: UUID): User? {
