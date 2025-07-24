@@ -10,7 +10,8 @@ import androidx.compose.ui.Alignment
 fun PermissionCheckbox(
     label: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -18,6 +19,7 @@ fun PermissionCheckbox(
         Checkbox(
             checked = checked,
             onCheckedChange = onCheckedChange,
+            enabled = enabled
         )
         Text(
             text = label

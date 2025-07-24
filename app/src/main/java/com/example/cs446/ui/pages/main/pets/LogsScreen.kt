@@ -224,7 +224,8 @@ fun LogsScreen(
                             Text("Calendar")
                         }
                     },
-                    selected = viewMode == LogViewMode.CALENDAR
+                    selected = viewMode == LogViewMode.CALENDAR,
+                    modifier = Modifier.padding(end = 8.dp)
                 )
                 FilterChip(
                     onClick = { viewMode = LogViewMode.CHART },
@@ -235,7 +236,7 @@ fun LogsScreen(
                             Text("Stats")
                         }
                     },
-                    selected = viewMode == LogViewMode.CALENDAR
+                    selected = viewMode == LogViewMode.CHART
                 )
             }
 

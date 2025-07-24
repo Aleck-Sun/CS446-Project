@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.Handler
 import com.example.cs446.backend.data.repository.UserPetRepository
+import com.example.cs446.backend.data.repository.UserRepository
+import com.example.cs446.backend.data.model.UserPetRelation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -40,6 +42,7 @@ class PermissionsViewModel : ViewModel() {
                 ) ?: return@launch
 
                 val updatedPermissions = when (permission) {
+                    "editStatistics" -> relation.permissions.copy(editStatistics = value)
                     "editLogs" -> relation.permissions.copy(editLogs = value)
                     "setReminders" -> relation.permissions.copy(setReminders = value)
                     "inviteHandlers" -> relation.permissions.copy(inviteHandlers = value)
@@ -61,6 +64,42 @@ class PermissionsViewModel : ViewModel() {
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update permission: ${e.message}"
                 e.printStackTrace()
+            }
+        }
+    }
+
+    fun inviteHandlerToPet(petId: UUID, usernameOrEmail: String, relationName: String, permissions: com.example.cs446.backend.data.model.Permissions, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                // Try to find user by username or email
+                val userRepo = UserRepository()
+                val user = try {
+                    userRepo.getAllUsers().find { it.username == usernameOrEmail || it.email == usernameOrEmail }
+                        ?: userRepo.getUserById(UUID.fromString(usernameOrEmail)) // fallback if UUID
+                } catch (e: Exception) { null }
+
+                if (user == null) {
+                    onResult(false, "User not found")
+                    return@launch
+                }
+                // Check if already a handler
+                val existing = userPetRepository.getRelationForUserAndPet(petId, user.id)
+                if (existing != null) {
+                    onResult(false, "User is already a handler for this pet")
+                    return@launch
+                }
+                // Add relation with selected permissions and relation name
+                val relation = UserPetRelation(
+                    userId = user.id,
+                    petId = petId,
+                    relation = relationName,
+                    permissions = permissions
+                )
+                userPetRepository.addUserPetRelation(relation)
+                loadHandlers(petId)
+                onResult(true, null)
+            } catch (e: Exception) {
+                onResult(false, e.message)
             }
         }
     }

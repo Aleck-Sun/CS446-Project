@@ -12,7 +12,7 @@ class UserPetRepository {
     private val userPetsTable = SupabaseClient.supabase.from("user-pet-relations")
     private val userRepository = UserRepository()
 
-    private suspend fun getUsersForPet(petId: UUID): List<UserPetRelation?> {
+    private suspend fun getUsersForPet(petId: UUID): List<UserPetRelation> {
         return try {
             userPetsTable
                 .select {
@@ -37,7 +37,7 @@ class UserPetRepository {
 
         val handlers = userPetRelations.mapNotNull { userPetRelation ->
             val user =
-                userPetRelation?.let { userRepository.getUserById(it.userId) }
+                userPetRelation.let { userRepository.getUserById(it.userId) }
 
             if (user == null) {
                 Log.w(
@@ -55,6 +55,21 @@ class UserPetRepository {
             }
         }
         return handlers.sortedWith(compareByDescending { it.role == "Owner" })
+    }
+
+    suspend fun getPetRelationsForUser(userId: UUID): List<UserPetRelation> {
+        return try {
+            userPetsTable.select {
+                filter {
+                    eq("user_id", userId)
+                }
+            }
+                .decodeList<UserPetRelationRaw>()
+                .map { it.toUserPetRelation() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
+        }
     }
 
     suspend fun getRelationForUserAndPet(petId: UUID, userId: UUID): UserPetRelation? {
@@ -84,5 +99,9 @@ class UserPetRepository {
                 eq("user_id", userPetRelationRaw.userId)
             }
         }
+    }
+
+    suspend fun addUserPetRelation(relation: UserPetRelation) {
+        userPetsTable.insert(userPetRelationToRaw(relation))
     }
 }

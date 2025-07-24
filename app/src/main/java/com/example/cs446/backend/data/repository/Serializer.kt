@@ -43,6 +43,7 @@ class JavaTimeInstantAdapter {
 
 fun parsePermissions(list: List<String>): Permissions {
     return Permissions(
+        editStatistics = "edit_statistics" in list,
         editLogs = "edit_logs" in list,
         setReminders = "set_reminders" in list,
         inviteHandlers = "invite_handlers" in list,
@@ -104,6 +105,7 @@ fun userPetRelationFromRaw(userPetRelationRaw: UserPetRelationRaw): UserPetRelat
         petId = userPetRelationRaw.petId,
         relation = userPetRelationRaw.relation,
         permissions = Permissions(
+            editStatistics = "edit_statistics" in userPetRelationRaw.permissions,
             editLogs = "edit_logs" in userPetRelationRaw.permissions,
             setReminders = "set_reminders" in userPetRelationRaw.permissions,
             inviteHandlers = "invite_handlers" in userPetRelationRaw.permissions,

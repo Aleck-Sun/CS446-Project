@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +59,6 @@ import com.example.cs446.ui.pages.main.formatDate
 import com.example.cs446.view.pets.PetsViewModel
 import kotlinx.coroutines.delay
 
-
 @Composable
 fun PetsScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
@@ -73,10 +73,21 @@ fun PetsScreen(
     val pets by viewModel.pets.collectAsState()
     val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
+    val userPetRelations by viewModel.userPetRelations.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val badges by viewModel.badges.collectAsState()
     var showToolTip by remember { mutableStateOf(false) }
     var toolTipText by remember { mutableStateOf("") }
+
+    val canEditStatistics by remember(userPetRelations, selectedPetId) {
+        derivedStateOf {
+            userPetRelations.find { it.petId == selectedPetId }?.permissions?.editStatistics == true
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.reloadUserPetRelations()
+    }
 
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
@@ -234,30 +245,32 @@ fun PetsScreen(
                         }
                     }
                     // Edit/Remove current pet
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Button(
-                            onClick = { showEditPetDialog = true }
+                    if (canEditStatistics) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Edit, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Edit")
-                        }
+                            Button(
+                                onClick = { showEditPetDialog = true }
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = null)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Edit")
+                            }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
 
-                        Button(
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                            onClick = { showRemovePetDialog = true }
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = null)
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Remove")
+                            Button(
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                                onClick = { showRemovePetDialog = true }
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Remove")
+                            }
                         }
                     }
                 }
