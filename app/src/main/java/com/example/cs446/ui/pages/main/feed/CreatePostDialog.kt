@@ -1,6 +1,7 @@
 package com.example.cs446.ui.pages.main.feed
 
 import android.content.Context
+import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,6 +52,7 @@ import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.result.AuthResult
 import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.DropdownPetSelector
+import com.example.cs446.ui.components.feed.LocationPicker
 import kotlinx.coroutines.selects.select
 import java.util.UUID
 
@@ -58,7 +60,7 @@ import java.util.UUID
 fun CreatePostDialog(
     pets: List<Pet> = emptyList<Pet>(),
     onDismiss: () -> Unit = {},
-    onPost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ ->  },
+    onPost: (Context, String, UUID, List<Uri>, Boolean, Location?) -> Unit = {_, _, _, _, _, _ ->  },
     postResult: PostResult = PostResult.Idling,
     sharedText: String = "",
     sharedImageUris: List<Uri> = emptyList<Uri>()
@@ -68,6 +70,7 @@ fun CreatePostDialog(
     var text by remember { mutableStateOf<String>(sharedText) }
     var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
+    var selectedLocation by remember { mutableStateOf<Location?>(null) }
 
     sharedImageUris.forEach {
         if (it !in selectedImagesUri) {
@@ -92,7 +95,7 @@ fun CreatePostDialog(
                     return@TextButton
                 }
                 selectedPet?.let {
-                    onPost(context, text, it.id, selectedImagesUri, makePublic)
+                    onPost(context, text, it.id, selectedImagesUri, makePublic, selectedLocation)
                 }
             }) {
                 Text("Add")
@@ -192,6 +195,15 @@ fun CreatePostDialog(
                     },
                     label = { Text("Add a caption...") },
                     modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LocationPicker(
+                    selectedLocation = selectedLocation,
+                    onLocationSelected = { location ->
+                        selectedLocation = location
+                    }
                 )
 
                 Row(
