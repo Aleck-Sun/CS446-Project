@@ -50,6 +50,8 @@
 | 2025-07-09 | Add dynamic activity types                      |                |                |               |                 | 10            |                |
 | 2025-07-09 | Add badge system                                | 8              |                |               |                 |               |                |
 | 2025-07-09 | Add follow/unfollow                             | 1              |                |               |                 |               |                |
+| 2025-07-14 | Social media location feature / integration     |                |                |               |                 |               | 13             |
 | 2025-07-15 | Add badge icons                                 | 2.5            |                |               |                 |               |                |
 | 2025-07-15 | Add pet images                                  | 1              |                |               |                 |               |                |
 | 2025-07-15 | Add logs bar graph                              | 3              |                |               |                 |               |                |
+| 2025-07-24 | Bug fixes                                       |                |                |               |                 |               | 1              |
