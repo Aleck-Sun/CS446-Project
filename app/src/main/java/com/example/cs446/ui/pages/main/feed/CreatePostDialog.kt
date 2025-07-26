@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -33,6 +31,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.Pet
-import com.example.cs446.backend.data.result.AuthResult
+import com.example.cs446.backend.data.repository.UserPetRepository
+import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.backend.data.result.PostResult
 import com.example.cs446.ui.components.feed.DropdownPetSelector
 import com.example.cs446.ui.components.feed.LocationPicker
@@ -65,10 +65,25 @@ fun CreatePostDialog(
     sharedText: String = "",
     sharedImageUris: List<Uri> = emptyList<Uri>()
 ) {
+    val userPetRepository = remember { UserPetRepository() }
+    val userRepository = remember { UserRepository() }
+    var filteredPets by remember { mutableStateOf<List<Pet>>(emptyList()) }
+
+    LaunchedEffect(pets) {
+        val userId = userRepository.getCurrentUserId()
+        if (userId != null) {
+            filteredPets = pets.filter { pet ->
+                val relation = userPetRepository.getRelationForUserAndPet(pet.id, userId)
+                relation?.permissions?.makePosts == true
+            }
+        } else {
+            filteredPets = emptyList()
+        }
+    }
     var currentImageIndex by remember { mutableStateOf<Int?>(null) }
     val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var text by remember { mutableStateOf<String>(sharedText) }
-    var selectedPet by remember { mutableStateOf<Pet?>(if (pets.isEmpty()) null else pets[0]) }
+    var selectedPet by remember { mutableStateOf<Pet?>(if (filteredPets.isEmpty()) null else filteredPets[0]) }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
     var selectedLocation by remember { mutableStateOf<Location?>(null) }
 
@@ -84,7 +99,7 @@ fun CreatePostDialog(
         uri?.let {
             selectedImagesUri.add(it)
         }
-        currentImageIndex = selectedImagesUri.size-1
+        currentImageIndex = selectedImagesUri.size - 1
     }
 
     AlertDialog(
@@ -114,19 +129,19 @@ fun CreatePostDialog(
         title = { Text("Create New Post") },
         text = {
             Column {
-                if (pets.isEmpty()) {
+                if (filteredPets.isEmpty()) {
                     Text(
                         "You do not have any pets.",
                         color = Color.Red
                     )
                 } else {
                     if (selectedPet == null) {
-                        selectedPet = pets.first()
+                        selectedPet = filteredPets.first()
                     }
                     DropdownPetSelector(
-                        pets,
+                        filteredPets,
                         selectedPet!!,
-                    ) { pet -> selectedPet = pet}
+                    ) { pet -> selectedPet = pet }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -142,10 +157,8 @@ fun CreatePostDialog(
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 64.dp)
                     ) {
-                        items(selectedImagesUri.size + 1) {
-                            index ->
-                            if (index < selectedImagesUri.size)
-                            {
+                        items(selectedImagesUri.size + 1) { index ->
+                            if (index < selectedImagesUri.size) {
                                 Image(
                                     painter = rememberAsyncImagePainter(selectedImagesUri[index]),
                                     contentDescription = "Selected pet image",
@@ -231,10 +244,12 @@ fun CreatePostDialog(
                         text = "Please wait...",
                         color = Color.Green
                     )
+
                     is PostResult.PostError -> Text(
                         text = "Error: ${postResult.message}",
                         color = Color.Red
                     )
+
                     else -> Spacer(Modifier)
                 }
             }

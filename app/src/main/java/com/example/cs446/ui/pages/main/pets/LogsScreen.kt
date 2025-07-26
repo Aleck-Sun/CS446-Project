@@ -66,6 +66,7 @@ import com.example.cs446.backend.data.model.ActivityLogType
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.backend.data.repository.PetRepository
+import com.example.cs446.backend.data.repository.UserPetRepository
 import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.ui.components.pets.ActivityLogCalendar
 import com.example.cs446.ui.components.pets.ActivityLogComponent
@@ -98,11 +99,14 @@ fun LogsScreen(
     val activityLogRepository = remember { ActivityLogRepository() }
     val userRepository = remember { UserRepository() }
     val petRepository = remember { PetRepository() }
+    val userPetRepository = remember { UserPetRepository() }
+    var canEditLogs by remember { mutableStateOf(false) }
+    var canMakePosts by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
     var pet by remember { mutableStateOf<Pet?>(null) }
-    var activityTypes by remember {mutableStateOf<List<ActivityLogType>>(emptyList())}
+    var activityTypes by remember { mutableStateOf<List<ActivityLogType>>(emptyList()) }
     var showActivityTypesModal by remember { mutableStateOf(false) }
 
     var showQrDialog by remember { mutableStateOf(false) }
@@ -114,7 +118,7 @@ fun LogsScreen(
         } else {
             activityLogs.filter { log ->
                 log.activityType.contains(searchText, ignoreCase = true) ||
-                log.comment.contains(searchText, ignoreCase = true)
+                        log.comment.contains(searchText, ignoreCase = true)
             }
         }
     }
@@ -123,13 +127,22 @@ fun LogsScreen(
         coroutineScope.launch {
             activityLogs = activityLogRepository.getActivityLogsTableForPet(UUID.fromString(petId))
             pet = petRepository.getPet(UUID.fromString(petId))
-            activityTypes = activityLogRepository.getActivityLogsTypeTableForPet(UUID.fromString(petId))
+            activityTypes =
+                activityLogRepository.getActivityLogsTypeTableForPet(UUID.fromString(petId))
         }
     }
 
     // Launch a coroutine to load logs when petId changes
     LaunchedEffect(petId) {
         fetchActivityLogsAndPet()
+        // Check editLogs permission
+        val userId = userRepository.getCurrentUserId()
+        if (userId != null) {
+            val relation =
+                userPetRepository.getRelationForUserAndPet(UUID.fromString(petId), userId)
+            canEditLogs = relation?.permissions?.editLogs == true
+            canMakePosts = relation?.permissions?.makePosts == true
+        }
     }
 
     Box(
@@ -186,9 +199,9 @@ fun LogsScreen(
 
             if (searchText.isNotEmpty()) {
                 Text(
-                    text = if (filteredLogs.isEmpty()) 
+                    text = if (filteredLogs.isEmpty())
                         "No activities found matching \"$searchText\""
-                    else 
+                    else
                         "Found ${filteredLogs.size} of ${activityLogs.size} activities",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -204,9 +217,13 @@ fun LogsScreen(
             ) {
                 FilterChip(
                     onClick = { viewMode = LogViewMode.LIST },
-                    label = { 
+                    label = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.AutoMirrored.Filled.List,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("List")
                         }
@@ -214,12 +231,16 @@ fun LogsScreen(
                     selected = viewMode == LogViewMode.LIST,
                     modifier = Modifier.padding(end = 8.dp)
                 )
-                
+
                 FilterChip(
                     onClick = { viewMode = LogViewMode.CALENDAR },
-                    label = { 
+                    label = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Calendar")
                         }
@@ -231,7 +252,11 @@ fun LogsScreen(
                     onClick = { viewMode = LogViewMode.CHART },
                     label = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.BarChart, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.BarChart,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Stats")
                         }
@@ -251,12 +276,14 @@ fun LogsScreen(
                         }
                     }
                 }
+
                 LogViewMode.CALENDAR -> {
                     ActivityLogCalendar(
                         activityLogs = filteredLogs,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
                 LogViewMode.CHART -> {
                     TrendChart(
                         activityLogs = filteredLogs,
@@ -269,23 +296,29 @@ fun LogsScreen(
         }
 
         // Floating Action Button in bottom right
-        FloatingActionButton(
-            onClick = { showActivityLogModal = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add Activity Log"
-            )
+        if (canEditLogs) {
+            FloatingActionButton(
+                onClick = { showActivityLogModal = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Activity Log"
+                )
+            }
         }
 
-        Button(
-            onClick = { showActivityTypesModal = true },
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-        ) {
-            Text("View Activity Types")
+        if (canEditLogs) {
+            Button(
+                onClick = { showActivityTypesModal = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text("View Activity Types")
+            }
         }
 
         if (showActivityTypesModal) {
@@ -306,7 +339,8 @@ fun LogsScreen(
                                 Button(onClick = {
                                     val userId = userRepository.getCurrentUserId()
                                     val url = "https://cs446-project-production.up.railway.app"
-                                    qrContent = "$url?petId=$petId&userId=$userId&type=${type.activityType}"
+                                    qrContent =
+                                        "$url?petId=$petId&userId=$userId&type=${type.activityType}"
                                     showQrDialog = true
                                 }) {
                                     Text("Create QR Code")
@@ -396,6 +430,7 @@ fun LogsScreen(
                         ActivityLogForm(
                             petId = pet!!.id,
                             activityLogRepository = activityLogRepository,
+                            canMakePost = canMakePosts,
                             onSubmit = { activityDate, activityType, comment, makePost, makePublic, imageUris ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(
@@ -440,7 +475,11 @@ private fun generateQrCodeBitmap(content: String): Bitmap? {
     }
 }
 
-fun saveQrToGallery(context: Context, bitmap: Bitmap, fileName: String = "qr_code_${System.currentTimeMillis()}") {
+fun saveQrToGallery(
+    context: Context,
+    bitmap: Bitmap,
+    fileName: String = "qr_code_${System.currentTimeMillis()}"
+) {
     val contentValues = ContentValues().apply {
         put(MediaStore.Images.Media.DISPLAY_NAME, "$fileName.jpg")
         put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
@@ -490,11 +529,13 @@ private suspend fun handleActivitySubmission(
         val caption = templates.random()
         viewModel.uploadPost(context, pet.id, caption, imageUris, makePublic)
     }
-    activityLogRepository.addActivityLog(ActivityLog(
-        userId = userId,
-        petId = pet.id,
-        activityType = activityType,
-        comment = comment,
-        createdAt = activityDate
-    ))
+    activityLogRepository.addActivityLog(
+        ActivityLog(
+            userId = userId,
+            petId = pet.id,
+            activityType = activityType,
+            comment = comment,
+            createdAt = activityDate
+        )
+    )
 }
