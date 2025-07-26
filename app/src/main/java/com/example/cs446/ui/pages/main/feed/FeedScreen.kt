@@ -1,5 +1,6 @@
 import android.content.Context
 import android.content.Intent
+import android.location.Location
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.expandVertically
@@ -66,6 +67,8 @@ import com.example.cs446.ui.components.feed.CommentText
 import com.example.cs446.ui.components.feed.FollowButton
 import com.example.cs446.ui.components.feed.IconWithText
 import com.example.cs446.ui.components.feed.ImageCarousel
+import com.example.cs446.ui.components.feed.LocationButton
+import com.example.cs446.ui.components.feed.MapDialog
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.ui.pages.main.feed.CreatePostDialog
 import com.example.cs446.ui.pages.main.getRelativeTime
@@ -100,7 +103,8 @@ fun FeedScreen(
         text: String,
         petId: UUID,
         imageUris: List<Uri>,
-        isPublic: Boolean
+        isPublic: Boolean,
+        location: Location?
     ) {
         viewModel.uploadPost(
             context = context,
@@ -108,6 +112,7 @@ fun FeedScreen(
             caption = text,
             imageUris = imageUris,
             isPublic = isPublic,
+            location = location
         )
         viewModel.clearSharedData()
     }
@@ -157,7 +162,7 @@ fun FeedContent(
     onComment: (UUID, String) -> Unit = {_, _->},
     onShare: (Context, String, String) -> Unit = {_, _, _ ->},
     onFollow: (UUID, Boolean) -> Unit = {_, _ ->},
-    onCreatePost: (Context, String, UUID, List<Uri>, Boolean) -> Unit = {_, _, _, _, _ -> },
+    onCreatePost: (Context, String, UUID, List<Uri>, Boolean, Location?) -> Unit = {_, _, _, _, _, _ -> },
     onSearchQueryChange: (String) -> Unit = {},
     onClearSearch: () -> Unit = {},
     sharedText: String? = null,
@@ -165,6 +170,8 @@ fun FeedContent(
 ) {
     var showAddPostDialog by remember { mutableStateOf(false) }
     var expandedPostId by remember { mutableStateOf<UUID?>(null) }
+    var showMapDialog by remember { mutableStateOf(false) }
+    var selectedLocation by remember { mutableStateOf<Location?>(null) }
     LaunchedEffect(postResult) {
         if (postResult is PostResult.PostSuccess)
         {
@@ -181,6 +188,11 @@ fun FeedContent(
 
     fun onOpenCommentSection(postId: UUID) {
         expandedPostId = if (postId == expandedPostId) null else postId
+    }
+    
+    fun onShowLocationMap(location: Location) {
+        selectedLocation = location
+        showMapDialog = true
     }
     CS446Theme {
         Column {
@@ -217,7 +229,8 @@ fun FeedContent(
                         onComment = onComment,
                         onOpenCommentSection = ::onOpenCommentSection,
                         onShare = onShare,
-                        onFollow = onFollow
+                        onFollow = onFollow,
+                        onShowLocationMap = ::onShowLocationMap
                     )
                 }
                 // show a message when search returns no results
@@ -258,6 +271,16 @@ fun FeedContent(
                     postResult = postResult,
                     sharedText = sharedText?:"",
                     sharedImageUris = sharedImageUri?.let{listOf(it)}?:emptyList()
+                )
+            }
+            
+            if (showMapDialog && selectedLocation != null) {
+                MapDialog(
+                    location = selectedLocation!!,
+                    onDismiss = { 
+                        showMapDialog = false
+                        selectedLocation = null
+                    }
                 )
             }
         }
@@ -367,6 +390,7 @@ fun PostItem(
     onOpenCommentSection: (UUID) -> Unit,
     onShare: (Context, String, String) -> Unit,
     onFollow: (UUID, Boolean) -> Unit = {_, _ ->},
+    onShowLocationMap: (Location) -> Unit = {},
 ) {
     Card(
         modifier = Modifier
@@ -421,15 +445,11 @@ fun PostItem(
                 )
             }
 
-            post.location?.let {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray)
-                    Text(
-                        text = it.toString(),
-                        color = Color.Gray,
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                }
+            post.location?.let { location ->
+                LocationButton(
+                    location = location,
+                    onClick = { onShowLocationMap(location) }
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))

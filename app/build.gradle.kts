@@ -106,4 +106,5 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation("com.google.zxing:core:3.5.1")
+    implementation("org.osmdroid:osmdroid-android:6.1.17")
 }
