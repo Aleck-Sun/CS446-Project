@@ -103,4 +103,15 @@ class PermissionsViewModel : ViewModel() {
             }
         }
     }
+
+    fun deleteUserAndPetRelation(petId: UUID, userId: UUID) {
+        viewModelScope.launch {
+            try {
+                userPetRepository.deleteUserAndPetRelation(petId, userId)
+                loadHandlers(petId)
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to delete pet: ${e.message}"
+            }
+        }
+    }
 }

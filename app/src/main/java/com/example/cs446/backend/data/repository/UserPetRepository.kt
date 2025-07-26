@@ -104,4 +104,13 @@ class UserPetRepository {
     suspend fun addUserPetRelation(relation: UserPetRelation) {
         userPetsTable.insert(userPetRelationToRaw(relation))
     }
+
+    suspend fun deleteUserAndPetRelation(petId: UUID, userId: UUID) {
+        userPetsTable.delete {
+            filter {
+                eq("pet_id", petId)
+                eq("user_id", userId)
+            }
+        }
+    }
 }

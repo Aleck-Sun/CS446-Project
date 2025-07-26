@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.cs446.backend.data.model.Handler
 import com.example.cs446.backend.data.model.Pet
 import com.example.cs446.backend.data.repository.PetRepository
 import com.example.cs446.backend.data.repository.UserRepository
@@ -39,8 +40,8 @@ import com.example.cs446.ui.components.AddHandlerDialog
 import com.example.cs446.ui.components.HandlerCard
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.view.pets.PermissionsViewModel
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
@@ -58,6 +59,9 @@ fun PermissionsScreen(
     var isLoading by remember { mutableStateOf(true) }
 
     val currentHandler = handlers.find { it.userId == loggedInUserId }
+    val isOwner by remember(currentHandler) {
+        derivedStateOf { currentHandler?.role == "Owner" }
+    }
     val canAddHandlers by remember(currentHandler) {
         derivedStateOf { currentHandler?.permissions?.inviteHandlers ?: false }
     }
@@ -66,6 +70,8 @@ fun PermissionsScreen(
     }
 
     var showAddHandlerDialog by remember { mutableStateOf(false) }
+    var showRemoveHandlerDialog by remember { mutableStateOf(false) }
+    var removeHandler by remember { mutableStateOf<Handler?>(null) }
     var inviteError by remember { mutableStateOf<String?>(null) }
     var isInviting by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -145,6 +151,7 @@ fun PermissionsScreen(
                 LazyColumn {
                     items(handlers) { handler ->
                         HandlerCard(
+                            isOwner = isOwner,
                             handler = handler,
                             onPermissionChange = { perm, value ->
                                 viewModel.updatePermission(
@@ -156,7 +163,11 @@ fun PermissionsScreen(
                             },
                             currentUserId = loggedInUserId
                                 ?: handler.userId, // fallback disables all if not loaded
-                            canEditPermissions = canEditPermissions
+                            canEditPermissions = canEditPermissions,
+                            showRemoveHandlerDialog = {
+                                showRemoveHandlerDialog = true
+                                removeHandler = handler
+                            }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                     }
@@ -191,6 +202,23 @@ fun PermissionsScreen(
                 },
                 isLoading = isInviting,
                 errorMessage = inviteError
+            )
+        }
+
+        if (showRemoveHandlerDialog && removeHandler != null) {
+            RemoveHandlerDialog(
+                handlerName = removeHandler?.name ?: "",
+                onConfirm = {
+                    pet?.let { pet ->
+                        removeHandler?.let { handler ->
+                            viewModel.deleteUserAndPetRelation(pet.id, handler.userId)
+                        }
+                    }
+                    showRemoveHandlerDialog = false
+                },
+                onDismiss = {
+                    showRemoveHandlerDialog = false
+                }
             )
         }
     }
