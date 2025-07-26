@@ -8,17 +8,18 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun RemovePetDialog(
+    action: String,
     petName: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Remove Pet") },
-        text = { Text("Are you sure you want to remove $petName? This action cannot be undone.") },
+        title = { Text("$action Pet") },
+        text = { Text("Are you sure you want to ${action.lowercase()} $petName? This action cannot be undone.") },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Remove", color = Color.Red)
+                Text(action, color = Color.Red)
             }
         },
         dismissButton = {

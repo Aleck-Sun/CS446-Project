@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
@@ -68,16 +67,24 @@ fun PetsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showAddPetDialog by remember { mutableStateOf(false) }
     var showEditPetDialog by remember { mutableStateOf(false) }
-    var showRemovePetDialog by remember { mutableStateOf(false) }
+    var showRemovePetDialogAsOwner by remember { mutableStateOf(false) }
+    var showRemovePetDialogAsNonOwner by remember { mutableStateOf(false) }
 
     val pets by viewModel.pets.collectAsState()
     val selectedPetId by viewModel.selectedPetId.collectAsState()
     val selectedPet = selectedPetId?.let { id -> pets.find { it.id == id } }
     val userPetRelations by viewModel.userPetRelations.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
+    val userId by viewModel.currentUserId.collectAsState()
     val badges by viewModel.badges.collectAsState()
     var showToolTip by remember { mutableStateOf(false) }
     var toolTipText by remember { mutableStateOf("") }
+
+    val isOwner by remember(userPetRelations, selectedPetId, userId) {
+        derivedStateOf {
+            userPetRelations.any { it.petId == selectedPetId && it.userId == userId && it.relation == "Owner" }
+        }
+    }
 
     val canEditStatistics by remember(userPetRelations, selectedPetId) {
         derivedStateOf {
@@ -217,7 +224,7 @@ fun PetsScreen(
                                             .size(24.dp)
                                             .clickable {
                                                 showToolTip = true
-                                                toolTipText = it.text?:"Unknown badge."
+                                                toolTipText = it.text ?: "Unknown badge."
                                             },
                                         contentScale = ContentScale.Crop
                                     )
@@ -237,7 +244,8 @@ fun PetsScreen(
                                         .background(
                                             Color.Black.copy(alpha = 0.75f),
                                             shape = RoundedCornerShape(8.dp)
-                                        ).padding(8.dp)
+                                        )
+                                        .padding(8.dp)
                                 ) {
                                     Text(text = toolTipText, color = Color.White, fontSize = 12.sp)
                                 }
@@ -245,14 +253,14 @@ fun PetsScreen(
                         }
                     }
                     // Edit/Remove current pet
-                    if (canEditStatistics) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (canEditStatistics) {
                             Button(
                                 onClick = { showEditPetDialog = true }
                             ) {
@@ -260,16 +268,26 @@ fun PetsScreen(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Edit")
                             }
+                        }
 
-                            Spacer(modifier = Modifier.width(8.dp))
-
+                        Spacer(modifier = Modifier.width(8.dp))
+                        if (isOwner) {
                             Button(
                                 colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                                onClick = { showRemovePetDialog = true }
+                                onClick = { showRemovePetDialogAsOwner = true }
                             ) {
                                 Icon(Icons.Default.Delete, contentDescription = null)
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Remove")
+                            }
+                        } else {
+                            Button(
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                                onClick = { showRemovePetDialogAsNonOwner = true }
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = null)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("Unlink")
                             }
                         }
                     }
@@ -281,7 +299,12 @@ fun PetsScreen(
             // Logs button
             Box(modifier = Modifier.fillMaxWidth()) {
                 Button(
-                    onClick = { onNavigate(MainActivityDestination.Logs, selectedPetId.toString()) },
+                    onClick = {
+                        onNavigate(
+                            MainActivityDestination.Logs,
+                            selectedPetId.toString()
+                        )
+                    },
                     enabled = selectedPetId != null,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -305,7 +328,12 @@ fun PetsScreen(
 
             // Permissions button
             Button(
-                onClick = { onNavigate(MainActivityDestination.Handlers, selectedPetId.toString()) },
+                onClick = {
+                    onNavigate(
+                        MainActivityDestination.Handlers,
+                        selectedPetId.toString()
+                    )
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
@@ -353,14 +381,29 @@ fun PetsScreen(
         )
     }
 
-    if (showRemovePetDialog && selectedPet != null) {
+    if (showRemovePetDialogAsOwner && selectedPet != null) {
         RemovePetDialog(
+            action = "Remove",
             petName = selectedPet.name,
             onConfirm = {
-                viewModel.deletePet(selectedPet.id)
-                showRemovePetDialog = false
+                viewModel.deletePetAsOwner(selectedPet.id)
+                showRemovePetDialogAsOwner = false
             },
-            onDismiss = { showRemovePetDialog = false }
+            onDismiss = { showRemovePetDialogAsOwner = false }
+        )
+    }
+
+    if (showRemovePetDialogAsNonOwner && selectedPet != null) {
+        RemovePetDialog(
+            action = "Unlink",
+            petName = selectedPet.name,
+            onConfirm = {
+                userId?.let {
+                    viewModel.deletePetAsNonOwner(selectedPet.id, it)
+                }
+                showRemovePetDialogAsNonOwner = false
+            },
+            onDismiss = { showRemovePetDialogAsNonOwner = false }
         )
     }
 }

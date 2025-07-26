@@ -45,6 +45,7 @@ class PetsViewModel : ViewModel() {
     val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _currentUserId = MutableStateFlow<UUID?>(null)
+    val currentUserId: StateFlow<UUID?> = _currentUserId
 
     private val _userPetRelations = MutableStateFlow<List<UserPetRelation>>(emptyList())
     val userPetRelations: StateFlow<List<UserPetRelation>> = _userPetRelations
@@ -174,10 +175,22 @@ class PetsViewModel : ViewModel() {
         }
     }
 
-    fun deletePet(petId: UUID) {
+    fun deletePetAsOwner(petId: UUID) {
         viewModelScope.launch {
             try {
                 petRepository.deletePet(petId)
+                loadPets(clearSelect = true)
+                _selectedPetId.value = _pets.value.firstOrNull()?.id
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to delete pet: ${e.message}"
+            }
+        }
+    }
+
+    fun deletePetAsNonOwner(petId: UUID, userId: UUID) {
+        viewModelScope.launch {
+            try {
+                petRepository.deleteUserAndPetRelation(petId, userId)
                 loadPets(clearSelect = true)
                 _selectedPetId.value = _pets.value.firstOrNull()?.id
             } catch (e: Exception) {

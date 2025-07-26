@@ -101,6 +101,7 @@ fun LogsScreen(
     val petRepository = remember { PetRepository() }
     val userPetRepository = remember { UserPetRepository() }
     var canEditLogs by remember { mutableStateOf(false) }
+    var canMakePosts by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var activityLogs by remember { mutableStateOf<List<ActivityLog>>(emptyList()) }
@@ -136,11 +137,12 @@ fun LogsScreen(
         fetchActivityLogsAndPet()
         // Check editLogs permission
         val userId = userRepository.getCurrentUserId()
-        canEditLogs = if (userId != null) {
+        if (userId != null) {
             val relation =
                 userPetRepository.getRelationForUserAndPet(UUID.fromString(petId), userId)
-            relation?.permissions?.editLogs == true
-        } else false
+            canEditLogs = relation?.permissions?.editLogs == true
+            canMakePosts = relation?.permissions?.makePosts == true
+        }
     }
 
     Box(
@@ -428,6 +430,7 @@ fun LogsScreen(
                         ActivityLogForm(
                             petId = pet!!.id,
                             activityLogRepository = activityLogRepository,
+                            canMakePost = canMakePosts,
                             onSubmit = { activityDate, activityType, comment, makePost, makePublic, imageUris ->
                                 coroutineScope.launch {
                                     handleActivitySubmission(

@@ -103,6 +103,18 @@ class PetRepository {
         }
     }
 
+    // Delete relation for the pet and user
+    // Does not delete the actual pet from the petsTable
+    //   because it might still be referred to in other tables, such as posts.
+    suspend fun deleteUserAndPetRelation(petId: UUID, userId: UUID) {
+        relationsTable.delete {
+            filter {
+                eq("pet_id", petId)
+                eq("user_id", userId)
+            }
+        }
+    }
+
     suspend fun getPet(petId: UUID): Pet {
         return parsePet(
             petsTable.select {
