@@ -175,7 +175,7 @@ fun ReminderScreen(
                     modifier = Modifier.heightIn(max = 400.dp) // Constrain height
                 ) {
                     items(pastReminders) { reminder ->
-                        ReminderItem(reminder = reminder)
+                        ReminderItem(reminder = reminder, isPast = true)
                         HorizontalDivider()
                     }
                 }
@@ -187,15 +187,13 @@ fun ReminderScreen(
 @Composable
 fun ReminderItem(
     reminder: Reminder,
+    isPast: Boolean = false,
     onToggleActive: ((Boolean) -> Unit)? = null
 ) {
     val systemZone = ZoneId.systemDefault()
     val now = LocalDateTime.now(systemZone)
     val reminderInstant = reminder.time.atZone(systemZone).toInstant()
     val nowInstant = now.atZone(systemZone).toInstant()
-
-    val isUpcoming = reminderInstant.isAfter(nowInstant) && reminder.active
-    val isPast = !isUpcoming
 
     Card(
         modifier = Modifier.fillMaxWidth(),

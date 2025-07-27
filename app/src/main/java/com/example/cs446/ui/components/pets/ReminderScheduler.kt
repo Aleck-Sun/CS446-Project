@@ -10,14 +10,11 @@ import com.example.cs446.backend.data.model.Reminder
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.UUID
-import com.example.cs446.ui.pages.main.SYSTEM_TIMEZONE
-import com.example.cs446.ui.pages.main.SYSTEM_ZONE_ID
 
 object ReminderScheduler {
     private const val TAG = "ReminderScheduler"
 
     fun scheduleReminder(context: Context, reminder: Reminder): Boolean {
-        // Don't schedule if not active
         if (!reminder.active) {
             Log.d(TAG, "Not scheduling inactive reminder ${reminder.id}")
             return false
@@ -26,22 +23,24 @@ object ReminderScheduler {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (!alarmManager.canScheduleExactAlarms()) {
-                    Log.w(TAG, "Exact alarm permission not granted")
-                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(intent)
-                    return false
-                }
+            // Check for exact alarm permission (Android 12+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                !alarmManager.canScheduleExactAlarms()) {
+                Log.w(TAG, "Exact alarm permission not granted")
+                return false
+            }
+
+            // Convert reminder time to system timezone first
+            val zonedTime = reminder.time.atZone(ZoneId.systemDefault())
+            val triggerTime = zonedTime.toInstant().toEpochMilli()
+
+            // Verify the time is in the future
+            if (triggerTime <= System.currentTimeMillis()) {
+                Log.w(TAG, "Reminder time is in the past: ${reminder.time}")
+                return false
             }
 
             val pendingIntent = createPendingIntent(context, reminder)
-
-            val triggerTime = reminder.time
-                .atZone(SYSTEM_ZONE_ID)
-                .toInstant()
-                .toEpochMilli()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
@@ -57,7 +56,7 @@ object ReminderScheduler {
                 )
             }
 
-            Log.d(TAG, "Reminder scheduled for ${reminder.time}")
+            Log.d(TAG, "Reminder scheduled for ${reminder.time} (trigger time: $triggerTime)")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Error scheduling reminder", e)
@@ -79,11 +78,9 @@ object ReminderScheduler {
                 alarmManager.cancel(it)
                 it.cancel()
                 Log.d(TAG, "Cancelled reminder $reminderId")
-            } ?: run {
-                Log.d(TAG, "No pending intent found for reminder $reminderId")
-            }
+            } ?: Log.d(TAG, "No pending intent found for reminder $reminderId")
         } catch (e: Exception) {
-            Log.e(TAG, "Error cancelling reminder", e)
+            Log.e(TAG, "Error cancelling reminder $reminderId", e)
         }
     }
 
@@ -92,12 +89,13 @@ object ReminderScheduler {
             context,
             reminder.id.hashCode(),
             Intent(context, ReminderReceiver::class.java).apply {
+                action = "com.example.cs446.REMINDER_ACTION"
+                putExtra("reminder_id", reminder.id.toString())
                 putExtra("title", reminder.title)
                 putExtra("description", reminder.description ?: "")
-                putExtra("reminder_id", reminder.id.toString())
-                putExtra("is_active", reminder.active)
             },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            PendingIntent.FLAG_UPDATE_CURRENT or
+                    PendingIntent.FLAG_IMMUTABLE
         )
     }
 }

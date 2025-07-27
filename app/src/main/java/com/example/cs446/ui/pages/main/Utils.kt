@@ -12,11 +12,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
 
-val SYSTEM_TIMEZONE: TimeZone = TimeZone.of("America/Toronto")
-val SYSTEM_ZONE_ID: ZoneId = ZoneId.of("America/Toronto")
-
-fun Instant.toSystemLocalDateTime(): LocalDateTime = this.toLocalDateTime(SYSTEM_TIMEZONE)
-
 fun formatDate(instant: Instant, unit: ChronoUnit = ChronoUnit.DAYS): String {
     val formatter = when(unit) {
         ChronoUnit.DAYS -> SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
@@ -24,16 +19,14 @@ fun formatDate(instant: Instant, unit: ChronoUnit = ChronoUnit.DAYS): String {
         ChronoUnit.MONTHS -> SimpleDateFormat("MMMM, yyyy", Locale.getDefault())
         else -> SimpleDateFormat("yyyy", Locale.getDefault())
     }
-    formatter.timeZone = java.util.TimeZone.getTimeZone(SYSTEM_ZONE_ID)
     val millis = instant.toEpochMilliseconds()
     val date = Date(millis)
     return formatter.format(date)
 }
 
-// Calculate age using Toronto timezone
 fun calculateAge(birthdate: Instant): String {
-    val today = Clock.System.now().toSystemLocalDateTime().date
-    val birthDate = birthdate.toSystemLocalDateTime().date
+    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val birthDate = birthdate.toLocalDateTime(TimeZone.currentSystemDefault()).date
     val period = birthDate.periodUntil(today)
 
     return when {
@@ -43,7 +36,7 @@ fun calculateAge(birthdate: Instant): String {
     }
 }
 
-// Calculate relative time (timezone independent, so no changes needed)
+// helper function to calculate relative time
 fun getRelativeTime(timestamp: Instant): String {
     val now = Clock.System.now()
     val duration = now - timestamp
