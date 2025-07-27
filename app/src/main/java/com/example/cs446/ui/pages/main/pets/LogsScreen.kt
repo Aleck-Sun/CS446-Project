@@ -90,7 +90,8 @@ fun LogsScreen(
     modifier: Modifier = Modifier,
     petId: String,
     viewModel: FeedViewModel,
-    onNavigate: (MainActivityDestination, String?) -> Unit
+    onNavigate: (MainActivityDestination, String?) -> Unit,
+    onLogAdded: () -> Unit = {}
 ) {
     val coroutineScope = rememberCoroutineScope()
     var showActivityLogModal by remember { mutableStateOf(false) }
@@ -446,6 +447,7 @@ fun LogsScreen(
                                         imageUris = imageUris,
                                         pet = pet,
                                     )
+                                    onLogAdded()
                                     showActivityLogModal = false
                                     fetchActivityLogsAndPet()
                                 }

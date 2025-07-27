@@ -22,8 +22,7 @@ import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.repository.BadgeRepository
 import com.example.cs446.backend.data.repository.UserPetRepository
-import com.example.cs446.common.AppEvent
-import com.example.cs446.common.EventBus
+import com.example.cs446.backend.data.repository.ActivityLogRepository
 
 class PetsViewModel : ViewModel() {
     private val petRepository = PetRepository()
@@ -31,6 +30,7 @@ class PetsViewModel : ViewModel() {
     private val userRepository = UserRepository()
     private val userPetRelationRepository = UserPetRepository()
     private val badgeRepository = BadgeRepository()
+    private val activityLogRepository = ActivityLogRepository()
 
     private val _pets = MutableStateFlow<List<Pet>>(emptyList())
     val pets: StateFlow<List<Pet>> = _pets
@@ -50,6 +50,9 @@ class PetsViewModel : ViewModel() {
     private val _userPetRelations = MutableStateFlow<List<UserPetRelation>>(emptyList())
     val userPetRelations: StateFlow<List<UserPetRelation>> = _userPetRelations
 
+    private val _logCounts = MutableStateFlow<Map<UUID, Int>>(mapOf())
+    val logCounts: StateFlow<Map<UUID, Int>> = _logCounts
+
     init {
         loadPets(clearSelect = true)
     }
@@ -68,6 +71,12 @@ class PetsViewModel : ViewModel() {
                     _pets.value.map {it.id}
                 )
                 _userPetRelations.value = userPetRelationRepository.getPetRelationsForUser(userId)
+                
+                val logCountsMap = mutableMapOf<UUID, Int>()
+                for (pet in _pets.value) {
+                    logCountsMap[pet.id] = activityLogRepository.getNumberOfLogs(pet.id)
+                }
+                _logCounts.value = logCountsMap
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to load pets: ${e.message}"
             }
@@ -127,11 +136,7 @@ class PetsViewModel : ViewModel() {
                 loadPets()
                 _selectedPetId.value = petId
 
-                newPet.imageUrl.let {
-                    EventBus.emit(
-                        AppEvent.ImageUploaded(petId)
-                    )
-                }
+
             } catch (e: Exception) {
                 _errorMessage.value =  "Failed to add pet: ${e.message}"
             }
@@ -163,11 +168,6 @@ class PetsViewModel : ViewModel() {
                     imageUrl = imageUrl
                 )
                 petRepository.updatePet(updatedPet)
-                if (originalPet.imageUrl != updatedPet.imageUrl) {
-                    EventBus.emit(
-                        AppEvent.ImageUploaded(originalPet.id)
-                    )
-                }
                 loadPets()
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to update pet: ${e.message}"
@@ -211,6 +211,18 @@ class PetsViewModel : ViewModel() {
                 _userPetRelations.value = userPetRelationRepository.getPetRelationsForUser(userId)
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to reload permissions: ${e.message}"
+            }
+        }
+    }
+
+    fun refreshLogCountForPet(petId: UUID) {
+        viewModelScope.launch {
+            try {
+                val newCount = activityLogRepository.getNumberOfLogs(petId)
+                val currentCounts = _logCounts.value.toMutableMap()
+                currentCounts[petId] = newCount
+                _logCounts.value = currentCounts
+            } catch (e: Exception) {
             }
         }
     }

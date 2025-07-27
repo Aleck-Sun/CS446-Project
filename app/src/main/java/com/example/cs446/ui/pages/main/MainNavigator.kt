@@ -21,6 +21,7 @@ import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
+import java.util.UUID
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.collectAsState
@@ -111,7 +112,8 @@ fun MainNavigator(
                 LogsScreen(
                     petId = petId,
                     viewModel = feedViewModel,
-                    onNavigate = navigateTo
+                    onNavigate = navigateTo,
+                    onLogAdded = { petsViewModel.refreshLogCountForPet(UUID.fromString(petId)) }
                 )
             }
             composable("${MainActivityDestination.Handlers.name.lowercase()}/{petId}") { backStackEntry ->
