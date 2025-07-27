@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
@@ -77,6 +78,7 @@ fun PetsScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val userId by viewModel.currentUserId.collectAsState()
     val badges by viewModel.badges.collectAsState()
+    val logCounts by viewModel.logCounts.collectAsState()
     var showToolTip by remember { mutableStateOf(false) }
     var toolTipText by remember { mutableStateOf("") }
 
@@ -313,14 +315,23 @@ fun PetsScreen(
                     Text("Logs")
                 }
 
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-8).dp, y = (-8).dp)
-                        .background(Color.Red, shape = CircleShape)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text("8", color = Color.White, fontSize = 12.sp)
+                selectedPetId?.let { petId ->
+                    val logCount = logCounts[petId] ?: 0
+                    if (logCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-8).dp, y = (-8).dp)
+                                .background(Color.Red, shape = CircleShape)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = logCount.toString(),
+                                color = Color.White,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 }
             }
 
@@ -334,11 +345,32 @@ fun PetsScreen(
                         selectedPetId.toString()
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedPetId != null
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Handlers")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Reminders button
+            Button(
+                onClick = {
+                    selectedPetId?.let {
+                        onNavigate(
+                            MainActivityDestination.Reminders,
+                            selectedPetId.toString()
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedPetId != null
+            ) {
+                Icon(Icons.Default.Alarm, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Reminders")
             }
         }
     }
