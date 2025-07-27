@@ -77,6 +77,7 @@ fun PetsScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val userId by viewModel.currentUserId.collectAsState()
     val badges by viewModel.badges.collectAsState()
+    val logCounts by viewModel.logCounts.collectAsState()
     var showToolTip by remember { mutableStateOf(false) }
     var toolTipText by remember { mutableStateOf("") }
 
@@ -313,14 +314,23 @@ fun PetsScreen(
                     Text("Logs")
                 }
 
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-8).dp, y = (-8).dp)
-                        .background(Color.Red, shape = CircleShape)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
-                    Text("8", color = Color.White, fontSize = 12.sp)
+                selectedPetId?.let { petId ->
+                    val logCount = logCounts[petId] ?: 0
+                    if (logCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .offset(x = (-8).dp, y = (-8).dp)
+                                .background(Color.Red, shape = CircleShape)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = logCount.toString(),
+                                color = Color.White,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
                 }
             }
 

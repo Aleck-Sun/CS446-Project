@@ -22,6 +22,7 @@ import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.repository.BadgeRepository
 import com.example.cs446.backend.data.repository.UserPetRepository
+import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.common.AppEvent
 import com.example.cs446.common.EventBus
 
@@ -31,12 +32,16 @@ class PetsViewModel : ViewModel() {
     private val userRepository = UserRepository()
     private val userPetRelationRepository = UserPetRepository()
     private val badgeRepository = BadgeRepository()
+    private val activityLogRepository = ActivityLogRepository()
 
     private val _pets = MutableStateFlow<List<Pet>>(emptyList())
     val pets: StateFlow<List<Pet>> = _pets
 
     private val _badges = MutableStateFlow<Map<UUID, List<Badge>>>(mapOf())
     val badges: StateFlow<Map<UUID, List<Badge>>> = _badges
+
+    private val _logCounts = MutableStateFlow<Map<UUID, Int>>(mapOf())
+    val logCounts: StateFlow<Map<UUID, Int>> = _logCounts
 
     private val _selectedPetId = MutableStateFlow<UUID?>(null)
     val selectedPetId: StateFlow<UUID?> = _selectedPetId
@@ -68,8 +73,36 @@ class PetsViewModel : ViewModel() {
                     _pets.value.map {it.id}
                 )
                 _userPetRelations.value = userPetRelationRepository.getPetRelationsForUser(userId)
+                
+                loadLogCounts()
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to load pets: ${e.message}"
+            }
+        }
+    }
+
+    private fun loadLogCounts() {
+        viewModelScope.launch {
+            try {
+                val counts = mutableMapOf<UUID, Int>()
+                for (pet in _pets.value) {
+                    counts[pet.id] = activityLogRepository.getNumberOfLogs(pet.id)
+                }
+                _logCounts.value = counts
+            } catch (e: Exception) {
+                _errorMessage.value = "failed to load log counts: ${e.message}"
+            }
+        }
+    }
+
+    fun refreshLogCount(petId: UUID) {
+        viewModelScope.launch {
+            try {
+                val currentCounts = _logCounts.value.toMutableMap()
+                currentCounts[petId] = activityLogRepository.getNumberOfLogs(petId)
+                _logCounts.value = currentCounts
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to refresh log count: ${e.message}"
             }
         }
     }
