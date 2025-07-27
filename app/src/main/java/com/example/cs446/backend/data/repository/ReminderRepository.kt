@@ -26,13 +26,18 @@ class ReminderRepository {
     }
 
     suspend fun getRemindersForPet(petId: UUID): List<Reminder> {
-        return remindersTable.select {
-            filter {
-                eq("pet_id", petId)
-            }
-        }.decodeList<ReminderRaw>()
-            .map { it.toReminder() }
-            .sortedBy { it.time }
+        return try {
+            remindersTable.select {
+                filter {
+                    eq("pet_id", petId)
+                }
+            }.decodeList<ReminderRaw>()
+                .map { it.toReminder() }
+                .sortedBy { it.time }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
     }
 
     suspend fun addReminder(reminder: Reminder) {

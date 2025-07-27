@@ -1,13 +1,10 @@
 package com.example.cs446.ui.pages.main.pets
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,8 +13,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.cs446.backend.data.model.Reminder
-import com.example.cs446.backend.data.repository.ReminderRepository
-import com.example.cs446.ui.components.pets.ReminderScheduler
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.view.pets.RemindersViewModel
 import kotlinx.coroutines.delay
@@ -25,18 +20,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import java.time.LocalDate
-import java.time.LocalTime
-import androidx.compose.foundation.clickable
-import java.time.Instant
-import com.example.cs446.ui.components.DatePickerTextField
-import kotlinx.coroutines.selects.select
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderScreen(
     petId: UUID,
@@ -56,7 +40,6 @@ fun ReminderScreen(
     }
 
     var showAddDialog by remember { mutableStateOf(false) }
-
 
     val currentTime by produceState(initialValue = LocalDateTime.now()) {
         while (true) {
@@ -147,6 +130,16 @@ fun ReminderScreen(
                 }
             }
         }
+    }
+
+    if (showAddDialog) {
+        AddReminderDialog(
+            onDismiss = { showAddDialog = false },
+            onAdd = { title, description, time, repeatIntervalDays, repeatTimes ->
+                viewModel.addReminder(context, petId, title, description, time, repeatIntervalDays, repeatTimes)
+                showAddDialog = false
+            }
+        )
     }
 }
 

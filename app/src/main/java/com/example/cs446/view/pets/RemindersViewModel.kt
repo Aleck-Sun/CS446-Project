@@ -72,7 +72,9 @@ class RemindersViewModel : ViewModel() {
         petId: UUID,
         title: String,
         description: String,
-        time: LocalDateTime
+        time: LocalDateTime,
+        repeatIntervalDays: Int,
+        repeatTimes: Int
     ) {
         viewModelScope.launch {
             try {
@@ -87,23 +89,42 @@ class RemindersViewModel : ViewModel() {
                     return@launch
                 }
 
-                val userId = _currentUserId.value ?: return@launch
-                val reminder = Reminder(
-                    id = UUID.randomUUID(),
-                    createdAt = Instant.now(),
-                    petId = petId,
-                    userId = userId,
-                    title = title,
-                    description = description,
-                    time = time,
-                    active = true
-                )
+                if (repeatIntervalDays <= 0) {
+                    _errorMessage.value = "Repeat interval days must be greater than 0"
+                    return@launch
+                }
 
-                reminderRepository.addReminder(reminder)
-                if (reminder.active) {
+                if (repeatTimes <= 0) {
+                    _errorMessage.value = "Repeat times must be greater than 0"
+                    return@launch
+                }
+
+                val userId = _currentUserId.value ?: return@launch
+
+                val reminders = (0 until repeatTimes).map { i ->
+                    Reminder(
+                        id = UUID.randomUUID(),
+                        createdAt = Instant.now(),
+                        petId = petId,
+                        userId = userId,
+                        title = title,
+                        description = description,
+                        time = time.plusDays(i.toLong() * repeatIntervalDays),
+                        active = true
+                    )
+                }.filter { it.time.isAfter(LocalDateTime.now()) || it.time.isEqual(LocalDateTime.now()) }
+
+                if (reminders.isEmpty()) {
+                    _errorMessage.value = "All reminder times are in the past"
+                    return@launch
+                }
+
+                // Schedule each reminder
+                reminders.forEach { reminder ->
+                    reminderRepository.addReminder(reminder)
                     val scheduled = ReminderScheduler.scheduleReminder(context, reminder)
                     if (!scheduled) {
-                        _errorMessage.value = "Couldn't schedule notification"
+                        _errorMessage.value = "Couldn't schedule notification for reminder at ${reminder.time}"
                     }
                 }
 
