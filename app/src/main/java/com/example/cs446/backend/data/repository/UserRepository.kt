@@ -1,5 +1,7 @@
 package com.example.cs446.backend.data.repository
 
+import android.content.Context
+import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.auth.auth
@@ -9,8 +11,8 @@ import java.util.UUID
 import kotlin.time.Duration
 
 class UserRepository {
+    private val storage = SupabaseClient.supabase.storage
     private val usersTable = SupabaseClient.supabase.from("users")
-    val storage = SupabaseClient.supabase.storage
 
     val defaultAvatarUrl = "user.png"
     // TODO: Add Bio attribute to users table
@@ -41,6 +43,23 @@ class UserRepository {
         } catch (e: Exception) {
             e.printStackTrace()
             ""
+        }
+    }
+
+    suspend fun updateAvatar(
+        context: Context,
+        avatarUri: Uri
+    ) {
+        try {
+            val inputStream = context.contentResolver.openInputStream(avatarUri)
+            val imageBytes = inputStream?.readBytes()
+
+            if (imageBytes != null) {
+                // upload to supabase
+                storage.from("avatars").update(defaultAvatarUrl, imageBytes)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

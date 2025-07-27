@@ -1,5 +1,6 @@
 package com.example.cs446.view.social
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -16,10 +17,6 @@ import java.util.UUID
 class ProfileViewModel : ViewModel() {
     private val postRepository = PostRepository()
     private val userRepository = UserRepository()
-
-    // Temporary values until type conversion between Uri? and String? is complete
-    private val _tempAvatar = MutableStateFlow<Uri?>(null)
-    val tempAvatar: StateFlow<Uri?> = _tempAvatar
 
     private val _avatarUrl = MutableStateFlow<String?>(null)
     private val _username = MutableStateFlow<String>("TEMP_USERNAME")
@@ -43,14 +40,20 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun updateProfile(
-        avatarUrl: Uri?,
+        context: Context,
+        avatarUri: Uri,
         username: String,
         bio: String
     ) {
-        // TODO: Work out type conversion
-        //_avatarUrl.value = avatarUrl
-        _username.value = username
-        _bio.value = bio
+        viewModelScope.launch {
+            if (avatarUri != Uri.EMPTY) {
+                userRepository.updateAvatar(context, avatarUri)
+            }
+            _username.value = username
+            _bio.value = bio
+        }
+
+        loadProfileInfo()
     }
 
     suspend fun loadNewPost(postId: UUID) {
