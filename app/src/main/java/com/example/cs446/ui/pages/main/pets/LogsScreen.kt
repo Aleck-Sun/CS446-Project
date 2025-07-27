@@ -74,6 +74,7 @@ import com.example.cs446.ui.components.pets.ActivityLogForm
 import com.example.cs446.ui.components.pets.TrendChart
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.view.social.FeedViewModel
+import com.example.cs446.view.pets.PetsViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
@@ -90,6 +91,7 @@ fun LogsScreen(
     modifier: Modifier = Modifier,
     petId: String,
     viewModel: FeedViewModel,
+    petsViewModel: PetsViewModel,
     onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -445,6 +447,7 @@ fun LogsScreen(
                                         makePublic = makePublic,
                                         imageUris = imageUris,
                                         pet = pet,
+                                        petsViewModel = petsViewModel
                                     )
                                     showActivityLogModal = false
                                     fetchActivityLogsAndPet()
@@ -509,6 +512,7 @@ private suspend fun handleActivitySubmission(
     makePublic: Boolean,
     imageUris: List<Uri>,
     pet: Pet?,
+    petsViewModel: PetsViewModel
 ) {
     val userId = userRepository.getCurrentUserId()
     if (userId == null || pet == null) {
@@ -538,4 +542,6 @@ private suspend fun handleActivitySubmission(
             createdAt = activityDate
         )
     )
+    
+    petsViewModel.refreshLogCount(pet.id)
 }
