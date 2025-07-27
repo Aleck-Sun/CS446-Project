@@ -5,5 +5,6 @@ enum class MainActivityDestination {
     Feed,
     Profile,
     Logs,
-    Handlers
+    Handlers,
+    Reminders
 }

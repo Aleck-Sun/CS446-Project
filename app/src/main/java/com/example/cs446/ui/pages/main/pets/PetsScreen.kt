@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Face
@@ -344,11 +345,32 @@ fun PetsScreen(
                         selectedPetId.toString()
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedPetId != null
             ) {
                 Icon(Icons.Default.ThumbUp, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Handlers")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Reminders button
+            Button(
+                onClick = {
+                    selectedPetId?.let {
+                        onNavigate(
+                            MainActivityDestination.Reminders,
+                            selectedPetId.toString()
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = selectedPetId != null
+            ) {
+                Icon(Icons.Default.Alarm, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Reminders")
             }
         }
     }
