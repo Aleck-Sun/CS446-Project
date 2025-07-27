@@ -1,6 +1,7 @@
 package com.example.cs446.view.social
 
 import android.content.Context
+import android.location.Location
 import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
@@ -110,6 +111,7 @@ open class FeedViewModel : ViewModel() {
         caption: String,
         imageUris: List<Uri>,
         isPublic: Boolean = false,
+        location: Location? = null
     ) {
         viewModelScope.launch {
             _postState.value = PostResult.Posting
@@ -123,7 +125,8 @@ open class FeedViewModel : ViewModel() {
                     imageUrls,
                     petId,
                     caption,
-                    isPublic
+                    isPublic,
+                    location
                 )
                 _postState.value = PostResult.PostSuccess
                 EventBus.emit(

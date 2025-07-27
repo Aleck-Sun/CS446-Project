@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -175,14 +176,25 @@ fun PostsItem(
         modifier = Modifier.fillMaxSize()
     ) {
         itemsIndexed(posts) { index, post ->
-            Image(
-                painter = rememberAsyncImagePainter(post.imageUrls[0]),
-                contentDescription = "Post $index",
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .padding(2.dp)
-                    .clip(RoundedCornerShape(4.dp))
-            )
+            if (post.imageUrls.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(post.imageUrls[0]),
+                    contentDescription = "Post $index",
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(2.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                ) {
+                    Text("No image", modifier = Modifier.align(Alignment.Center))
+                }
+            }
         }
     }
 }

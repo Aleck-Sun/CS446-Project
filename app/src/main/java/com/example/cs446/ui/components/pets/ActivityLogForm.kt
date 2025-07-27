@@ -65,6 +65,7 @@ fun ActivityLogForm(
     modifier: Modifier = Modifier,
     petId: UUID,
     activityLogRepository: ActivityLogRepository,
+    canMakePost: Boolean,
     onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, makePublic: Boolean, selectedImagesUri: List<Uri>) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -145,15 +146,17 @@ fun ActivityLogForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        if (canMakePost){
+            Spacer(modifier = Modifier.height(8.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Post to Pet Profile")
-            Switch(
-                checked = makePost,
-                onCheckedChange = { makePost = it },
-                modifier = Modifier.padding(start = 8.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Post to Pet Profile")
+                Switch(
+                    checked = makePost,
+                    onCheckedChange = { makePost = it },
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
         }
 
         if (makePost) {

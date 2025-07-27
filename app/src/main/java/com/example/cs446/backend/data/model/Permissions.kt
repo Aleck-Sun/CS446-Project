@@ -1,6 +1,7 @@
 package com.example.cs446.backend.data.model
 
 data class Permissions(
+    val editStatistics: Boolean = false,
     val editLogs: Boolean = false,
     val setReminders: Boolean = false,
     val inviteHandlers: Boolean = false,
@@ -9,6 +10,7 @@ data class Permissions(
 ) {
     fun toList(): List<String> {
         val result = mutableListOf<String>()
+        if (editStatistics) result.add("edit_statistics")
         if (editLogs) result.add("edit_logs")
         if (setReminders) result.add("set_reminders")
         if (inviteHandlers) result.add("invite_handlers")
@@ -20,6 +22,7 @@ data class Permissions(
     companion object {
         fun fromList(permissions: List<String>): Permissions {
             return Permissions(
+                editStatistics = "edit_statistics" in permissions,
                 editLogs = "edit_logs" in permissions,
                 setReminders = "set_reminders" in permissions,
                 inviteHandlers = "invite_handlers" in permissions,

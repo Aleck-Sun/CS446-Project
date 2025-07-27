@@ -1,6 +1,7 @@
 package com.example.cs446.backend.data.repository
 
 import android.content.Context
+import android.location.Location
 import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.post.Comment
@@ -27,22 +28,43 @@ class PostRepository {
     private val userRepository = UserRepository()
     private val petRepository = PetRepository()
     private val followTable = SupabaseClient.supabase.from("pet-followers")
+    
+    private fun parseLocationString(locationString: String?): Location? {
+        return try {
+            if (locationString.isNullOrBlank()) return null
+            val parts = locationString.split(",")
+            if (parts.size != 2) return null
+            val lat = parts[0].trim().toDouble()
+            val lng = parts[1].trim().toDouble()
+            Location("").apply {
+                latitude = lat
+                longitude = lng
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     suspend fun uploadPost(
         imageUrls: List<String>,
         petId: UUID,
         caption: String,
-        isPublic: Boolean = false
+        isPublic: Boolean = false,
+        location: Location? = null
     ): UUID {
-        return postTable.insert(
-            mapOf (
-                "user_id" to auth.currentUserOrNull()?.id,
-                "pet_id" to petId,
-                "image_urls" to imageUrls,
-                "caption" to caption,
-                "is_public" to isPublic
-            )
-        ) {
+        val postData = mutableMapOf(
+            "user_id" to auth.currentUserOrNull()?.id,
+            "pet_id" to petId,
+            "image_urls" to imageUrls,
+            "caption" to caption,
+            "is_public" to isPublic
+        )
+        
+        location?.let {
+            postData["location"] = "${it.latitude},${it.longitude}"
+        }
+        
+        return postTable.insert(postData) {
             select()
         }.decodeSingle<PostRaw>().id
     }
@@ -369,7 +391,8 @@ class PostRepository {
                     comments = getCommentsForPost(it.id),
                     likes = likes,
                     liked = liked,
-                    isFollowing = followed
+                    isFollowing = followed,
+                    location = parseLocationString(it.location)
                 )
             }
             return posts
@@ -442,6 +465,7 @@ class PostRepository {
                     comments = getCommentsForPost(it.id),
                     likes = likes,
                     liked = liked,
+                    location = parseLocationString(it.location)
                 )
             }
             return posts

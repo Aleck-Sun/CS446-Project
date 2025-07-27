@@ -2,9 +2,9 @@ package com.example.cs446.backend.data.repository
 
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
-import io.github.jan.supabase.auth.auth
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -57,7 +57,7 @@ class UserRepository {
             }.decodeSingle<User>()
 
             return user.copy(
-                avatarUrl = getSignedAvatarUrl(user.avatarUrl?:defaultAvatarUrl)
+                avatarUrl = getSignedAvatarUrl(user.avatarUrl ?: defaultAvatarUrl)
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -72,6 +72,19 @@ class UserRepository {
                     isIn("id", userIds)
                 }
             }.decodeList<User>().map {
+                it.copy(
+                    avatarUrl = getSignedAvatarUrl(it.avatarUrl ?: defaultAvatarUrl)
+                )
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return emptyList()
+        }
+    }
+
+    suspend fun getAllUsers(): List<User> {
+        return try {
+            usersTable.select().decodeList<User>().map {
                 it.copy(
                     avatarUrl = getSignedAvatarUrl(it.avatarUrl ?: defaultAvatarUrl)
                 )

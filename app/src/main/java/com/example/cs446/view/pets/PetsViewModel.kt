@@ -21,6 +21,7 @@ import com.example.cs446.backend.data.model.Permissions
 import com.example.cs446.backend.data.model.Species
 import com.example.cs446.backend.data.model.Breed
 import com.example.cs446.backend.data.repository.BadgeRepository
+import com.example.cs446.backend.data.repository.UserPetRepository
 import com.example.cs446.common.AppEvent
 import com.example.cs446.common.EventBus
 
@@ -28,6 +29,7 @@ class PetsViewModel : ViewModel() {
     private val petRepository = PetRepository()
     private val imageRepository = ImageRepository()
     private val userRepository = UserRepository()
+    private val userPetRelationRepository = UserPetRepository()
     private val badgeRepository = BadgeRepository()
 
     private val _pets = MutableStateFlow<List<Pet>>(emptyList())
@@ -43,6 +45,10 @@ class PetsViewModel : ViewModel() {
     val errorMessage: StateFlow<String?> = _errorMessage
 
     private val _currentUserId = MutableStateFlow<UUID?>(null)
+    val currentUserId: StateFlow<UUID?> = _currentUserId
+
+    private val _userPetRelations = MutableStateFlow<List<UserPetRelation>>(emptyList())
+    val userPetRelations: StateFlow<List<UserPetRelation>> = _userPetRelations
 
     init {
         loadPets(clearSelect = true)
@@ -61,6 +67,7 @@ class PetsViewModel : ViewModel() {
                 _badges.value = badgeRepository.getAllBadgesForPets(
                     _pets.value.map {it.id}
                 )
+                _userPetRelations.value = userPetRelationRepository.getPetRelationsForUser(userId)
             } catch (e: Exception) {
                 _errorMessage.value = e.message ?: "Failed to load pets: ${e.message}"
             }
@@ -108,6 +115,7 @@ class PetsViewModel : ViewModel() {
                         petId = petId,
                         relation = "Owner",
                         permissions = Permissions(
+                            editStatistics = true,
                             editLogs = true,
                             setReminders = true,
                             inviteHandlers = true,
@@ -167,7 +175,7 @@ class PetsViewModel : ViewModel() {
         }
     }
 
-    fun deletePet(petId: UUID) {
+    fun deletePetAsOwner(petId: UUID) {
         viewModelScope.launch {
             try {
                 petRepository.deletePet(petId)
@@ -179,7 +187,31 @@ class PetsViewModel : ViewModel() {
         }
     }
 
+    fun deletePetAsNonOwner(petId: UUID, userId: UUID) {
+        viewModelScope.launch {
+            try {
+                petRepository.deleteUserAndPetRelation(petId, userId)
+                loadPets(clearSelect = true)
+                _selectedPetId.value = _pets.value.firstOrNull()?.id
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to delete pet: ${e.message}"
+            }
+        }
+    }
+
     fun clearErrorMessage() {
         _errorMessage.value = null
+    }
+
+    fun reloadUserPetRelations() {
+        viewModelScope.launch {
+            try {
+                val userId = userRepository.getCurrentUserId()
+                    ?: throw IllegalStateException("User not logged in")
+                _userPetRelations.value = userPetRelationRepository.getPetRelationsForUser(userId)
+            } catch (e: Exception) {
+                _errorMessage.value = e.message ?: "Failed to reload permissions: ${e.message}"
+            }
+        }
     }
 }
