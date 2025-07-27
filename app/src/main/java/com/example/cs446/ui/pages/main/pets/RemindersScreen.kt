@@ -1,12 +1,43 @@
 package com.example.cs446.ui.pages.main.pets
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,6 +60,7 @@ fun ReminderScreen(
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val userPetRelations by viewModel.userPetRelations.collectAsState()
 
     val userId by viewModel.currentUserId.collectAsState()
     val reminders by viewModel.reminders.collectAsState()
@@ -45,6 +77,12 @@ fun ReminderScreen(
         while (true) {
             value = LocalDateTime.now()
             delay(1000)
+        }
+    }
+
+    val canSetReminders by remember(userPetRelations, petId) {
+        derivedStateOf {
+            userPetRelations.find { it.petId == petId }?.permissions?.setReminders == true
         }
     }
 
@@ -69,11 +107,26 @@ fun ReminderScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text(
-                "Manage Reminders",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Manage Reminders",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
+                )
+                IconButton(
+                    onClick = { onNavigate(MainActivityDestination.Pets, null) },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+            }
 
             Text(
                 "Current time: ${currentTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm:ss a"))}",
@@ -82,14 +135,16 @@ fun ReminderScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Button(
-                onClick = { showAddDialog = true },
-                modifier = Modifier.align(Alignment.Start) // left aligned
-            ) {
-                Text("Create New Reminder")
-            }
+            if (canSetReminders) {
+                Button(
+                    onClick = { showAddDialog = true },
+                    modifier = Modifier.align(Alignment.Start) // left aligned
+                ) {
+                    Text("Create New Reminder")
+                }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // Upcoming Reminders
             Text("Upcoming Reminders", style = MaterialTheme.typography.headlineSmall)
@@ -136,7 +191,15 @@ fun ReminderScreen(
         AddReminderDialog(
             onDismiss = { showAddDialog = false },
             onAdd = { title, description, time, repeatIntervalDays, repeatTimes ->
-                viewModel.addReminder(context, petId, title, description, time, repeatIntervalDays, repeatTimes)
+                viewModel.addReminder(
+                    context,
+                    petId,
+                    title,
+                    description,
+                    time,
+                    repeatIntervalDays,
+                    repeatTimes
+                )
                 showAddDialog = false
             }
         )

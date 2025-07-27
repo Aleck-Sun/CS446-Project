@@ -1,11 +1,13 @@
 package com.example.cs446.ui.pages.main
 
 import FeedScreen
+import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
@@ -16,16 +18,13 @@ import com.example.cs446.ui.components.BottomNavigationBar
 import com.example.cs446.ui.pages.main.pets.LogsScreen
 import com.example.cs446.ui.pages.main.pets.PermissionsScreen
 import com.example.cs446.ui.pages.main.pets.PetsScreen
+import com.example.cs446.ui.pages.main.pets.ReminderScreen
 import com.example.cs446.ui.pages.main.profile.ProfileScreen
 import com.example.cs446.view.pets.PermissionsViewModel
 import com.example.cs446.view.pets.PetsViewModel
+import com.example.cs446.view.pets.RemindersViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.social.ProfileViewModel
-import android.content.Context
-import android.net.Uri
-import androidx.compose.runtime.collectAsState
-import com.example.cs446.ui.pages.main.pets.ReminderScreen
-import com.example.cs446.view.pets.RemindersViewModel
 import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -37,7 +36,7 @@ fun MainNavigator(
     remindersViewModel: RemindersViewModel,
     onLogout: () -> Unit = {},
     permissionsViewModel: PermissionsViewModel,
-    onShare: (Context, String, String) -> Unit = {_,_,_->},
+    onShare: (Context, String, String) -> Unit = { _, _, _ -> },
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -68,6 +67,11 @@ fun MainNavigator(
                 && param == null
             ) {
                 navController.popBackStack()
+            } else if (currentRoute == MainActivityDestination.Reminders.name.lowercase()
+                && route == MainActivityDestination.Pets.name.lowercase()
+                && param == null
+            ) {
+                navController.popBackStack()
             } else if (param != null) {
                 navController.navigate(route)
             } else {
@@ -93,8 +97,9 @@ fun MainNavigator(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (shareContent) MainActivityDestination.Feed.toString().lowercase()
-                    else MainActivityDestination.Pets.name.lowercase(),
+            startDestination = if (shareContent) MainActivityDestination.Feed.toString()
+                .lowercase()
+            else MainActivityDestination.Pets.name.lowercase(),
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(MainActivityDestination.Pets.name.lowercase()) {
@@ -108,7 +113,11 @@ fun MainNavigator(
                 )
             }
             composable(MainActivityDestination.Profile.name.lowercase()) {
-                ProfileScreen(onNavigate = navigateTo, viewModel = profileViewModel, onLogout = onLogout)
+                ProfileScreen(
+                    onNavigate = navigateTo,
+                    viewModel = profileViewModel,
+                    onLogout = onLogout
+                )
             }
             composable("${MainActivityDestination.Logs.name.lowercase()}/{petId}") { backStackEntry ->
                 val petId = backStackEntry.arguments?.getString("petId") ?: ""

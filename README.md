@@ -73,3 +73,5 @@
 | 2025-07-26 | Fixed bug where tab and enter are characters    |                |                | 1             |                 |               |                |
 | 2025-07-26 | Reminder bug fixes, refactor dialogs & imports  |                |                |               | 1.5             |               |                |
 | 2025-07-26 | Implement reoccurring reminders                 |                |                |               | 1               |               |                |
+| 2025-07-27 | Added back button for reminders                 |                |                | 0.5           |                 |               |                |
+| 2025-07-27 | Added functionality for set reminder permission |                |                | 0.5           |                 |               |                |
