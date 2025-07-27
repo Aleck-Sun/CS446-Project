@@ -64,3 +64,4 @@
 | 2025-07-26 | Added unlinking and removing pets functionality |                |                | 2             |                 |               |                |
 | 2025-07-26 | Bug fixes for the image display in profile page |                |                | 0.5           |                 |               |                |
 | 2025-07-26 | Added a remove handler button for owner         |                |                | 2             |                 |               |                |
+| 2025-07-26 | Fixed bug where tab and enter are characters    |                |                | 1             |                 |               |                |
