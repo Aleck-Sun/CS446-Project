@@ -18,7 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.example.cs446.backend.data.result.AuthResult
 import com.example.cs446.ui.theme.CS446Theme
 import com.example.cs446.view.security.SecurityViewModel
+import kotlin.math.sign
 
 @Composable
 fun LoginScreen(
@@ -63,6 +69,11 @@ fun LoginBox(
     var email by remember { mutableStateOf("test@test.com") }
     var password by remember { mutableStateOf("123456") }
 
+    val emailFocusRequester = remember { FocusRequester() }
+    val passwordFocusRequester = remember { FocusRequester() }
+    val loginButtonFocusRequester = remember { FocusRequester() }
+    val signUpButtonFocusRequester = remember { FocusRequester() }
+
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -82,31 +93,58 @@ fun LoginBox(
             )
             OutlinedTextField(
                 value = email,
-                onValueChange = {email=it},
+                onValueChange = { newText ->
+                    val filteredText = newText.filter { it != '\t' && it != '\n' }
+                    email = filteredText
+                },
                 label = { Text("Email") },
-                modifier = Modifier.padding(bottom = 8.dp),
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .focusRequester(emailFocusRequester)
+                    .onKeyEvent { keyEvent ->
+                        if (keyEvent.key == Key.Tab) {
+                            passwordFocusRequester.requestFocus()
+                            true
+                        } else {
+                            false
+                        }
+                    }
             )
             OutlinedTextField(
                 value = password,
-                onValueChange = {password=it},
+                onValueChange = { newText ->
+                    val filteredText = newText.filter { it != '\t' && it != '\n' }
+                    password = filteredText
+                },
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier.padding(bottom = 8.dp)
-
+                modifier = Modifier
+                    .padding(bottom = 8.dp)
+                    .focusRequester(passwordFocusRequester)
+                    .onKeyEvent { keyEvent ->
+                        if (keyEvent.key == Key.Tab) {
+                            loginButtonFocusRequester.requestFocus()
+                            true
+                        } else {
+                            false
+                        }
+                    }
             )
             when (authState) {
                 is AuthResult.LoginSuccess -> Text(
                     text = "Login successful",
                     color = Color.Green
                 )
+
                 is AuthResult.LoginError -> Text(
                     text = "Error: ${authState.message}",
                     color = Color.Red
                 )
+
                 else -> Spacer(Modifier)
             }
 
-            Row (
+            Row(
                 modifier = Modifier.padding(top = 16.dp)
             )
             {
@@ -114,14 +152,39 @@ fun LoginBox(
                     onClick = {
                         onLogin(email, password)
                     },
-                    modifier.padding(end = 16.dp)
+                    modifier = Modifier
+                        .padding(end = 16.dp)
+                        .focusRequester(loginButtonFocusRequester)
+                        .onKeyEvent { keyEvent ->
+                            when (keyEvent.key) {
+                                Key.Tab -> {
+                                    signUpButtonFocusRequester.requestFocus()
+                                    true
+                                }
 
+                                Key.Enter -> {
+                                    onLogin(email, password)
+                                    true
+                                }
+
+                                else -> false
+                            }
+                        }
                 ) {
                     Text("Log In")
                 }
 
                 Button(
-                    modifier = Modifier,
+                    modifier = Modifier
+                        .focusRequester(signUpButtonFocusRequester)
+                        .onKeyEvent { keyEvent ->
+                            if (keyEvent.key == Key.Tab) {
+                                emailFocusRequester.requestFocus()
+                                true
+                            } else {
+                                false
+                            }
+                        },
                     onClick = onNavigateToRegister,
                 ) {
                     Text("Sign Up")
