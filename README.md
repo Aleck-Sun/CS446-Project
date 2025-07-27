@@ -41,16 +41,21 @@
 | 2025-07-01 | Reformatted the Handler View Model              |                |                | 2             |                 |               |                |
 | 2025-07-01 | Linked up Permissions with Database             |                |                | 13            |                 |               |                |
 | 2025-07-02 | Add posting logic to activity log               |                |                |               |                 | 4             |                |
+| 2025-07-02 | Setup Reminders page and db table               |                |                |               | 2               |               |                |
 | 2025-07-02 | Date picker bug fixes                           |                |                |               |                 |               | 1              |
 | 2025-07-02 | Profile posts retrieve from database            |                | 2              |               |                 |               |                |
 | 2025-07-04 | Fixed backwards navigation for permissions page |                |                | 1.5           |                 |               |                |
 | 2025-07-04 | Added loading sequence while data loads         |                |                | 0.5           |                 |               |                |
+| 2025-07-05 | Add, view, delete reminders                     |                |                |               | 1.5             |               |                |
+| 2025-07-05 | Schedule and receive reminders                  |                |                |               | 2               |               |                |
 | 2025-07-07 | Added Edit Profile button to Profile            |                | 7              |               |                 |               |                |
 | 2025-07-08 | Add dynamic activity types                      |                |                |               |                 | 6             |                |
 | 2025-07-09 | Add dynamic activity types                      |                |                |               |                 | 10            |                |
 | 2025-07-09 | Add badge system                                | 8              |                |               |                 |               |                |
 | 2025-07-09 | Add follow/unfollow                             | 1              |                |               |                 |               |                |
 | 2025-07-14 | Social media location feature / integration     |                |                |               |                 |               | 13             |
+| 2025-07-15 | Refactor reminders, implement toggle active     |                |                |               | 1.5             |               |                |
+| 2025-07-15 | Add date and time pickers for reminders         |                |                |               | 1               |               |                |
 | 2025-07-15 | Add badge icons                                 | 2.5            |                |               |                 |               |                |
 | 2025-07-15 | Add pet images                                  | 1              |                |               |                 |               |                |
 | 2025-07-15 | Add logs bar graph                              | 3              |                |               |                 |               |                |
@@ -60,8 +65,11 @@
 | 2025-07-24 | Added editing pet statistics permissions        |                |                | 2             |                 |               |                |
 | 2025-07-24 | Added editing pet logs permissions              |                |                | 2             |                 |               |                |
 | 2025-07-24 | Bug fixes in logs                               |                |                | 0.5           |                 |               |                |
+| 2025-07-25 | Fix reminder pickers, attempt to fix time zone  |                |                |               | 2               |               |                |
 | 2025-07-26 | Added post permissions functionality            |                |                | 2             |                 |               |                |
 | 2025-07-26 | Added unlinking and removing pets functionality |                |                | 2             |                 |               |                |
 | 2025-07-26 | Bug fixes for the image display in profile page |                |                | 0.5           |                 |               |                |
 | 2025-07-26 | Added a remove handler button for owner         |                |                | 2             |                 |               |                |
 | 2025-07-26 | Fixed bug where tab and enter are characters    |                |                | 1             |                 |               |                |
+| 2025-07-26 | Reminder bug fixes, refactor dialogs & imports  |                |                |               | 1.5             |               |                |
+| 2025-07-26 | Implement reoccurring reminders                 |                |                |               | 1               |               |                |

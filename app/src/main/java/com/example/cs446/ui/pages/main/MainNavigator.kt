@@ -24,6 +24,9 @@ import com.example.cs446.view.social.ProfileViewModel
 import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.collectAsState
+import com.example.cs446.ui.pages.main.pets.ReminderScreen
+import com.example.cs446.view.pets.RemindersViewModel
+import java.util.UUID
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -31,6 +34,7 @@ fun MainNavigator(
     petsViewModel: PetsViewModel,
     feedViewModel: FeedViewModel,
     profileViewModel: ProfileViewModel,
+    remindersViewModel: RemindersViewModel,
     onLogout: () -> Unit = {},
     permissionsViewModel: PermissionsViewModel,
     onShare: (Context, String, String) -> Unit = {_,_,_->},
@@ -119,6 +123,14 @@ fun MainNavigator(
                 PermissionsScreen(
                     petId = petId,
                     viewModel = permissionsViewModel,
+                    onNavigate = navigateTo
+                )
+            }
+            composable("${MainActivityDestination.Reminders.name.lowercase()}/{petId}") { backStackEntry ->
+                val petId = backStackEntry.arguments?.getString("petId") ?: ""
+                ReminderScreen(
+                    petId = UUID.fromString(petId),
+                    viewModel = remindersViewModel,
                     onNavigate = navigateTo
                 )
             }
