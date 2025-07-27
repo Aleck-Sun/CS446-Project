@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.pets
 
+import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,7 +25,18 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import java.time.LocalDate
+import java.time.LocalTime
+import androidx.compose.foundation.clickable
+import java.time.Instant
+import com.example.cs446.ui.components.DatePickerTextField
+import kotlinx.coroutines.selects.select
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderScreen(
     petId: UUID,
@@ -33,9 +45,6 @@ fun ReminderScreen(
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var time by remember { mutableStateOf(LocalDateTime.now().plusMinutes(1)) }
 
     val userId by viewModel.currentUserId.collectAsState()
     val reminders by viewModel.reminders.collectAsState()
@@ -45,6 +54,9 @@ fun ReminderScreen(
     val (upcomingReminders, pastReminders) = remember(reminders) {
         viewModel.getPartitionedReminders()
     }
+
+    var showAddDialog by remember { mutableStateOf(false) }
+
 
     val currentTime by produceState(initialValue = LocalDateTime.now()) {
         while (true) {
@@ -87,57 +99,11 @@ fun ReminderScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            Button(
+                onClick = { showAddDialog = true },
+                modifier = Modifier.align(Alignment.Start) // left aligned
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "Create New Reminder",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            label = { Text("Title") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
-
-                        OutlinedTextField(
-                            value = description,
-                            onValueChange = { description = it },
-                            label = { Text("Description") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            viewModel.addReminder(
-                                context = context,
-                                petId = petId,
-                                title = title,
-                                description = description,
-                                time = time
-                            )
-                            title = ""
-                            description = ""
-                            time = LocalDateTime.now().plusMinutes(1)
-                        },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Add Reminder")
-                    }
-                }
+                Text("Create New Reminder")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -175,7 +141,7 @@ fun ReminderScreen(
                     modifier = Modifier.heightIn(max = 400.dp) // Constrain height
                 ) {
                     items(pastReminders) { reminder ->
-                        ReminderItem(reminder = reminder, isPast = true)
+                        ReminderItem(reminder = reminder)
                         HorizontalDivider()
                     }
                 }
@@ -187,21 +153,23 @@ fun ReminderScreen(
 @Composable
 fun ReminderItem(
     reminder: Reminder,
-    isPast: Boolean = false,
     onToggleActive: ((Boolean) -> Unit)? = null
 ) {
     val systemZone = ZoneId.systemDefault()
     val now = LocalDateTime.now(systemZone)
-    val reminderInstant = reminder.time.atZone(systemZone).toInstant()
-    val nowInstant = now.atZone(systemZone).toInstant()
+    val isUpcoming = reminder.time.atZone(systemZone)
+        .isAfter(now.atZone(systemZone))
+    val isActive = reminder.active
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (!reminder.active || isPast)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-            else MaterialTheme.colorScheme.surface
+            containerColor = when {
+                !isUpcoming -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                !isActive -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
+                else -> MaterialTheme.colorScheme.surface
+            }
         )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -215,24 +183,28 @@ fun ReminderItem(
                         reminder.title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (!reminder.active || isPast)
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface
+                        color = when {
+                            !isUpcoming -> MaterialTheme.colorScheme.onSurfaceVariant
+                            !isActive -> MaterialTheme.colorScheme.onSurfaceVariant
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         reminder.description,
-                        color = if (!reminder.active || isPast)
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        else MaterialTheme.colorScheme.onSurface
+                        color = when {
+                            !isUpcoming -> MaterialTheme.colorScheme.onSurfaceVariant
+                            !isActive -> MaterialTheme.colorScheme.onSurfaceVariant
+                            else -> MaterialTheme.colorScheme.onSurface
+                        }
                     )
                 }
 
-                if (onToggleActive != null) {
+                if (onToggleActive != null && isUpcoming) {
                     Switch(
-                        checked = reminder.active,
+                        checked = isActive,
                         onCheckedChange = onToggleActive,
-                        enabled = !isPast,
+                        enabled = isUpcoming,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = MaterialTheme.colorScheme.primary,
                             checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
@@ -251,11 +223,13 @@ fun ReminderItem(
                 Text(
                     "Due: ${reminder.time.format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a"))}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (!reminder.active || isPast)
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    else MaterialTheme.colorScheme.onSurface
+                    color = when {
+                        !isUpcoming -> MaterialTheme.colorScheme.onSurfaceVariant
+                        !isActive -> MaterialTheme.colorScheme.onSurfaceVariant
+                        else -> MaterialTheme.colorScheme.onSurface
+                    }
                 )
-                if (!reminder.active) {
+                if (!isActive) {
                     Text(
                         "Inactive",
                         style = MaterialTheme.typography.labelSmall,

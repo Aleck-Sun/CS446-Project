@@ -66,8 +66,7 @@ class RemindersViewModel : ViewModel() {
             }
         }
     }
-
-
+    
     fun addReminder(
         context: Context,
         petId: UUID,
@@ -77,6 +76,17 @@ class RemindersViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
+                // Validation
+                if (title.isBlank()) {
+                    _errorMessage.value = "Title cannot be empty"
+                    return@launch
+                }
+
+                if (time.isBefore(LocalDateTime.now())) {
+                    _errorMessage.value = "Reminder time must be in the future"
+                    return@launch
+                }
+
                 val userId = _currentUserId.value ?: return@launch
                 val reminder = Reminder(
                     id = UUID.randomUUID(),
@@ -97,6 +107,7 @@ class RemindersViewModel : ViewModel() {
                     }
                 }
 
+                _errorMessage.value = null
                 loadRemindersForPet(petId)
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to add reminder: ${e.message}"
@@ -197,13 +208,10 @@ class RemindersViewModel : ViewModel() {
 
     // partition reminders by past and upcoming
     fun getPartitionedReminders(): Pair<List<Reminder>, List<Reminder>> {
-        val systemZone = ZoneId.systemDefault()
-        val now = LocalDateTime.now(systemZone)
-
+        val now = LocalDateTime.now(ZoneId.systemDefault())
         return _reminders.value.partition { reminder ->
-            val reminderInstant = reminder.time.atZone(systemZone).toInstant()
-            val nowInstant = now.atZone(systemZone).toInstant()
-            reminderInstant.isAfter(nowInstant) && reminder.active
+            reminder.time.atZone(ZoneId.systemDefault())
+                .isAfter(now.atZone(ZoneId.systemDefault()))
         }
     }
 }
