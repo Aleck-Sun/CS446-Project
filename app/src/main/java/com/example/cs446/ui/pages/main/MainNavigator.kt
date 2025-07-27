@@ -124,6 +124,7 @@ fun MainNavigator(
                 LogsScreen(
                     petId = petId,
                     viewModel = feedViewModel,
+                    petsViewModel = petsViewModel,
                     onNavigate = navigateTo
                 )
             }
