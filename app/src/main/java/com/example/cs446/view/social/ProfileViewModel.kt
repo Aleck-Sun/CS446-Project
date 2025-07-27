@@ -1,5 +1,6 @@
 package com.example.cs446.view.social
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,11 +15,14 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ProfileViewModel : ViewModel() {
-    private val _avatar = MutableStateFlow<Uri?>(null)
-    private val _username = MutableStateFlow<String>("TEMP_USERNAME")
-    private val _bio = MutableStateFlow<String>("TEMP_USERNAME")
+    private val postRepository = PostRepository()
+    private val userRepository = UserRepository()
 
-    val avatar: StateFlow<Uri?> = _avatar
+    private val _avatarUrl = MutableStateFlow<String?>(null)
+    private val _username = MutableStateFlow<String>("TEMP_USERNAME")
+    private val _bio = MutableStateFlow<String>("TEMP_BIO")
+
+    val avatar: StateFlow<String?> = _avatarUrl
     val username: StateFlow<String> = _username
     val bio: StateFlow<String> = _bio
 
@@ -28,20 +32,29 @@ class ProfileViewModel : ViewModel() {
 
     var isLoading = false;
 
-    private val postRepository = PostRepository()
-    private val userRepository = UserRepository()
+
 
     init {
         loadMorePosts()
+        loadProfileInfo()
     }
 
     fun updateProfile(
-        avatar: Uri?,
+        context: Context,
+        avatarUri: Uri,
         username: String,
         bio: String
     ) {
         viewModelScope.launch {
+            if (avatarUri != Uri.EMPTY) {
+                userRepository.updateAvatar(context, avatarUri)
+            }
+            _username.value = username
+            // userRepository.updateUsername(username)
+            _bio.value = bio
         }
+
+        loadProfileInfo()
     }
 
     suspend fun loadNewPost(postId: UUID) {
@@ -83,6 +96,33 @@ class ProfileViewModel : ViewModel() {
                     is AppEvent.PostCreated -> loadNewPost(event.postId)
                     else -> null
                 }
+            }
+        }
+    }
+
+    fun loadProfileInfo() {
+//        if (isLoading) return
+//        isLoading = true
+
+        viewModelScope.launch {
+            try {
+                val userID = userRepository.getCurrentUserId()
+
+                if (userID == null) {
+                    throw Exception("userID = null")
+                }
+                val user = userRepository.getUserById(userID)
+
+                if (user == null) {
+                    throw Exception("user = null")
+                }
+                _avatarUrl.value = user.avatarUrl
+                _username.value = user.username
+                _bio.value = userRepository.getBioByUser(user)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                isLoading = false
             }
         }
     }

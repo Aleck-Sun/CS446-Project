@@ -59,6 +59,7 @@
 | 2025-07-15 | Add badge icons                                 | 2.5            |                |               |                 |               |                |
 | 2025-07-15 | Add pet images                                  | 1              |                |               |                 |               |                |
 | 2025-07-15 | Add logs bar graph                              | 3              |                |               |                 |               |                |
+| 2025-07-15 | Profile retrieves from database                 |                | 8              |               |                 |               |                |
 | 2025-07-24 | Bug fixes                                       |                |                |               |                 |               | 1              |
 | 2025-07-24 | Added inviting handlers                         |                |                | 6             |                 |               |                |
 | 2025-07-24 | Added editing permissions for others            |                |                | 2             |                 |               |                |
@@ -75,3 +76,5 @@
 | 2025-07-26 | Implement reoccurring reminders                 |                |                |               | 1               |               |                |
 | 2025-07-27 | Added back button for reminders                 |                |                | 0.5           |                 |               |                |
 | 2025-07-27 | Added functionality for set reminder permission |                |                | 0.5           |                 |               |                |
+| 2025-07-27 | Profile Editing Avatar                          |                | 6              |               |                 |               |                |
+| 2025-07-27 | Username editing                                |                | 4              |               |                 |               |                |

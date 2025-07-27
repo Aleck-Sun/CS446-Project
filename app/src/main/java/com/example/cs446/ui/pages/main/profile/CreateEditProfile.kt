@@ -60,27 +60,32 @@ import kotlin.String
 @Composable
 fun CreateEditProfile(
     onDismiss: () -> Unit = {},
-    onSave: (Uri?, String, String) -> Unit = {_, _, _ -> },
+    onSave: (Context, Uri, String, String) -> Unit = {_, _, _, _ -> },
     usernameDefault: String = "",
     bioDefault: String = "",
-    avatarDefault: Uri? = null
+    avatarDefault: Uri = Uri.EMPTY
 ) {
-    var avatarImage by remember { mutableStateOf<Uri?>(avatarDefault) }
+    var avatarImage by remember { mutableStateOf<Uri>(avatarDefault) }
     var usernameText by remember { mutableStateOf<String>(usernameDefault) }
     var bioText by remember { mutableStateOf<String>(bioDefault) }
 
     val avatarPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) {
-        avatarImage = it
+        uri: Uri? ->
+        uri?.let {
+            avatarImage = it
+        }
     }
+
+    val context = LocalContext.current
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(
                 onClick = {
-                    onSave(avatarImage, usernameText, bioText)
+                    onSave(context, avatarImage, usernameText, bioText)
                 }
             ) {
                 Text("Save")
@@ -103,7 +108,7 @@ fun CreateEditProfile(
                     contentDescription = "Profile Avatar",
                     modifier = Modifier
                         .size(
-                            if (avatarImage == null) { 0.dp }
+                            if (avatarImage == Uri.EMPTY) { 0.dp }
                             else  { 100.dp }
                         )
                         .clickable { avatarPickerLauncher.launch("image/*") },

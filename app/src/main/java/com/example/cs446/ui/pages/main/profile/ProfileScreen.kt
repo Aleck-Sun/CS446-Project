@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main.profile
 
+import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -34,10 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.common.security.SecurityComponent
 import com.example.cs446.ui.pages.main.MainActivityDestination
@@ -50,6 +54,7 @@ fun ProfileScreen(
     onNavigate: (MainActivityDestination, String?) -> Unit,
     onLogout: () -> Unit = {}
 ) {
+    // val avatar by viewModel.tempAvatar.collectAsState()
     val avatar by viewModel.avatar.collectAsState()
     val username by viewModel.username.collectAsState()
     val bio by viewModel.bio.collectAsState()
@@ -60,15 +65,18 @@ fun ProfileScreen(
     val securityComponent = SecurityComponent()
 
     fun onSaveProfile(
-        avatar: Uri?,
+        context: Context,
+        avatar: Uri,
         username: String,
         bio: String
     ): Unit {
         viewModel.updateProfile(
+            context = context,
             avatar,
             username,
             bio
         )
+        showEditProfile = false
     }
 
     Column(
@@ -77,8 +85,7 @@ fun ProfileScreen(
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = rememberAsyncImagePainter(avatar),
+            Image(painter = rememberAsyncImagePainter(avatar),
                 contentDescription = "Profile Picture",
                 modifier = Modifier
                     .size(80.dp)
@@ -138,6 +145,9 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        Text("Pets", fontWeight = FontWeight.Bold)
+        //Button()
+
         PostsItem(posts = posts)
 
         if (showEditProfile) {
@@ -146,7 +156,7 @@ fun ProfileScreen(
                 onSave = ::onSaveProfile,
                 usernameDefault = username,
                 bioDefault = bio,
-                avatarDefault = avatar
+                avatarDefault = Uri.EMPTY
             )
         }
     }

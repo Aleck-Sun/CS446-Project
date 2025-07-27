@@ -1,18 +1,24 @@
 package com.example.cs446.backend.data.repository
 
+import android.content.Context
+import android.net.Uri
 import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
+import java.io.File
 import java.util.UUID
 import kotlin.time.Duration
 
 class UserRepository {
+    private val storage = SupabaseClient.supabase.storage
     private val usersTable = SupabaseClient.supabase.from("users")
-    val storage = SupabaseClient.supabase.storage
 
     val defaultAvatarUrl = "user.png"
+    val defaultUsernameFile = "username.txt"
+    // TODO: Add Bio attribute to users table
+    val defaultBio = "Add Biography"
 
     suspend fun createNewUser(userId: String, email: String): User {
         usersTable.insert(
@@ -40,6 +46,40 @@ class UserRepository {
             e.printStackTrace()
             ""
         }
+    }
+
+    suspend fun updateAvatar(
+        context: Context,
+        avatarUri: Uri
+    ) {
+        try {
+            val inputStream = context.contentResolver.openInputStream(avatarUri)
+            val imageBytes = inputStream?.readBytes()
+
+            if (imageBytes != null) {
+                // upload to supabase
+                storage.from("avatars").upload(defaultAvatarUrl, imageBytes)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    suspend fun updateUsername(
+        newUsername: String
+    ) {
+        val newUsernameFile = File("example.txt")
+        newUsernameFile.writeText(newUsername)
+        val fileBytes = newUsernameFile.readBytes()
+
+        // TODO: attempting to upload username as a file to storage, crashes the app instead
+        val response = storage.from("usernames").upload(defaultUsernameFile, fileBytes)
+
+        println(response)
+    }
+
+    suspend fun getBioByUser(user: User): String {
+        return defaultBio
     }
 
     suspend fun getUserById(userId: UUID): User? {
