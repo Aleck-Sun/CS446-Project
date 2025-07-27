@@ -50,6 +50,7 @@ class ProfileViewModel : ViewModel() {
                 userRepository.updateAvatar(context, avatarUri)
             }
             _username.value = username
+            // userRepository.updateUsername(username)
             _bio.value = bio
         }
 

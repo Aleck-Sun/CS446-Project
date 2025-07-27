@@ -7,6 +7,7 @@ import com.example.cs446.backend.data.model.User
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
+import java.io.File
 import java.util.UUID
 import kotlin.time.Duration
 
@@ -15,6 +16,7 @@ class UserRepository {
     private val usersTable = SupabaseClient.supabase.from("users")
 
     val defaultAvatarUrl = "user.png"
+    val defaultUsernameFile = "username.txt"
     // TODO: Add Bio attribute to users table
     val defaultBio = "Add Biography"
 
@@ -56,11 +58,24 @@ class UserRepository {
 
             if (imageBytes != null) {
                 // upload to supabase
-                storage.from("avatars").update(defaultAvatarUrl, imageBytes)
+                storage.from("avatars").upload(defaultAvatarUrl, imageBytes)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    suspend fun updateUsername(
+        newUsername: String
+    ) {
+        val newUsernameFile = File("example.txt")
+        newUsernameFile.writeText(newUsername)
+        val fileBytes = newUsernameFile.readBytes()
+
+        // TODO: attempting to upload username as a file to storage, crashes the app instead
+        val response = storage.from("usernames").upload(defaultUsernameFile, fileBytes)
+
+        println(response)
     }
 
     suspend fun getBioByUser(user: User): String {
