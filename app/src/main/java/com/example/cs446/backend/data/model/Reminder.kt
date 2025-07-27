@@ -12,7 +12,8 @@ data class ReminderRaw(
     @Json(name = "user_id") val userId: UUID,
     @Json(name = "title") val title: String,
     @Json(name = "description") val description: String,
-    @Json(name = "time") val time: String  // ISO-8601 format with timezone
+    @Json(name = "time") val time: String,
+    @Json(name = "active") val active: Boolean
 ) {
     fun toReminder(): Reminder {
         return Reminder(
@@ -22,8 +23,8 @@ data class ReminderRaw(
             userId = this.userId,
             title = this.title,
             description = this.description,
-            time = OffsetDateTime.parse(this.time)
-                .toLocalDateTime()
+            time = OffsetDateTime.parse(this.time).toLocalDateTime(),
+            active = this.active
         )
     }
 }
@@ -35,7 +36,8 @@ data class Reminder(
     val userId: UUID,
     val title: String,
     val description: String,
-    val time: LocalDateTime  // Using LocalDateTime
+    val time: LocalDateTime,
+    val active: Boolean = true
 ) {
     fun toReminderRaw(): ReminderRaw {
         return ReminderRaw(
@@ -45,9 +47,9 @@ data class Reminder(
             userId = this.userId,
             title = this.title,
             description = this.description,
-            time = this.time
-                .atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+            time = this.time.atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+            active = this.active
         )
     }
 }

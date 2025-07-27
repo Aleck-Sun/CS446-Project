@@ -9,52 +9,95 @@ import android.util.Log
 import com.example.cs446.backend.data.model.Reminder
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.util.UUID
+import com.example.cs446.ui.pages.main.SYSTEM_TIMEZONE
+import com.example.cs446.ui.pages.main.SYSTEM_ZONE_ID
 
 object ReminderScheduler {
     private const val TAG = "ReminderScheduler"
 
     fun scheduleReminder(context: Context, reminder: Reminder): Boolean {
+        // Don't schedule if not active
+        if (!reminder.active) {
+            Log.d(TAG, "Not scheduling inactive reminder ${reminder.id}")
+            return false
+        }
+
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (!alarmManager.canScheduleExactAlarms()) {
-                    Log.w(TAG, "Cannot schedule exact alarms - permission not granted")
+                    Log.w(TAG, "Exact alarm permission not granted")
+                    val intent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
                     return false
                 }
             }
 
-            val intent = Intent(context, ReminderReceiver::class.java).apply {
-                putExtra("title", reminder.title)
-                putExtra("description", reminder.description ?: "")
-                putExtra("reminder_id", reminder.id.toString())
-            }
-
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                reminder.id.hashCode(),
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+            val pendingIntent = createPendingIntent(context, reminder)
 
             val triggerTime = reminder.time
-                .atZone(ZoneId.systemDefault())
+                .atZone(SYSTEM_ZONE_ID)
                 .toInstant()
                 .toEpochMilli()
 
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                triggerTime,
-                pendingIntent
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+            }
 
+            Log.d(TAG, "Reminder scheduled for ${reminder.time}")
             true
-        } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException when scheduling exact alarm", e)
-            false
         } catch (e: Exception) {
             Log.e(TAG, "Error scheduling reminder", e)
             false
         }
+    }
+
+    fun cancelReminder(context: Context, reminderId: UUID) {
+        try {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                reminderId.hashCode(),
+                Intent(context, ReminderReceiver::class.java),
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            pendingIntent?.let {
+                alarmManager.cancel(it)
+                it.cancel()
+                Log.d(TAG, "Cancelled reminder $reminderId")
+            } ?: run {
+                Log.d(TAG, "No pending intent found for reminder $reminderId")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error cancelling reminder", e)
+        }
+    }
+
+    private fun createPendingIntent(context: Context, reminder: Reminder): PendingIntent {
+        return PendingIntent.getBroadcast(
+            context,
+            reminder.id.hashCode(),
+            Intent(context, ReminderReceiver::class.java).apply {
+                putExtra("title", reminder.title)
+                putExtra("description", reminder.description ?: "")
+                putExtra("reminder_id", reminder.id.toString())
+                putExtra("is_active", reminder.active)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 }

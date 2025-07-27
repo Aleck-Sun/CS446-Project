@@ -1,5 +1,6 @@
 package com.example.cs446.ui.pages.main
 
+import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -7,10 +8,14 @@ import android.os.Build
 import android.os.Bundle
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.pm.PackageManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.cs446.common.badges.BadgeComponent
@@ -27,12 +32,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URL
+import java.util.TimeZone
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
-
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+//        TimeZone.setDefault(TimeZone.getTimeZone("America/Toronto"))
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
@@ -43,7 +48,8 @@ class MainActivity : ComponentActivity() {
         val remindersViewModel = RemindersViewModel()
         val badgeComponent = BadgeComponent()
 
-        createNotificationChannel()
+        requestNotificationPermissions()
+        remindersViewModel.scheduleAllUpcomingReminders(applicationContext)
 
         val shareContent = intent.getBooleanExtra("share_post", false)
         val sharedText = intent.getStringExtra("shared_text")
@@ -110,15 +116,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun createNotificationChannel() {
-        val name = "Reminders"
-        val descriptionText = "Channel for pet reminders"
-        val importance = NotificationManager.IMPORTANCE_HIGH
-        val channel = NotificationChannel("reminder_channel", name, importance).apply {
-            description = descriptionText
+    private fun requestNotificationPermissions() {
+        // Notification permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
+            }
         }
-        val notificationManager: NotificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+
+        // Exact alarm permission (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            }
+        }
+    }
+
+    companion object {
+        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
     }
 }

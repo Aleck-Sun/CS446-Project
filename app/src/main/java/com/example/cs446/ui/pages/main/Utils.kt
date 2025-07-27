@@ -2,13 +2,20 @@ package com.example.cs446.ui.pages.main
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toLocalDateTime
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
+
+val SYSTEM_TIMEZONE: TimeZone = TimeZone.of("America/Toronto")
+val SYSTEM_ZONE_ID: ZoneId = ZoneId.of("America/Toronto")
+
+fun Instant.toSystemLocalDateTime(): LocalDateTime = this.toLocalDateTime(SYSTEM_TIMEZONE)
 
 fun formatDate(instant: Instant, unit: ChronoUnit = ChronoUnit.DAYS): String {
     val formatter = when(unit) {
@@ -17,14 +24,16 @@ fun formatDate(instant: Instant, unit: ChronoUnit = ChronoUnit.DAYS): String {
         ChronoUnit.MONTHS -> SimpleDateFormat("MMMM, yyyy", Locale.getDefault())
         else -> SimpleDateFormat("yyyy", Locale.getDefault())
     }
+    formatter.timeZone = java.util.TimeZone.getTimeZone(SYSTEM_ZONE_ID)
     val millis = instant.toEpochMilliseconds()
     val date = Date(millis)
     return formatter.format(date)
 }
 
+// Calculate age using Toronto timezone
 fun calculateAge(birthdate: Instant): String {
-    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-    val birthDate = birthdate.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    val today = Clock.System.now().toSystemLocalDateTime().date
+    val birthDate = birthdate.toSystemLocalDateTime().date
     val period = birthDate.periodUntil(today)
 
     return when {
@@ -34,7 +43,7 @@ fun calculateAge(birthdate: Instant): String {
     }
 }
 
-// helper function to calculate relative time
+// Calculate relative time (timezone independent, so no changes needed)
 fun getRelativeTime(timestamp: Instant): String {
     val now = Clock.System.now()
     val duration = now - timestamp
