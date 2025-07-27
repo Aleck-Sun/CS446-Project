@@ -5,6 +5,8 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,6 +18,7 @@ import com.example.cs446.ui.pages.login.LoginActivity
 import com.example.cs446.view.pets.PetsViewModel
 import com.example.cs446.view.social.FeedViewModel
 import com.example.cs446.view.pets.PermissionsViewModel
+import com.example.cs446.view.pets.RemindersViewModel
 import com.example.cs446.view.social.ProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +40,10 @@ class MainActivity : ComponentActivity() {
         val feedViewModel = FeedViewModel()
         val profileViewModel = ProfileViewModel()
         val permissionsViewModel = PermissionsViewModel()
+        val remindersViewModel = RemindersViewModel()
         val badgeComponent = BadgeComponent()
+
+        createNotificationChannel()
 
         val shareContent = intent.getBooleanExtra("share_post", false)
         val sharedText = intent.getStringExtra("shared_text")
@@ -96,10 +102,23 @@ class MainActivity : ComponentActivity() {
                 petsViewModel = petsViewModel,
                 feedViewModel = feedViewModel,
                 profileViewModel = profileViewModel,
+                remindersViewModel = remindersViewModel,
                 onLogout = onLogout,
                 permissionsViewModel = permissionsViewModel,
                 onShare = ::onShare,
             )
         }
+    }
+
+    private fun createNotificationChannel() {
+        val name = "Reminders"
+        val descriptionText = "Channel for pet reminders"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel("reminder_channel", name, importance).apply {
+            description = descriptionText
+        }
+        val notificationManager: NotificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 }
