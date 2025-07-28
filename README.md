@@ -81,4 +81,7 @@
 | 2025-07-27 | Username editing                                |                | 4              |               |                 |               |                |
 | 2025-07-27 | Removed ability to put owner as relation name   |                |                | 0.5           |                 |               |                |
 | 2025-07-27 | Added time to the activity log form             |                |                | 0.5           |                 |               |                |
+| 2025-07-27 | Fix time zone inconsistencies, clean up display |                |                |               | 2               |               |                |
+| 2025-07-27 | Implement delete and edit reminders             |                |                |               | 1.5             |               |                |
+| 2025-07-28 | Enforce permission policies for reminders       |                |                |               | 1               |               |                |
 | 2025-07-28 | Fixed submit without adding activity type to db |                |                | 3             |                 |               |                |

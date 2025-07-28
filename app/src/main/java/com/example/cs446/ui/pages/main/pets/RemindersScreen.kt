@@ -68,6 +68,12 @@ fun ReminderScreen(
     val reminders by viewModel.reminders.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
+    val canManageReminders by remember(userPetRelations, petId) {
+        derivedStateOf {
+            userPetRelations.find { it.petId == petId }?.permissions?.setReminders == true
+        }
+    }
+
     // partition reminders by past and upcoming
     val (upcomingReminders, pastReminders) = remember(reminders) {
         viewModel.getPartitionedReminders()
@@ -76,18 +82,12 @@ fun ReminderScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var reminderBeingEdited by remember { mutableStateOf<Reminder?>(null) }
 
-    val currentTime by produceState(initialValue = LocalDateTime.now()) {
-        while (true) {
-            value = LocalDateTime.now()
-            delay(1000)
-        }
-    }
-
-    val canSetReminders by remember(userPetRelations, petId) {
-        derivedStateOf {
-            userPetRelations.find { it.petId == petId }?.permissions?.setReminders == true
-        }
-    }
+//    val currentTime by produceState(initialValue = LocalDateTime.now()) {
+//        while (true) {
+//            value = LocalDateTime.now()
+//            delay(1000)
+//        }
+//    }
 
     LaunchedEffect(petId) {
         viewModel.loadRemindersForPet(petId)
@@ -116,7 +116,7 @@ fun ReminderScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Manage Reminders",
+                    "Reminders",
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier.padding(top = 16.dp, bottom = 16.dp)
                 )
@@ -138,10 +138,10 @@ fun ReminderScreen(
 //                modifier = Modifier.padding(bottom = 16.dp)
 //            )
 
-            if (canSetReminders) {
+            if (canManageReminders) {
                 Button(
                     onClick = { showAddDialog = true },
-                    modifier = Modifier.align(Alignment.Start) // left aligned
+                    modifier = Modifier.align(Alignment.Start)
                 ) {
                     Text("Create New Reminder")
                 }
@@ -165,6 +165,7 @@ fun ReminderScreen(
                     items(upcomingReminders) { reminder ->
                         ReminderItem(
                             reminder = reminder,
+                            canManageReminders,
                             onToggleActive = { isActive ->
                                 viewModel.toggleActiveReminder(context, reminder.id, petId)
                             },
@@ -238,6 +239,7 @@ fun ReminderScreen(
 @Composable
 fun ReminderItem(
     reminder: Reminder,
+    canManageReminders: Boolean,
     onToggleActive: ((Boolean) -> Unit)? = null,
     onEdit: ((Reminder) -> Unit)? = null,
     onDelete: ((Reminder) -> Unit)? = null
@@ -288,7 +290,7 @@ fun ReminderItem(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (onToggleActive != null && isUpcoming) {
+                    if (canManageReminders && onToggleActive != null && isUpcoming) {
                         Switch(
                             checked = isActive,
                             onCheckedChange = onToggleActive,
@@ -302,7 +304,7 @@ fun ReminderItem(
                         )
                     }
 
-                    if (onEdit != null) {
+                    if (canManageReminders && onEdit != null) {
                         IconButton(
                             onClick = { onEdit(reminder) },
                         ) {
@@ -314,7 +316,7 @@ fun ReminderItem(
                         }
                     }
 
-                    if (onDelete != null) {
+                    if (canManageReminders && onDelete != null) {
                         IconButton(onClick = { onDelete(reminder) }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,

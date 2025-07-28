@@ -25,16 +25,6 @@ class ReminderReceiver : BroadcastReceiver() {
 
             if (!active) {
                 Log.d("ReminderReceiver", "Skipping inactive reminder $reminderId")
-                // Delete reminder
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        val uuid = UUID.fromString(reminderId)
-                        ReminderRepository().deleteReminder(uuid)
-                        Log.d("ReminderReceiver", "Deleted reminder $reminderId after skipping")
-                    } catch (e: Exception) {
-                        Log.e("ReminderReceiver", "Failed to delete reminder $reminderId", e)
-                    }
-                }
                 return
             }
 
