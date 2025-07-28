@@ -80,3 +80,5 @@
 | 2025-07-27 | UI logs implementation, bug fixes               |                |                |               |                 |               | 5              |
 | 2025-07-27 | Username editing                                |                | 4              |               |                 |               |                |
 | 2025-07-27 | Removed ability to put owner as relation name   |                |                | 0.5           |                 |               |                |
+| 2025-07-27 | Added time to the activity log form             |                |                | 0.5           |                 |               |                |
+| 2025-07-28 | Fixed submit without adding activity type to db |                |                | 3             |                 |               |                |

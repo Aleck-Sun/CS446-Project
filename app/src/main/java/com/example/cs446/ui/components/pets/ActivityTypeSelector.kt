@@ -48,6 +48,7 @@ fun ActivityTypeSelector(
             onValueChange = {
                 inputText = it
                 hasUserTyped = true
+                onActivityTypeChange(it)
             },
             label = { Text("Activity Type") },
             modifier = Modifier
