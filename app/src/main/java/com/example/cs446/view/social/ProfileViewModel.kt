@@ -4,11 +4,13 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cs446.backend.SupabaseClient
 import com.example.cs446.backend.data.model.post.Post
 import com.example.cs446.backend.data.repository.PostRepository
 import com.example.cs446.backend.data.repository.UserRepository
 import com.example.cs446.common.AppEvent
 import com.example.cs446.common.EventBus
+import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -27,8 +29,10 @@ class ProfileViewModel : ViewModel() {
     val bio: StateFlow<String> = _bio
 
     private val _allPosts = MutableStateFlow<List<Post>>(listOf())
+    private val _numberOfFollowing = MutableStateFlow<Int>(0)
 
     val posts: StateFlow<List<Post>> = _allPosts
+    val numberOfFollowing: StateFlow<Int> = _numberOfFollowing
 
     var isLoading = false;
 
@@ -119,10 +123,19 @@ class ProfileViewModel : ViewModel() {
                 _avatarUrl.value = user.avatarUrl
                 _username.value = user.username
                 _bio.value = userRepository.getBioByUser(user)
+
+                _numberOfFollowing.value = postRepository.getNumberOfPetsFollowing(userID)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
                 isLoading = false
+            }
+
+            EventBus.events.collect { event ->
+                when (event) {
+                    is AppEvent.PetFollowed -> loadProfileInfo()
+                    else -> null
+                }
             }
         }
     }

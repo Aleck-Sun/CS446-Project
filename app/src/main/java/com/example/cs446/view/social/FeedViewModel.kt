@@ -229,6 +229,11 @@ open class FeedViewModel : ViewModel() {
                             post
                         }
                     }
+                    EventBus.emit(
+                        AppEvent.PetFollowed(
+                            petId
+                        )
+                    )
                 }
 
                 filterPosts()

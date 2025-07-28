@@ -8,6 +8,7 @@ import java.util.UUID
 
 sealed class AppEvent {
     data class PostCreated(val petId: UUID, val postId: UUID) : AppEvent()
+    data class PetFollowed(val petId: UUID) : AppEvent()
     data class ImageUploaded(val petId: UUID) : AppEvent()
     data class CommentPosted(val postId: UUID) : AppEvent()
     data class ActivityLogged(val petId: UUID, val logId: UUID) : AppEvent()

@@ -209,6 +209,25 @@ class PostRepository {
         }
     }
 
+    suspend fun getNumberOfPetsFollowing(userId: UUID): Int {
+        val toReturn = try {
+            followTable.select {
+                filter {
+                    eq("user_id", userId)
+                    eq("followed", true)
+                }
+                count(Count.EXACT)
+            }.countOrNull()!!.toInt()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            0
+        }
+
+        println(toReturn)
+
+        return toReturn
+    }
+
     suspend fun updateLikeStatus(postId: UUID): Boolean {
         return try {
             likeTable.upsert(

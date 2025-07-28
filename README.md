@@ -78,3 +78,4 @@
 | 2025-07-27 | Added functionality for set reminder permission |                |                | 0.5           |                 |               |                |
 | 2025-07-27 | Profile Editing Avatar                          |                | 6              |               |                 |               |                |
 | 2025-07-27 | Username editing                                |                | 4              |               |                 |               |                |
+| 2025-07-28 | Added real profile stats                        |                | 3              |               |                 |               |                |
