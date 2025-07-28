@@ -79,3 +79,4 @@
 | 2025-07-27 | Profile Editing Avatar                          |                | 6              |               |                 |               |                |
 | 2025-07-27 | UI logs implementation, bug fixes               |                |                |               |                 |               | 5              |
 | 2025-07-27 | Username editing                                |                | 4              |               |                 |               |                |
+| 2025-07-27 | Removed ability to put owner as relation name   |                |                | 0.5           |                 |               |                |
