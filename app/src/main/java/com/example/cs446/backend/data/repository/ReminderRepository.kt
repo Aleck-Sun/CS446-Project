@@ -57,7 +57,7 @@ class ReminderRepository {
             time?.let {
                 set(
                     "time",
-                    it.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                    it.atZone(ZoneId.of("America/Toronto")).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
                 )
             }
             active?.let { set("active", it) }
@@ -65,6 +65,18 @@ class ReminderRepository {
             filter {
                 eq("id", reminderId)
             }
+        }
+    }
+
+    suspend fun deleteReminder(reminderId: UUID) {
+        try {
+            remindersTable.delete {
+                filter {
+                    eq("id", reminderId)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

@@ -18,21 +18,20 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Schedule
-import java.time.ZonedDateTime
+import com.example.cs446.backend.data.model.Reminder
 
 @Composable
-fun AddReminderDialog(
+fun EditReminderDialog(
+    reminder: Reminder,
     onDismiss: () -> Unit,
-    onAdd: (title: String, description: String, time: ZonedDateTime, repeatIntervalDays: Int, repeatTimes: Int) -> Unit
+    onEdit: (title: String, description: String, time: LocalDateTime) -> Unit
 ) {
     val context = LocalContext.current
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
-    var selectedTime by remember { mutableStateOf(LocalTime.now().plusMinutes(1)) }
-    var repeatIntervalDays by remember { mutableStateOf("1") }
-    var repeatTimes by remember { mutableStateOf("1") }
+    var title by remember { mutableStateOf(reminder.title) }
+    var description by remember { mutableStateOf(reminder.description) }
+    var selectedDate by remember { mutableStateOf(reminder.time.toLocalDate()) }
+    var selectedTime by remember { mutableStateOf(reminder.time.toLocalTime()) }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -65,23 +64,17 @@ fun AddReminderDialog(
         confirmButton = {
             TextButton(onClick = {
                 // Validate inputs
-                val time = LocalDateTime.of(selectedDate, selectedTime).atZone(ZoneId.of("America/Toronto"))
-                val repeatEvery = repeatIntervalDays.toIntOrNull() ?: -1
-                val timesCount = repeatTimes.toIntOrNull() ?: -1
+                val time = LocalDateTime.of(selectedDate, selectedTime)
 
                 if (title.isBlank()) {
                     errorMessage = "Title cannot be empty"
-                } else if (time.isBefore(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
+                } else if (time.isBefore(LocalDateTime.now())) {
                     errorMessage = "Reminder time must be in the future"
-                } else if (repeatEvery <= 0) {
-                    errorMessage = "Repeat every days must be > 0"
-                } else if (timesCount <= 0) {
-                    errorMessage = "Repeat times must be > 0"
                 } else {
-                    onAdd(title, description, time, repeatIntervalDays.toInt(), repeatTimes.toInt())
+                    onEdit(title, description, time)
                 }
             }) {
-                Text("Add")
+                Text("Confirm")
             }
         },
         dismissButton = {
@@ -89,7 +82,7 @@ fun AddReminderDialog(
                 Text("Cancel")
             }
         },
-        title = { Text("Create New Reminder") },
+        title = { Text("Update Reminder") },
         text = {
             Column {
                 OutlinedTextField(
@@ -173,24 +166,6 @@ fun AddReminderDialog(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Column {
-                    OutlinedTextField(
-                        value = repeatIntervalDays,
-                        onValueChange = { repeatIntervalDays = it.filter { c -> c.isDigit() } },
-                        label = { Text("Repeat every X days") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedTextField(
-                        value = repeatTimes,
-                        onValueChange = { repeatTimes = it.filter { c -> c.isDigit() } },
-                        label = { Text("Repeat X times") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
 
                 errorMessage?.let { error ->
                     Spacer(modifier = Modifier.height(8.dp))

@@ -7,8 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.example.cs446.backend.data.model.Reminder
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.UUID
 
 object ReminderScheduler {
@@ -23,18 +21,14 @@ object ReminderScheduler {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-            // Check for exact alarm permission (Android 12+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                 !alarmManager.canScheduleExactAlarms()) {
                 Log.w(TAG, "Exact alarm permission not granted")
                 return false
             }
 
-            // Convert reminder time to system timezone first
-            val zonedTime = reminder.time.atZone(ZoneId.systemDefault())
-            val triggerTime = zonedTime.toInstant().toEpochMilli()
+            val triggerTime = reminder.time.toInstant().toEpochMilli()
 
-            // Verify the time is in the future
             if (triggerTime <= System.currentTimeMillis()) {
                 Log.w(TAG, "Reminder time is in the past: ${reminder.time}")
                 return false
@@ -42,19 +36,11 @@ object ReminderScheduler {
 
             val pendingIntent = createPendingIntent(context, reminder)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            }
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
 
             Log.d(TAG, "Reminder scheduled for ${reminder.time} (trigger time: $triggerTime)")
             true
@@ -92,7 +78,8 @@ object ReminderScheduler {
                 action = "com.example.cs446.REMINDER_ACTION"
                 putExtra("reminder_id", reminder.id.toString())
                 putExtra("title", reminder.title)
-                putExtra("description", reminder.description ?: "")
+                putExtra("description", reminder.description)
+                putExtra("active", reminder.active)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or
                     PendingIntent.FLAG_IMMUTABLE
