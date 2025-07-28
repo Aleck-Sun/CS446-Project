@@ -169,6 +169,17 @@ class RemindersViewModel : ViewModel() {
         }
     }
 
+    fun deleteReminder(reminderId: UUID, petId: UUID) {
+        viewModelScope.launch {
+            try {
+                reminderRepository.deleteReminder(reminderId)
+                loadRemindersForPet(petId)
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to delete reminder"
+            }
+        }
+    }
+
     fun scheduleAllUpcomingReminders(context: Context) {
         viewModelScope.launch {
             try {

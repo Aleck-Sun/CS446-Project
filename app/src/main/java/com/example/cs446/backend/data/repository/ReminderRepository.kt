@@ -67,4 +67,16 @@ class ReminderRepository {
             }
         }
     }
+
+    suspend fun deleteReminder(reminderId: UUID) {
+        try {
+            remindersTable.delete {
+                filter {
+                    eq("id", reminderId)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

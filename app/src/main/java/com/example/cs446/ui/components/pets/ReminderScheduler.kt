@@ -7,8 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.example.cs446.backend.data.model.Reminder
-import java.time.LocalDateTime
-import java.time.ZoneId
 import java.util.UUID
 
 object ReminderScheduler {
@@ -80,7 +78,8 @@ object ReminderScheduler {
                 action = "com.example.cs446.REMINDER_ACTION"
                 putExtra("reminder_id", reminder.id.toString())
                 putExtra("title", reminder.title)
-                putExtra("description", reminder.description ?: "")
+                putExtra("description", reminder.description)
+                putExtra("active", reminder.active)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or
                     PendingIntent.FLAG_IMMUTABLE

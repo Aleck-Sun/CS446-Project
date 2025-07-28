@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -130,12 +131,12 @@ fun ReminderScreen(
                 }
             }
 
-            Text(
-                "Current time: ${currentTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm:ss a"))}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+//            Text(
+//                "Current time: ${currentTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm:ss a"))}",
+//                style = MaterialTheme.typography.bodyMedium,
+//                color = MaterialTheme.colorScheme.primary,
+//                modifier = Modifier.padding(bottom = 16.dp)
+//            )
 
             if (canSetReminders) {
                 Button(
@@ -149,13 +150,17 @@ fun ReminderScreen(
             }
 
             // Upcoming Reminders
-            Text("Upcoming Reminders", style = MaterialTheme.typography.headlineSmall)
+//            Text("Upcoming Reminders", style = MaterialTheme.typography.headlineSmall)
 
             if (upcomingReminders.isEmpty()) {
                 Text("No upcoming reminders")
             } else {
                 LazyColumn(
-                    modifier = Modifier.heightIn(max = 400.dp) // Constrain height
+//                    modifier = Modifier
+//                        .padding(paddingValues)
+//                        .fillMaxSize()
+//                        .padding(16.dp)
+                    modifier = Modifier.heightIn(max = 700.dp)
                 ) {
                     items(upcomingReminders) { reminder ->
                         ReminderItem(
@@ -163,30 +168,33 @@ fun ReminderScreen(
                             onToggleActive = { isActive ->
                                 viewModel.toggleActiveReminder(context, reminder.id, petId)
                             },
-                            onEdit = { reminderBeingEdited = it }
+                            onEdit = { reminderBeingEdited = it },
+                            onDelete = {
+                                viewModel.deleteReminder(reminder.id, petId)
+                            }
                         )
                         HorizontalDivider()
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+//            Spacer(modifier = Modifier.height(16.dp))
 
             // Past Reminders section
-            Text("Past Reminders", style = MaterialTheme.typography.headlineSmall)
-
-            if (pastReminders.isEmpty()) {
-                Text("No past reminders")
-            } else {
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 400.dp) // Constrain height
-                ) {
-                    items(pastReminders) { reminder ->
-                        ReminderItem(reminder = reminder)
-                        HorizontalDivider()
-                    }
-                }
-            }
+//            Text("Past Reminders", style = MaterialTheme.typography.headlineSmall)
+//
+//            if (pastReminders.isEmpty()) {
+//                Text("No past reminders")
+//            } else {
+//                LazyColumn(
+//                    modifier = Modifier.heightIn(max = 400.dp) // Constrain height
+//                ) {
+//                    items(pastReminders) { reminder ->
+//                        ReminderItem(reminder = reminder)
+//                        HorizontalDivider()
+//                    }
+//                }
+//            }
         }
     }
 
@@ -231,7 +239,8 @@ fun ReminderScreen(
 fun ReminderItem(
     reminder: Reminder,
     onToggleActive: ((Boolean) -> Unit)? = null,
-    onEdit: ((Reminder) -> Unit)? = null
+    onEdit: ((Reminder) -> Unit)? = null,
+    onDelete: ((Reminder) -> Unit)? = null
 ) {
     val systemZone = ZoneId.of("America/Toronto")
     val now = LocalDateTime.now(systemZone)
@@ -301,6 +310,16 @@ fun ReminderItem(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Reminder",
                                 tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    if (onDelete != null) {
+                        IconButton(onClick = { onDelete(reminder) }) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Reminder",
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
