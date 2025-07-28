@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,12 +52,9 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.ActivityLogType
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.ui.components.DateTimePickerTextField
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -83,10 +81,11 @@ fun ActivityLogForm(
     val selectedImagesUri = remember { mutableStateListOf<Uri>() }
     var makePublic by remember { mutableStateOf<Boolean>(false) }
     var activityTypeOptions = remember { mutableStateListOf<String>() }
+    var showActivityTypeError by remember { mutableStateOf(false) }
 
     LaunchedEffect(petId) {
         val types = activityLogRepository.getActivityLogsTypeTableForPet(petId)
-        activityTypeOptions.addAll(types.map { it.activityType} )
+        activityTypeOptions.addAll(types.map { it.activityType })
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -95,7 +94,7 @@ fun ActivityLogForm(
         uri?.let {
             selectedImagesUri.add(it)
         }
-        currentImageIndex = selectedImagesUri.size-1
+        currentImageIndex = selectedImagesUri.size - 1
     }
 
     Column(
@@ -120,25 +119,28 @@ fun ActivityLogForm(
 
         ActivityTypeSelector(
             activityType = activityType,
-            onActivityTypeChange = { activityType = it },
+            onActivityTypeChange = {
+                activityType = it
+                if (showActivityTypeError && it.isNotBlank()) {
+                    showActivityTypeError = false
+                }
+            },
             activityTypeOptions = activityTypeOptions,
             onNewTypeConfirmed = { newType ->
                 if (!activityTypeOptions.contains(newType.lowercase())) {
                     activityTypeOptions.add(newType.lowercase())
-
-                    // Save new activity type in DB
-                    coroutineScope.launch {
-                        activityLogRepository.addActivityLogsType(
-                            ActivityLogType(
-                                activityType = newType.lowercase(),
-                                petId = petId,
-                                createdAt = Instant.now(),
-                            )
-                        )
-                    }
                 }
             }
         )
+
+        if (showActivityTypeError) {
+            Text(
+                text = "Please enter an activity type",
+                color = MaterialTheme.colorScheme.error,
+                fontSize = 12.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -149,7 +151,7 @@ fun ActivityLogForm(
             modifier = Modifier.fillMaxWidth()
         )
 
-        if (canMakePost){
+        if (canMakePost) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -175,10 +177,8 @@ fun ActivityLogForm(
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 64.dp)
                 ) {
-                    items(selectedImagesUri.size + 1) {
-                            index ->
-                        if (index < selectedImagesUri.size)
-                        {
+                    items(selectedImagesUri.size + 1) { index ->
+                        if (index < selectedImagesUri.size) {
                             Image(
                                 painter = rememberAsyncImagePainter(selectedImagesUri[index]),
                                 contentDescription = "Selected pet image",
@@ -236,14 +236,32 @@ fun ActivityLogForm(
 
         Button(
             onClick = {
-                onSubmit(
-                    activityDateTime.atZone(ZoneOffset.systemDefault()).toInstant(),
-                    activityType,
-                    comment,
-                    makePost,
-                    makePublic,
-                    selectedImagesUri
-                )
+                if (activityType.isBlank()) {
+                    showActivityTypeError = true
+                    return@Button
+                }
+                coroutineScope.launch {
+                    if (!activityTypeOptions.contains(activityType.lowercase())) {
+                        activityLogRepository.addActivityLogsType(
+                            ActivityLogType(
+                                activityType = activityType.lowercase(),
+                                petId = petId,
+                                createdAt = Instant.now(),
+                            )
+                        )
+                        activityTypeOptions.add(activityType.lowercase())
+                    }
+
+                    onSubmit(
+                        activityDateTime.atZone(ZoneOffset.systemDefault()).toInstant(),
+                        activityType,
+                        comment,
+                        makePost,
+                        makePublic,
+                        selectedImagesUri
+                    )
+                }
+
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
