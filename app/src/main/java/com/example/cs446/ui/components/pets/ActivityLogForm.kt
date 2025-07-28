@@ -50,11 +50,13 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.ActivityLogType
 import com.example.cs446.backend.data.repository.ActivityLogRepository
-import com.example.cs446.ui.components.DatePickerTextField
+import com.example.cs446.ui.components.DateTimePickerTextField
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -69,9 +71,10 @@ fun ActivityLogForm(
     onSubmit: (activityDate: Instant, activityType: String, comment: String, makePost: Boolean, makePublic: Boolean, selectedImagesUri: List<Uri>) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-    var activityDate by remember { mutableStateOf(LocalDate.now()) }
+    var activityDateTime by remember { mutableStateOf(LocalDateTime.now()) }
     var activityType by remember { mutableStateOf("") }
     var comment by remember { mutableStateOf("") }
     var makePost by remember { mutableStateOf(false) }
@@ -104,12 +107,12 @@ fun ActivityLogForm(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        DatePickerTextField(
-            date = activityDate,
-            label = "Activity Date",
-            formatter = formatter,
-            onDateChange = {
-                activityDate = it
+        DateTimePickerTextField(
+            dateTime = activityDateTime,
+            dateFormatter = dateFormatter,
+            timeFormatter = timeFormatter,
+            onDateTimeChange = {
+                activityDateTime = it
             }
         )
 
@@ -234,7 +237,7 @@ fun ActivityLogForm(
         Button(
             onClick = {
                 onSubmit(
-                    activityDate.atStartOfDay(ZoneOffset.UTC).toInstant(),
+                    activityDateTime.atZone(ZoneOffset.systemDefault()).toInstant(),
                     activityType,
                     comment,
                     makePost,
