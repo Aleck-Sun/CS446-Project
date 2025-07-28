@@ -11,14 +11,19 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.example.cs446.backend.data.repository.ReminderRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.UUID
 
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         try {
             val reminderId = intent.getStringExtra("reminder_id") ?: ""
-            val isActive = intent.getBooleanExtra("is_active", true)
+            val active = intent.getBooleanExtra("active", false)
 
-            if (!isActive) {
+            if (!active) {
                 Log.d("ReminderReceiver", "Skipping inactive reminder $reminderId")
                 return
             }
@@ -39,6 +44,7 @@ class ReminderReceiver : BroadcastReceiver() {
                 }
             }
 
+            // Deliver notification
             NotificationManagerCompat.from(context).notify(
                 reminderId.hashCode(),
                 NotificationCompat.Builder(context, CHANNEL_ID)
@@ -49,6 +55,17 @@ class ReminderReceiver : BroadcastReceiver() {
                     .setAutoCancel(true)
                     .build()
             )
+
+            // Delete reminder
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val uuid = UUID.fromString(reminderId)
+                    ReminderRepository().deleteReminder(uuid)
+                    Log.d("ReminderReceiver", "Deleted reminder $reminderId after triggering")
+                } catch (e: Exception) {
+                    Log.e("ReminderReceiver", "Failed to delete reminder $reminderId", e)
+                }
+            }
         } catch (e: Exception) {
             Log.e("ReminderReceiver", "Error in onReceive", e)
         }

@@ -74,6 +74,7 @@ import com.example.cs446.ui.components.pets.ActivityLogForm
 import com.example.cs446.ui.components.pets.TrendChart
 import com.example.cs446.ui.pages.main.MainActivityDestination
 import com.example.cs446.view.social.FeedViewModel
+import com.example.cs446.view.pets.PetsViewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
@@ -90,6 +91,7 @@ fun LogsScreen(
     modifier: Modifier = Modifier,
     petId: String,
     viewModel: FeedViewModel,
+    petsViewModel: PetsViewModel,
     onNavigate: (MainActivityDestination, String?) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -317,11 +319,14 @@ fun LogsScreen(
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                Text("View Activity Types")
+                Text("Manage Activity Types")
             }
         }
 
         if (showActivityTypesModal) {
+            var newActivityType by remember { mutableStateOf("") }
+            var showInputError by remember { mutableStateOf(false) }
+
             AlertDialog(
                 onDismissRequest = { showActivityTypesModal = false },
                 title = { Text("Activity Types") },
@@ -346,6 +351,53 @@ fun LogsScreen(
                                     Text("Create QR Code")
                                 }
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text("Add New Activity Type", fontWeight = FontWeight.Bold)
+                        OutlinedTextField(
+                            value = newActivityType,
+                            onValueChange = {
+                                newActivityType = it
+                                if (showInputError) showInputError = false
+                            },
+                            isError = showInputError,
+                            label = { Text("New Type") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        if (showInputError) {
+                            Text(
+                                "Type already exists or is blank",
+                                color = MaterialTheme.colorScheme.error,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val trimmed = newActivityType.trim()
+                                val exists = activityTypes.any { it.activityType.equals(trimmed, ignoreCase = true) }
+
+                                if (trimmed.isNotBlank() && !exists) {
+                                    coroutineScope.launch {
+                                        addNewActivityType(
+                                            activityType = trimmed,
+                                            activityTypes = activityTypes,
+                                            updateActivityTypes = { activityTypes = it },
+                                            activityLogRepository = activityLogRepository,
+                                            pet = pet
+                                        )
+                                    }
+                                    newActivityType = ""
+                                } else {
+                                    showInputError = true
+                                }
+                            },
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("Add Type")
                         }
                     }
                 },
@@ -445,6 +497,7 @@ fun LogsScreen(
                                         makePublic = makePublic,
                                         imageUris = imageUris,
                                         pet = pet,
+                                        petsViewModel = petsViewModel
                                     )
                                     showActivityLogModal = false
                                     fetchActivityLogsAndPet()
@@ -455,6 +508,28 @@ fun LogsScreen(
                 }
             }
         }
+    }
+}
+
+private suspend fun addNewActivityType(
+    activityType: String,
+    activityTypes: List<ActivityLogType>,
+    updateActivityTypes: (List<ActivityLogType>) -> Unit,
+    activityLogRepository: ActivityLogRepository,
+    pet: Pet?
+) {
+    if (pet == null) return
+
+    val exists = activityTypes.any { it.activityType.equals(activityType, ignoreCase = true) }
+
+    if (activityType.isNotBlank() && !exists) {
+        val newType = ActivityLogType(
+            activityType = activityType.lowercase(),
+            petId = pet.id,
+            createdAt = Instant.now()
+        )
+        activityLogRepository.addActivityLogsType(newType)
+        updateActivityTypes(activityTypes + newType)
     }
 }
 
@@ -509,6 +584,7 @@ private suspend fun handleActivitySubmission(
     makePublic: Boolean,
     imageUris: List<Uri>,
     pet: Pet?,
+    petsViewModel: PetsViewModel
 ) {
     val userId = userRepository.getCurrentUserId()
     if (userId == null || pet == null) {
@@ -538,4 +614,6 @@ private suspend fun handleActivitySubmission(
             createdAt = activityDate
         )
     )
+    
+    petsViewModel.refreshLogCount(pet.id)
 }

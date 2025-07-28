@@ -1,9 +1,12 @@
 package com.example.cs446.ui.pages.main.profile
 
+import PostItem
 import android.content.Context
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,10 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.rememberAsyncImagePainter
 import coil.request.CachePolicy
 import coil.request.ImageRequest
@@ -64,6 +69,7 @@ fun ProfileScreen(
     val numberOfFollowing by viewModel.numberOfFollowing.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val securityComponent = SecurityComponent()
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
 
     fun onSaveProfile(
         context: Context,
@@ -78,6 +84,12 @@ fun ProfileScreen(
             bio
         )
         showEditProfile = false
+    }
+
+    fun onSelectPost(
+        post: Post
+    ) {
+        selectedPost = post
     }
 
     Column(
@@ -148,7 +160,7 @@ fun ProfileScreen(
         //Text("Pets", fontWeight = FontWeight.Bold)
         //Button()
 
-        PostsItem(posts = posts)
+        PostsItem(posts = posts, ::onSelectPost)
 
         if (showEditProfile) {
             CreateEditProfile(
@@ -158,6 +170,23 @@ fun ProfileScreen(
                 bioDefault = bio,
                 avatarDefault = Uri.EMPTY
             )
+        }
+
+        selectedPost?.let {
+            Dialog(onDismissRequest = { selectedPost = null }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.8f))
+                        .clickable { selectedPost = null },
+                    contentAlignment = Alignment.Center
+                ) {
+                    PostItem(
+                        it,
+                        isExpanded = true
+                    )
+                }
+            }
         }
     }
 }
@@ -172,7 +201,8 @@ fun ProfileStat(label: String, count: String) {
 
 @Composable
 fun PostsItem(
-    posts : List<Post>
+    posts : List<Post>,
+    onSelectPost : (Post) -> Unit = {_->}
 ) {
     Text("Posts", fontWeight = FontWeight.Bold)
 
@@ -182,14 +212,19 @@ fun PostsItem(
     ) {
         itemsIndexed(posts) { index, post ->
             if (post.imageUrls.isNotEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(post.imageUrls[0]),
-                    contentDescription = "Post $index",
+                Box(
                     modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(2.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                )
+                        .aspectRatio(1f) // Force square shape
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onSelectPost(post) }
+                ) {
+                    Image(
+                        painter = rememberAsyncImagePainter(post.imageUrls[0]),
+                        contentDescription = "Post $index",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             } else {
                 Box(
                     modifier = Modifier

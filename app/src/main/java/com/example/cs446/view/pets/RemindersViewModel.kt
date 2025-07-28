@@ -1,7 +1,6 @@
 package com.example.cs446.view.pets
 
 import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cs446.backend.data.model.Reminder
@@ -14,10 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class RemindersViewModel : ViewModel() {
     private val userRepository = UserRepository()
@@ -72,7 +71,7 @@ class RemindersViewModel : ViewModel() {
         petId: UUID,
         title: String,
         description: String,
-        time: LocalDateTime,
+        time: ZonedDateTime,
         repeatIntervalDays: Int,
         repeatTimes: Int
     ) {
@@ -84,7 +83,7 @@ class RemindersViewModel : ViewModel() {
                     return@launch
                 }
 
-                if (time.isBefore(LocalDateTime.now())) {
+                if (time.isBefore(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     _errorMessage.value = "Reminder time must be in the future"
                     return@launch
                 }
@@ -112,7 +111,9 @@ class RemindersViewModel : ViewModel() {
                         time = time.plusDays(i.toLong() * repeatIntervalDays),
                         active = true
                     )
-                }.filter { it.time.isAfter(LocalDateTime.now()) || it.time.isEqual(LocalDateTime.now()) }
+                }.filter {
+                    it.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))
+                            || it.time.isEqual(LocalDateTime.now().atZone(ZoneId.of("America/Toronto"))) }
 
                 if (reminders.isEmpty()) {
                     _errorMessage.value = "All reminder times are in the past"
@@ -132,6 +133,47 @@ class RemindersViewModel : ViewModel() {
                 loadRemindersForPet(petId)
             } catch (e: Exception) {
                 _errorMessage.value = "Failed to add reminder: ${e.message}"
+            }
+        }
+    }
+
+    fun updateReminder(
+        context: Context,
+        reminderId: UUID,
+        petId: UUID,
+        title: String,
+        description: String,
+        time: LocalDateTime
+    ) {
+        viewModelScope.launch {
+            try {
+                reminderRepository.updateReminder(
+                    reminderId = reminderId,
+                    title = title,
+                    description = description,
+                    time = time
+                )
+
+                ReminderScheduler.cancelReminder(context, reminderId)
+                val updatedReminder = reminderRepository.getReminder(reminderId)
+                if (updatedReminder != null && updatedReminder.active && updatedReminder.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
+                    ReminderScheduler.scheduleReminder(context, updatedReminder)
+                }
+
+                loadRemindersForPet(petId)
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to update reminder: ${e.message}"
+            }
+        }
+    }
+
+    fun deleteReminder(reminderId: UUID, petId: UUID) {
+        viewModelScope.launch {
+            try {
+                reminderRepository.deleteReminder(reminderId)
+                loadRemindersForPet(petId)
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to delete reminder"
             }
         }
     }
@@ -191,7 +233,7 @@ class RemindersViewModel : ViewModel() {
                     ?: throw IllegalStateException("Reminder not found")
 
                 // Reschedule if the reminder time is in the future
-                if (reminder.time.isAfter(LocalDateTime.now())) {
+                if (reminder.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     val scheduled = ReminderScheduler.scheduleReminder(context, reminder)
                     if (!scheduled) {
                         _errorMessage.value = "Couldn't reschedule notification"
@@ -229,10 +271,9 @@ class RemindersViewModel : ViewModel() {
 
     // partition reminders by past and upcoming
     fun getPartitionedReminders(): Pair<List<Reminder>, List<Reminder>> {
-        val now = LocalDateTime.now(ZoneId.systemDefault())
+        val now = LocalDateTime.now(ZoneId.of("America/Toronto"))
         return _reminders.value.partition { reminder ->
-            reminder.time.atZone(ZoneId.systemDefault())
-                .isAfter(now.atZone(ZoneId.systemDefault()))
+            reminder.time.isAfter(now.atZone(ZoneId.of("America/Toronto")))
         }
     }
 }

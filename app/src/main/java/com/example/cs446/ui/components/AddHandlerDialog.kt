@@ -36,6 +36,8 @@ fun AddHandlerDialog(
                     localError = "Please enter a username or email"
                 } else if (relationName.isBlank()) {
                     localError = "Please enter a relation name"
+                } else if (relationName.trim().lowercase() == "owner"){
+                    localError = "Relation name cannot be 'Owner'"
                 } else {
                     localError = null
                     onInvite(
