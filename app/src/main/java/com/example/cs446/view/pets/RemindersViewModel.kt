@@ -18,6 +18,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 class RemindersViewModel : ViewModel() {
     private val userRepository = UserRepository()
@@ -72,7 +73,7 @@ class RemindersViewModel : ViewModel() {
         petId: UUID,
         title: String,
         description: String,
-        time: LocalDateTime,
+        time: ZonedDateTime,
         repeatIntervalDays: Int,
         repeatTimes: Int
     ) {
@@ -84,7 +85,7 @@ class RemindersViewModel : ViewModel() {
                     return@launch
                 }
 
-                if (time.isBefore(LocalDateTime.now())) {
+                if (time.isBefore(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     _errorMessage.value = "Reminder time must be in the future"
                     return@launch
                 }
@@ -112,7 +113,9 @@ class RemindersViewModel : ViewModel() {
                         time = time.plusDays(i.toLong() * repeatIntervalDays),
                         active = true
                     )
-                }.filter { it.time.isAfter(LocalDateTime.now()) || it.time.isEqual(LocalDateTime.now()) }
+                }.filter {
+                    it.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))
+                            || it.time.isEqual(LocalDateTime.now().atZone(ZoneId.of("America/Toronto"))) }
 
                 if (reminders.isEmpty()) {
                     _errorMessage.value = "All reminder times are in the past"
@@ -155,7 +158,7 @@ class RemindersViewModel : ViewModel() {
 
                 ReminderScheduler.cancelReminder(context, reminderId)
                 val updatedReminder = reminderRepository.getReminder(reminderId)
-                if (updatedReminder != null && updatedReminder.active && updatedReminder.time.isAfter(LocalDateTime.now())) {
+                if (updatedReminder != null && updatedReminder.active && updatedReminder.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     ReminderScheduler.scheduleReminder(context, updatedReminder)
                 }
 
@@ -221,7 +224,7 @@ class RemindersViewModel : ViewModel() {
                     ?: throw IllegalStateException("Reminder not found")
 
                 // Reschedule if the reminder time is in the future
-                if (reminder.time.isAfter(LocalDateTime.now())) {
+                if (reminder.time.isAfter(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     val scheduled = ReminderScheduler.scheduleReminder(context, reminder)
                     if (!scheduled) {
                         _errorMessage.value = "Couldn't reschedule notification"
@@ -259,10 +262,9 @@ class RemindersViewModel : ViewModel() {
 
     // partition reminders by past and upcoming
     fun getPartitionedReminders(): Pair<List<Reminder>, List<Reminder>> {
-        val now = LocalDateTime.now(ZoneId.systemDefault())
+        val now = LocalDateTime.now(ZoneId.of("America/Toronto"))
         return _reminders.value.partition { reminder ->
-            reminder.time.atZone(ZoneId.systemDefault())
-                .isAfter(now.atZone(ZoneId.systemDefault()))
+            reminder.time.isAfter(now.atZone(ZoneId.of("America/Toronto")))
         }
     }
 }

@@ -51,7 +51,7 @@ fun ActivityLogCalendar(
     
     val logsByDate = remember(activityLogs) {
         activityLogs.groupBy { log ->
-            log.createdAt.atZone(ZoneId.systemDefault()).toLocalDate()
+            log.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate()
         }
     }
     
@@ -343,7 +343,7 @@ private fun ActivityLogItem(log: ActivityLog) {
                     fontSize = 16.sp
                 )
                 Text(
-                    text = log.createdAt.atZone(ZoneId.systemDefault())
+                    text = log.createdAt.atZone(ZoneId.of("America/Toronto"))
                         .format(DateTimeFormatter.ofPattern("HH:mm")),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

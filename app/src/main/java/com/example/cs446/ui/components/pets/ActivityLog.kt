@@ -25,7 +25,7 @@ import java.util.UUID
 fun ActivityLogComponent(activityLog: ActivityLog) {
     val formattedDate = remember(activityLog.createdAt) {
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-            .withZone(ZoneId.systemDefault())
+            .withZone(ZoneId.of("America/Toronto"))
             .format(activityLog.createdAt)
     }
 

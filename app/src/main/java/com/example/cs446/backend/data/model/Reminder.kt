@@ -23,7 +23,7 @@ data class ReminderRaw(
             userId = this.userId,
             title = this.title,
             description = this.description,
-            time = OffsetDateTime.parse(this.time).toLocalDateTime(),
+            time = OffsetDateTime.parse(this.time).toZonedDateTime(),
             active = this.active
         )
     }
@@ -36,7 +36,7 @@ data class Reminder(
     val userId: UUID,
     val title: String,
     val description: String,
-    val time: LocalDateTime,
+    val time: ZonedDateTime,
     val active: Boolean = true
 ) {
     fun toReminderRaw(): ReminderRaw {
@@ -47,8 +47,7 @@ data class Reminder(
             userId = this.userId,
             title = this.title,
             description = this.description,
-            time = this.time.atZone(ZoneId.systemDefault())
-                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
+            time = this.time.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME),
             active = this.active
         )
     }

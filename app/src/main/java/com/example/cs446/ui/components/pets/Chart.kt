@@ -53,7 +53,7 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
     var startDay by remember {
         mutableStateOf(
             earliestDate
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("America/Toronto"))
                 .toLocalDate()
         )
     }
@@ -61,16 +61,16 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
     fun setGranularity() {
         startDay = when (unit) {
             ChronoUnit.DAYS -> earliestDate
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("America/Toronto"))
                 .truncatedTo(ChronoUnit.DAYS)
                 .toLocalDate()
             ChronoUnit.WEEKS -> earliestDate
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("America/Toronto"))
                 .with(DayOfWeek.MONDAY)
                 .truncatedTo(ChronoUnit.DAYS)
                 .toLocalDate()
             ChronoUnit.MONTHS -> earliestDate
-                .atZone(ZoneId.systemDefault())
+                .atZone(ZoneId.of("America/Toronto"))
                 .withDayOfMonth(1)
                 .truncatedTo(ChronoUnit.DAYS)
                 .toLocalDate()
@@ -81,7 +81,7 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
         val tmpData = mutableListOf<Int>()
         val tmpDates = mutableListOf<java.time.LocalDate>()
         while (
-            tmpDay < Instant.now().atZone(ZoneId.systemDefault()).toLocalDate()
+            tmpDay < Instant.now().atZone(ZoneId.of("America/Toronto")).toLocalDate()
         ) {
             tmpDates.add(tmpDay)
             val nextDate = when(unit) {
@@ -102,8 +102,8 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
 
             tmpData.add(
                 activityLogs.count {
-                    it.createdAt.atZone(ZoneId.systemDefault()).toLocalDate() >= tmpDay
-                            && it.createdAt.atZone(ZoneId.systemDefault()).toLocalDate() < nextDate
+                    it.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate() >= tmpDay
+                            && it.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate() < nextDate
                 }.toInt()
             )
             tmpDay = nextDate

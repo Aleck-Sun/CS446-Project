@@ -233,9 +233,9 @@ fun ReminderItem(
     onToggleActive: ((Boolean) -> Unit)? = null,
     onEdit: ((Reminder) -> Unit)? = null
 ) {
-    val systemZone = ZoneId.systemDefault()
+    val systemZone = ZoneId.of("America/Toronto")
     val now = LocalDateTime.now(systemZone)
-    val isUpcoming = reminder.time.atZone(systemZone)
+    val isUpcoming = reminder.time
         .isAfter(now.atZone(systemZone))
     val isActive = reminder.active
 
@@ -314,7 +314,8 @@ fun ReminderItem(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    "Due: ${reminder.time.format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a"))}",
+                    "Due: ${reminder.time.withZoneSameInstant(ZoneId.of("America/Toronto"))
+                        .format(DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a"))}",
                     style = MaterialTheme.typography.labelSmall,
                     color = when {
                         !isUpcoming -> MaterialTheme.colorScheme.onSurfaceVariant

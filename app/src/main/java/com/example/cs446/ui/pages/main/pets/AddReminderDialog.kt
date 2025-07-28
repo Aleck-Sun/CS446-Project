@@ -18,11 +18,12 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Schedule
+import java.time.ZonedDateTime
 
 @Composable
 fun AddReminderDialog(
     onDismiss: () -> Unit,
-    onAdd: (title: String, description: String, time: LocalDateTime, repeatIntervalDays: Int, repeatTimes: Int) -> Unit
+    onAdd: (title: String, description: String, time: ZonedDateTime, repeatIntervalDays: Int, repeatTimes: Int) -> Unit
 ) {
     val context = LocalContext.current
 
@@ -64,13 +65,13 @@ fun AddReminderDialog(
         confirmButton = {
             TextButton(onClick = {
                 // Validate inputs
-                val time = LocalDateTime.of(selectedDate, selectedTime)
+                val time = LocalDateTime.of(selectedDate, selectedTime).atZone(ZoneId.of("America/Toronto"))
                 val repeatEvery = repeatIntervalDays.toIntOrNull() ?: -1
                 val timesCount = repeatTimes.toIntOrNull() ?: -1
 
                 if (title.isBlank()) {
                     errorMessage = "Title cannot be empty"
-                } else if (time.isBefore(LocalDateTime.now())) {
+                } else if (time.isBefore(LocalDateTime.now().atZone(ZoneId.of("America/Toronto")))) {
                     errorMessage = "Reminder time must be in the future"
                 } else if (repeatEvery <= 0) {
                     errorMessage = "Repeat every days must be > 0"

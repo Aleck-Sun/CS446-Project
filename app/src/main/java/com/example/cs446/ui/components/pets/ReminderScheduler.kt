@@ -23,18 +23,14 @@ object ReminderScheduler {
         return try {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-            // Check for exact alarm permission (Android 12+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                 !alarmManager.canScheduleExactAlarms()) {
                 Log.w(TAG, "Exact alarm permission not granted")
                 return false
             }
 
-            // Convert reminder time to system timezone first
-            val zonedTime = reminder.time.atZone(ZoneId.systemDefault())
-            val triggerTime = zonedTime.toInstant().toEpochMilli()
+            val triggerTime = reminder.time.toInstant().toEpochMilli()
 
-            // Verify the time is in the future
             if (triggerTime <= System.currentTimeMillis()) {
                 Log.w(TAG, "Reminder time is in the past: ${reminder.time}")
                 return false
@@ -42,19 +38,11 @@ object ReminderScheduler {
 
             val pendingIntent = createPendingIntent(context, reminder)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setExact(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            }
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                triggerTime,
+                pendingIntent
+            )
 
             Log.d(TAG, "Reminder scheduled for ${reminder.time} (trigger time: $triggerTime)")
             true
