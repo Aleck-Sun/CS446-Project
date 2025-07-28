@@ -136,6 +136,36 @@ class RemindersViewModel : ViewModel() {
         }
     }
 
+    fun updateReminder(
+        context: Context,
+        reminderId: UUID,
+        petId: UUID,
+        title: String,
+        description: String,
+        time: LocalDateTime
+    ) {
+        viewModelScope.launch {
+            try {
+                reminderRepository.updateReminder(
+                    reminderId = reminderId,
+                    title = title,
+                    description = description,
+                    time = time
+                )
+
+                ReminderScheduler.cancelReminder(context, reminderId)
+                val updatedReminder = reminderRepository.getReminder(reminderId)
+                if (updatedReminder != null && updatedReminder.active && updatedReminder.time.isAfter(LocalDateTime.now())) {
+                    ReminderScheduler.scheduleReminder(context, updatedReminder)
+                }
+
+                loadRemindersForPet(petId)
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to update reminder: ${e.message}"
+            }
+        }
+    }
+
     fun scheduleAllUpcomingReminders(context: Context) {
         viewModelScope.launch {
             try {

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -72,6 +73,7 @@ fun ReminderScreen(
     }
 
     var showAddDialog by remember { mutableStateOf(false) }
+    var reminderBeingEdited by remember { mutableStateOf<Reminder?>(null) }
 
     val currentTime by produceState(initialValue = LocalDateTime.now()) {
         while (true) {
@@ -160,7 +162,8 @@ fun ReminderScreen(
                             reminder = reminder,
                             onToggleActive = { isActive ->
                                 viewModel.toggleActiveReminder(context, reminder.id, petId)
-                            }
+                            },
+                            onEdit = { reminderBeingEdited = it }
                         )
                         HorizontalDivider()
                     }
@@ -204,12 +207,31 @@ fun ReminderScreen(
             }
         )
     }
+
+    reminderBeingEdited?.let { reminder ->
+        EditReminderDialog(
+            reminder = reminder,
+            onDismiss = { reminderBeingEdited = null },
+            onEdit = { title, description, time ->
+                viewModel.updateReminder(
+                    context = context,
+                    reminderId = reminder.id,
+                    petId = petId,
+                    title = title,
+                    description = description,
+                    time = time
+                )
+                reminderBeingEdited = null
+            }
+        )
+    }
 }
 
 @Composable
 fun ReminderItem(
     reminder: Reminder,
-    onToggleActive: ((Boolean) -> Unit)? = null
+    onToggleActive: ((Boolean) -> Unit)? = null,
+    onEdit: ((Reminder) -> Unit)? = null
 ) {
     val systemZone = ZoneId.systemDefault()
     val now = LocalDateTime.now(systemZone)
@@ -256,19 +278,34 @@ fun ReminderItem(
                     )
                 }
 
-                if (onToggleActive != null && isUpcoming) {
-                    Switch(
-                        checked = isActive,
-                        onCheckedChange = onToggleActive,
-                        enabled = isUpcoming,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.primary,
-                            checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
-                            uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onToggleActive != null && isUpcoming) {
+                        Switch(
+                            checked = isActive,
+                            onCheckedChange = onToggleActive,
+                            enabled = true,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.primary,
+                                checkedTrackColor = MaterialTheme.colorScheme.primaryContainer,
+                                uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         )
-                    )
+                    }
+
+                    if (onEdit != null) {
+                        IconButton(
+                            onClick = { onEdit(reminder) },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Reminder",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
+
             }
             Spacer(modifier = Modifier.height(8.dp))
             Row(
