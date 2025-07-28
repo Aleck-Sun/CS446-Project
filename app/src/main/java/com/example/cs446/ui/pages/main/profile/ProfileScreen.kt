@@ -66,6 +66,7 @@ fun ProfileScreen(
     var showEditProfile by remember { mutableStateOf(false) }
 
     val posts by viewModel.posts.collectAsState()
+    val numberOfFollowing by viewModel.numberOfFollowing.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val securityComponent = SecurityComponent()
     var selectedPost by remember { mutableStateOf<Post?>(null) }
@@ -111,53 +112,52 @@ fun ProfileScreen(
             }
         }
 
-        Button(
-            onClick = {showEditProfile = true}
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text("Edit Profile")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(100.dp)
+            ) {
+                ProfileStat("Posts", posts.size.toString())
+                ProfileStat("Following", numberOfFollowing.toString())
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            ProfileStat("Posts", "120")
-            ProfileStat("Followers", "2.5K")
-            ProfileStat("Following", "300")
-        }
+            Button(
+                onClick = {showEditProfile = true},
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) {
+                Text("Edit Profile")
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = { /* follow/edit profile */ },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Follow")
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // logout button for testing
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    val success = securityComponent.logoutUser()
-                    if (success) {
-                        onLogout()
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        val success = securityComponent.logoutUser()
+                        if (success) {
+                            onLogout()
+                        }
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
-        ) {
-            Text("Logout", color = Color.White)
+                },
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            ) {
+                Text("Logout", color = Color.White)
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Pets", fontWeight = FontWeight.Bold)
+        //Text("Pets", fontWeight = FontWeight.Bold)
         //Button()
 
         PostsItem(posts = posts, ::onSelectPost)
