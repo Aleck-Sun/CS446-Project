@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.Arrangement
 import com.example.cs446.backend.data.model.ActivityLog
 import kotlinx.datetime.Clock.System
 import kotlinx.datetime.LocalDate
@@ -39,6 +41,7 @@ import kotlinx.datetime.toKotlinLocalDate
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
+import java.time.LocalDate as JavaLocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
 
@@ -83,7 +86,6 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
         while (
             tmpDay < Instant.now().atZone(ZoneId.of("America/Toronto")).toLocalDate()
         ) {
-            tmpDates.add(tmpDay)
             val nextDate = when(unit) {
                 ChronoUnit.DAYS -> tmpDay
                     .plusDays(1)
@@ -100,12 +102,18 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
                 else -> throw Exception("Invalid time unit")
             }
 
-            tmpData.add(
-                activityLogs.count {
-                    it.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate() >= tmpDay
-                            && it.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate() < nextDate
-                }.toInt()
-            )
+            val count = activityLogs.count {
+                val logDate = it.createdAt.atZone(ZoneId.of("America/Toronto")).toLocalDate()
+                logDate >= tmpDay &&
+                        logDate < nextDate &&
+                        logDate.year == JavaLocalDate.now(ZoneId.of("America/Toronto")).year
+            }
+
+            if (count > 0) {
+                tmpData.add(count)
+                tmpDates.add(tmpDay)
+            }
+
             tmpDay = nextDate
         }
 
@@ -113,7 +121,9 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
         fields = tmpDates
         maxCount = max(tmpData.maxOrNull()?:1, 1)
     }
-    setGranularity()
+    LaunchedEffect(unit, activityLogs) {
+        setGranularity()
+    }
 
     val gradientA = Color(0xFFCEB8FF)
     val gradientB = Color(0xFFE6D6FF)
@@ -121,6 +131,38 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
     Column(
         modifier = modifier
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp, horizontal = 8.dp),
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Button(
+                modifier = Modifier.padding(end = 8.dp),
+                onClick = { unit = ChronoUnit.DAYS }
+            ) {
+                Icon(Icons.Default.CalendarViewDay, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Day")
+            }
+            Button(
+                modifier = Modifier.padding(end = 8.dp),
+                onClick = { unit = ChronoUnit.WEEKS }
+            ) {
+                Icon(Icons.Default.CalendarViewWeek, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Week")
+            }
+            Button(
+                modifier = Modifier.padding(end = 8.dp),
+                onClick = { unit = ChronoUnit.MONTHS }
+            ) {
+                Icon(Icons.Default.CalendarViewMonth, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Month")
+            }
+        }
+
         LazyColumn {
             itemsIndexed(data) { idx, value ->
                 val date = fields[idx]
@@ -159,44 +201,44 @@ fun TrendChart(activityLogs: List<ActivityLog>, modifier: Modifier) {
                 }
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
-        Row (
-            modifier = Modifier.fillMaxWidth()
-                .padding(top=16.dp)
-        ){
-            Button(
-                modifier = Modifier.padding(end = 8.dp),
-                onClick = {
-                    unit = ChronoUnit.DAYS
-                    setGranularity()
-                }
-            ) {
-                Icon(Icons.Default.CalendarViewDay, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Day")
-            }
-            Button(
-                modifier = Modifier.padding(end = 8.dp),
-                onClick = {
-                    unit = ChronoUnit.WEEKS
-                    setGranularity()
-                }
-            ) {
-                Icon(Icons.Default.CalendarViewWeek, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Week")
-            }
-            Button(
-                modifier = Modifier.padding(end = 8.dp),
-                onClick = {
-                    unit = ChronoUnit.MONTHS
-                    setGranularity()
-                }
-            ) {
-                Icon(Icons.Default.CalendarViewMonth, contentDescription = null)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Month")
-            }
-        }
+//        Spacer(modifier = Modifier.weight(1f))
+//        Row (
+//            modifier = Modifier.fillMaxWidth()
+//                .padding(top=16.dp)
+//        ){
+//            Button(
+//                modifier = Modifier.padding(end = 8.dp),
+//                onClick = {
+//                    unit = ChronoUnit.DAYS
+//                    setGranularity()
+//                }
+//            ) {
+//                Icon(Icons.Default.CalendarViewDay, contentDescription = null)
+//                Spacer(modifier = Modifier.width(4.dp))
+//                Text("Day")
+//            }
+//            Button(
+//                modifier = Modifier.padding(end = 8.dp),
+//                onClick = {
+//                    unit = ChronoUnit.WEEKS
+//                    setGranularity()
+//                }
+//            ) {
+//                Icon(Icons.Default.CalendarViewWeek, contentDescription = null)
+//                Spacer(modifier = Modifier.width(4.dp))
+//                Text("Week")
+//            }
+//            Button(
+//                modifier = Modifier.padding(end = 8.dp),
+//                onClick = {
+//                    unit = ChronoUnit.MONTHS
+//                    setGranularity()
+//                }
+//            ) {
+//                Icon(Icons.Default.CalendarViewMonth, contentDescription = null)
+//                Spacer(modifier = Modifier.width(4.dp))
+//                Text("Month")
+//            }
+//        }
     }
 }
