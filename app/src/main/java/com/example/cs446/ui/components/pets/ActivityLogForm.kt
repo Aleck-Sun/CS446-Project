@@ -52,6 +52,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.cs446.backend.data.model.ActivityLogType
 import com.example.cs446.backend.data.repository.ActivityLogRepository
 import com.example.cs446.ui.components.DateTimePickerTextField
+import com.example.cs446.ui.components.DropdownSelector
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
@@ -117,25 +118,38 @@ fun ActivityLogForm(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        ActivityTypeSelector(
-            activityType = activityType,
-            onActivityTypeChange = {
+//        ActivityTypeSelector(
+//            activityType = activityType,
+//            onActivityTypeChange = {
+//                activityType = it
+//                if (showActivityTypeError && it.isNotBlank()) {
+//                    showActivityTypeError = false
+//                }
+//            },
+//            activityTypeOptions = activityTypeOptions,
+//            onNewTypeConfirmed = { newType ->
+//                if (!activityTypeOptions.contains(newType.lowercase())) {
+//                    activityTypeOptions.add(newType.lowercase())
+//                }
+//            }
+//        )
+        DropdownSelector<String>(
+            label = "Activity Type",
+            selectedValue = activityType,
+            options = activityTypeOptions,
+            onValueSelected = {
                 activityType = it
                 if (showActivityTypeError && it.isNotBlank()) {
                     showActivityTypeError = false
                 }
             },
-            activityTypeOptions = activityTypeOptions,
-            onNewTypeConfirmed = { newType ->
-                if (!activityTypeOptions.contains(newType.lowercase())) {
-                    activityTypeOptions.add(newType.lowercase())
-                }
-            }
+            isError = showActivityTypeError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         if (showActivityTypeError) {
             Text(
-                text = "Please enter an activity type",
+                text = "Please select an activity type",
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 12.sp,
                 modifier = Modifier.padding(top = 4.dp)
@@ -241,16 +255,16 @@ fun ActivityLogForm(
                     return@Button
                 }
                 coroutineScope.launch {
-                    if (!activityTypeOptions.contains(activityType.lowercase())) {
-                        activityLogRepository.addActivityLogsType(
-                            ActivityLogType(
-                                activityType = activityType.lowercase(),
-                                petId = petId,
-                                createdAt = Instant.now(),
-                            )
-                        )
-                        activityTypeOptions.add(activityType.lowercase())
-                    }
+//                    if (!activityTypeOptions.contains(activityType.lowercase())) {
+//                        activityLogRepository.addActivityLogsType(
+//                            ActivityLogType(
+//                                activityType = activityType.lowercase(),
+//                                petId = petId,
+//                                createdAt = Instant.now(),
+//                            )
+//                        )
+//                        activityTypeOptions.add(activityType.lowercase())
+//                    }
 
                     onSubmit(
                         activityDateTime.atZone(ZoneOffset.systemDefault()).toInstant(),
