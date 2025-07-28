@@ -85,3 +85,4 @@
 | 2025-07-27 | Implement delete and edit reminders             |                |                |               | 1.5             |               |                |
 | 2025-07-28 | Enforce permission policies for reminders       |                |                |               | 1               |               |                |
 | 2025-07-28 | Fixed submit without adding activity type to db |                |                | 3             |                 |               |                |
+| 2025-07-28 | Make profile screen nicer                       | 1              |                |               |                 |               |                |

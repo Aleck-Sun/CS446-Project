@@ -385,12 +385,12 @@ fun AddPostButton(
 fun PostItem(
     post: Post,
     isExpanded: Boolean = false,
-    onLike: (UUID) -> Unit,
-    onComment: (UUID, String) -> Unit,
-    onOpenCommentSection: (UUID) -> Unit,
-    onShare: (Context, String, String) -> Unit,
+    onLike: (UUID) -> Unit = {},
+    onComment: (UUID, String) -> Unit = {_,_->},
+    onOpenCommentSection: (UUID) -> Unit = {},
+    onShare: (Context, String, String) -> Unit = {_,_,_->},
     onFollow: (UUID, Boolean) -> Unit = {_, _ ->},
-    onShowLocationMap: (Location) -> Unit = {},
+    onShowLocationMap: (Location) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
